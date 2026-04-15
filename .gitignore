@@ -1,0 +1,12 @@
+# Virtual environment
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Environment variables (we'll use this later for your API key!)
+.env
+
+# Mac junk
+.DS_Store
