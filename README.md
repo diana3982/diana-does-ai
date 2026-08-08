@@ -6,7 +6,7 @@
 
 ## What is Columba?
 
-Columba is an AI-powered emotional support companion designed for young people who might be struggling — and who might not have anyone to talk to right now.
+Columba is an AI-powered emotional support companion designed for anyone who might be struggling — and who might not have someone to talk to right now.
 
 It's not therapy. It's not a hotline. It's something in between: a warm, non-judgmental presence that listens, reflects, and meets you exactly where you are — at 2am when you can't sleep, or on a Tuesday when everything just feels like too much.
 
@@ -16,7 +16,7 @@ Built with the Anthropic API and designed from day one with **safety, inclusion,
 
 ## Why I Built This
 
-Mental health support has a reach problem. Not everyone has access to a therapist. Not everyone feels safe talking to a parent or a friend. And for young people navigating their identity — their gender, their sexuality, their place in the world — the stakes of not having support can be devastating.
+Mental health support has a reach problem. Not everyone has access to a therapist. Not everyone feels safe talking to a parent or a friend. And for anyone navigating their identity — their gender, their sexuality, their place in the world — the stakes of not having support can be devastating.
 
 I know this firsthand — from both sides.
 
@@ -24,7 +24,7 @@ I've navigated depression and anxiety for most of my life. It wasn't until four 
 
 I've also seen this pain reflected in the people I love. I've lost someone dear to me — someone who needed exactly the kind of support this app tries to offer. I've watched friends carry burdens that no one should have to carry alone — the pain of not being accepted for who they are, the exhaustion of feeling unseen, the quiet weight of navigating a world that doesn't always make space for them. I've learned that sometimes the most powerful thing you can offer someone is simply a safe place to land.
 
-Columba exists because I believe technology, built thoughtfully and with intention, can genuinely change and save lives. Every design decision in this app — from the pronouns question to the 988 routing to the user-configurable persona — was made with a real person in mind. Someone like me. Someone like the people I love.
+Columba exists because I believe technology, built thoughtfully and with intention, can genuinely change and save lives. Every design decision in this app — from how users are addressed to the 988 routing to the user-configurable persona — was made with a real person in mind. Someone like me. Someone like the people I love.
 
 ---
 
@@ -49,11 +49,8 @@ Each quirk is tracked with:
 
 Low confidence quirks are surfaced for user confirmation before being used. Users can view and delete anything at any time — because **transparency and user control are non-negotiable.**
 
-### 🏳️‍🌈 Inclusive by Design
-- Pronouns are asked early and respected throughout
-- No assumptions about gender, identity, or background
-- Spiritual beliefs (or lack thereof) are welcomed, never imposed
-- Personas are configurable so users can talk to someone who feels like *them*
+### 🌟 Inclusive by Design
+Columba is built for everyone — no assumptions about who you are, where you come from, or what you believe. Every user is met with the same warmth and respect. Users are invited to share how they'd like to be addressed, in a way that helps them feel seen and valued. Every choice is always optional and judgment free.
 
 ### 🔒 Responsible AI, Always
 - Crisis escalation built in — users in distress are always encouraged to reach out to a trusted adult or contact the **988 Suicide and Crisis Lifeline**
