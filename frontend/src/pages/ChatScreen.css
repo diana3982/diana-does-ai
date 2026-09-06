@@ -1,0 +1,157 @@
+/* ChatScreen — AIM two-panel window: buddy info left, conversation right. */
+
+.chat {
+  width: min(900px, 100%);
+  /* A fixed height is what lets the history scroll instead of the page. */
+  height: min(760px, 86vh);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-body {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  flex: 1;
+  min-height: 0; /* lets the children scroll rather than stretch the grid */
+}
+
+/* --- Left: buddy info ------------------------------------------------ */
+.chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  background: var(--color-bg);
+  border-right: var(--border-thin);
+  overflow-y: auto;
+}
+
+.chat-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.chat-name {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-accent);
+  text-shadow: 0 0 10px var(--accent-glow);
+  overflow-wrap: anywhere;
+}
+
+.chat-status-message {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.chat-about-line {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.chat-about-value {
+  float: right;
+  color: var(--color-accent);
+}
+
+.chat-sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: auto; /* pinned to the bottom of the panel */
+}
+
+.chat-sidebar-actions .btn {
+  width: 100%;
+}
+
+/* --- Right: the conversation ----------------------------------------- */
+.chat-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-4);
+}
+
+.chat-history {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: var(--space-2);
+}
+
+.chat-empty {
+  margin: var(--space-6) 0;
+  text-align: center;
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.chat-error {
+  margin: 0 0 var(--space-2);
+}
+
+/* --- Composer --------------------------------------------------------- */
+.chat-composer {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+  padding-top: var(--space-3);
+  border-top: var(--border-thin);
+}
+
+.chat-input {
+  flex: 1;
+  min-height: 38px;
+  max-height: 96px; /* ~3 lines; the JS cap keeps it in step */
+  overflow-y: auto;
+}
+
+.chat-composer .btn {
+  flex: none;
+  height: 38px;
+}
+
+/* --- Narrow screens --------------------------------------------------- */
+@media (max-width: 720px) {
+  .chat {
+    height: 92vh;
+  }
+
+  .chat-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .chat-sidebar {
+    border-right: 0;
+    border-bottom: var(--border-thin);
+    padding: var(--space-3);
+  }
+
+  /* On a phone the buddy panel becomes a header strip, not a column. */
+  .chat-identity {
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+  }
+
+  .chat-about,
+  .chat-sidebar .divider {
+    display: none;
+  }
+
+  .chat-sidebar-actions {
+    margin-top: var(--space-3);
+  }
+}

@@ -1,0 +1,59 @@
+/* Messages. User messages sit right with an accent edge; the companion's
+   sit left under their name. Both keep the hairline-border look. */
+
+.bubble-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-4);
+  max-width: 78%;
+}
+
+.bubble-row-user {
+  margin-left: auto;
+  align-items: flex-end;
+}
+
+.bubble-row-companion {
+  margin-right: auto;
+  align-items: flex-start;
+}
+
+.bubble-sender {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+
+.bubble {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-thin);
+  border-radius: var(--radius);
+}
+
+.bubble-user {
+  background: var(--color-sent);
+  border-color: var(--color-border);
+  /* The accent edge, on the side the message came from. */
+  border-right: 2px solid var(--color-sent-border);
+}
+
+.bubble-companion {
+  background: var(--color-received);
+  border-left: 2px solid var(--color-accent-dim);
+}
+
+.bubble-text {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  /* Keeps the line breaks someone typed, and breaks long unspaced strings
+     instead of stretching the bubble off the panel. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bubble-time {
+  margin: var(--space-1) 0 0;
+}

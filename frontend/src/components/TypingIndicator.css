@@ -1,0 +1,30 @@
+/* The waiting state. Deliberately quiet — it should read as someone
+   thinking, not as a machine working. */
+
+.typing {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.typing-name {
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 2px;
+  font-size: var(--text-lg);
+  line-height: 0.6;
+  color: var(--color-accent);
+}
+
+.typing-status {
+  font-family: var(--font-sans);
+  font-style: italic;
+  color: var(--color-text-muted);
+}

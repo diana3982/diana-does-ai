@@ -90,6 +90,19 @@ Always follow these rules:
 
     return base_prompt
 
+def _parse_json_object(raw):
+    """Parse a JSON object out of a model reply.
+
+    Asking for "only JSON" gets JSON, but often inside a ```json fence --
+    which json.loads() rejects, so every extraction silently returned
+    nothing. Take the outermost {...} and ignore whatever wraps it.
+    """
+    start = raw.find('{')
+    end = raw.rfind('}')
+    if start == -1 or end == -1:
+        raise ValueError(f"no JSON object in model reply: {raw[:80]!r}")
+    return json.loads(raw[start:end + 1])
+
 def extract_quirks(message):
     """Silent background call to extract quirks from user message"""
     try:
@@ -115,8 +128,7 @@ If nothing personal is mentioned, return {"found": false, "quirks": []}""",
             messages=[{"role": "user", "content": message}]
         )
 
-        raw = response.content[0].text.strip()
-        return json.loads(raw)
+        return _parse_json_object(response.content[0].text)
 
     except Exception as e:
         print(f"Quirk extraction error: {e}")

@@ -178,8 +178,10 @@ Classic AIM/MSN two-panel layout:
 - Divider line
 - "About me" section showing tone + top 2 personality stats
 - Divider line
-- `[ view my quirks ]` button — opens QuirksPanel
-- `[ start over ]` button — calls POST /chat/reset, clears message history in state
+- quirks live in *my settings* (Phase 4), not a button here
+- `[ clear this chat ]` button — calls POST /chat/reset, clears message history
+  in state. Named this way so it isn't confused with **start over** in *my
+  settings*, which forgets the companion itself
 
 ### Right Panel: Chat Window
 - Scrollable message history area — auto-scrolls to bottom on new message
@@ -215,15 +217,16 @@ hey, I'm really glad you reached out. tell me more ·  2:34 PM
 - Use CSS animation, keep it subtle
 
 ### Acceptance Criteria
-- [ ] Chat window renders existing character info on load
-- [ ] Messages send on button click and Enter key
-- [ ] Input is disabled while response is loading
-- [ ] Loading indicator shows while waiting for reply
-- [ ] Auto-scroll to latest message on new message
-- [ ] Companion name + avatar appear correctly
-- [ ] POST /chat called with correct payload
-- [ ] Reset button calls POST /chat/reset and clears UI history
-- [ ] Error shown warmly if chat call fails
+- [x] Chat window renders existing character info on load
+- [x] Messages send on button click and Enter key (Shift+Enter for a newline)
+- [x] Input is disabled while response is loading
+- [x] Loading indicator shows while waiting for reply
+- [x] Auto-scroll to latest message on new message
+- [x] Companion name + avatar appear correctly
+- [x] POST /chat called with correct payload
+- [x] `[ clear this chat ]` calls POST /chat/reset and clears UI history
+- [x] Error shown warmly if chat call fails, and the unsent message is put
+      back in the box rather than lost
 
 ---
 

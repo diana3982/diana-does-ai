@@ -1,0 +1,23 @@
+/* The dove, in a panel-bordered square with a soft lavender glow. */
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  border: var(--border-thin);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+
+.avatar-lg {
+  width: 64px;
+  height: 64px;
+  font-size: 32px;
+}
+
+.avatar-sm {
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+}
