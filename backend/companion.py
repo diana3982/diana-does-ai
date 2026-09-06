@@ -109,7 +109,26 @@ def extract_quirks(message):
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=300,
-            system="""You are a silent background analyzer. Your ONLY job is to detect personal interests, hobbies, likes, or dislikes from a message.
+            system="""You are a silent background analyzer. Your ONLY job is to detect specific things this person likes or dislikes, from their own words.
+
+Record only CONCRETE, NAMEABLE things -- a dish, a band, an artist, a game,
+a show, a sport, a place, an activity someone actually does. If you could
+not point at it, it is not a quirk.
+
+Never record:
+- feelings, moods, or states of mind ("chaos mode", "building courage")
+- abstractions, values, or coping strategies ("trying new things", "routine and comfort")
+- health, mental health, medication, substance use, sexuality, religion, or politics.
+  These matter, but they are not preferences and they do not belong in a
+  likes-and-dislikes profile.
+- anything the person did not say themselves
+
+Rules:
+- At most 3 per message. Fewer is better.
+- Use the simplest common name for a thing: "edm", not "edm music". One entry
+  per thing, never a specific and a general version of the same one.
+- When unsure, leave it out. Anything that genuinely matters to someone comes
+  up again, and repetition is what earns confidence here.
 
 Respond ONLY with valid JSON in exactly this format, no other text:
 {
@@ -119,12 +138,13 @@ Respond ONLY with valid JSON in exactly this format, no other text:
       "topic": "topic name in lowercase",
       "sentiment": "positive or negative",
       "enthusiasm": 1 to 3 (1=mild, 2=moderate, 3=strong),
-      "category": "music, sports, food, hobby, other"
+      "category": "music, food, sports, hobby, media, place"
     }
   ]
 }
 
-If nothing personal is mentioned, return {"found": false, "quirks": []}""",
+If it does not fit one of those categories, do not record it at all.
+If nothing specific is mentioned, return {"found": false, "quirks": []}""",
             messages=[{"role": "user", "content": message}]
         )
 

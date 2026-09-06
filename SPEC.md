@@ -363,33 +363,70 @@ Show errors inline near the relevant action, not as full-page errors. Auto-dismi
 
 ---
 
-## Phased Build Order (Do This Weekend)
+## Phased Build Order
 
-### Phase 1 — Foundation
+### Phase 1 — Foundation ✅
 1. Vite + React project setup in `/frontend`
 2. `App.css` with all CSS custom properties
 3. `src/api/columba.js` with all API functions
 4. `App.jsx` with character check + conditional routing
 
-### Phase 2 — Setup Flow
+### Phase 2 — Setup Flow ✅
 5. `TitleBar` component
 6. `StatSlider` component
 7. `SetupScreen` — full form, submit, "choose for me"
 
-### Phase 3 — Chat Flow
+### Phase 3 — Chat Flow ✅
 8. `CompanionAvatar` component
 9. `MessageBubble` component
 10. `ChatScreen` — full layout, send/receive, loading state
+11. Recovery: retry on a failed send, reconnect + live status dot while away,
+    confirmation before clearing
 
-### Phase 4 — Quirks
-11. `QuirksPanel` — slide-in, list, delete
+### Phase 3.5 — What the companion notices (backend)
+
+Everything here rides the **existing silent Haiku call** that already runs on
+every message for quirk extraction — one round trip, one JSON schema, one
+defensive parse. These are entangled (a sensitivity sets the intensity floor),
+so building them apart means building the same seam twice.
+
+12. **Intensity tagging** — `light` / `medium` / `heavy`, per message.
+    **Fails heavy**: a missing, unparseable or errored tag must never unlock
+    the light lines. A classifier that fails open is the one bug here that
+    could actually hurt someone.
+13. **Sensitivities** — a separate store from quirks. **Withhold-only**: it
+    removes an option before it is offered, and can never raise a topic. Opens
+    only when the user opens it, and only while they hold it open. Sets the
+    intensity floor to `medium` while in play. Visible and deletable in *my
+    settings*; a toggle, default on.
+14. **Gender cues** — when someone picked "any", learn a preference from how
+    they refer to their companion. Never announced, never confirmed aloud.
+15. **Tightened quirk extraction** — concrete nameable things only, max 3 per
+    message, no `other` category. ✅
+16. **`real_talk` capped at heavy** — soften a 4-5 setting when someone is in
+    crisis. The one place the app overrides an explicit user choice.
+17. **Test mode** — env-gated, never a user-reachable toggle. Unmistakable
+    indicator while active. Must not write real quirks or history. Crisis
+    escalation stays fully live. "Force the tier" stays separate from "tell
+    the model it is a test".
+
+### Phase 4 — My settings
+18. Edit your companion — the setup form, prefilled
+19. What your companion knows — quirks list, sensitivities list, *about quirks*
+20. Start over — `[ ] my companion` `[ ] what they know`, neither pre-ticked
 
 ### Phase 5 — Polish
-12. Typing indicator animation
-13. Auto-scroll behavior
-14. Error states
-15. Keyboard shortcuts (Enter to send)
-16. Responsive adjustments if needed
+21. Status message selection: static per session, context-aware
+22. Personalized statuses from quirks, under the existing guardrails
+23. Responsive adjustments, remaining error states
+
+### Phase 6 — Flappy Phact
+24. The error-screen game, tiered by conversation intensity
+
+### Phase 7 — Sessions that last
+25. Conversation history persists locally, cleared only when the user clears it
+26. Rolling summary of the older turns rather than a truncation window
+27. AIM-style login / returning-visit flow
 
 ---
 
