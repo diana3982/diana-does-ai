@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="4" fill="#1a1a2e"/>
+  <!-- Columba: a four-point star, the constellation's brightest point -->
+  <path fill="#CA7DF9" d="M16 4c.9 5.3 2.8 7.2 8.1 8.1-5.3.9-7.2 2.8-8.1 8.1-.9-5.3-2.8-7.2-8.1-8.1C13.2 11.2 15.1 9.3 16 4z"/>
+  <circle cx="9" cy="24" r="1.4" fill="#e8e8f0" opacity=".8"/>
+  <circle cx="23" cy="22" r="1" fill="#e8e8f0" opacity=".6"/>
+  <circle cx="16" cy="27" r=".8" fill="#CA7DF9" opacity=".7"/>
+</svg>

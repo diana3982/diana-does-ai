@@ -1,0 +1,542 @@
+/* ===============================================================
+   🕊️ Columba — App.css
+   Design tokens + global styles + shared retro primitives.
+
+   Aesthetic: AIM/MSN Messenger windows, Y2K panels and borders,
+   with a celestial undertone (deep space palette, soft lavender glow).
+   Dark mode only — there is no light theme by design.
+   =============================================================== */
+
+:root {
+  /* --- Brand palette ------------------------------------------ */
+  --color-bg: #1a1a2e;            /* deep navy — primary background */
+  --color-surface: #16213e;       /* lighter navy — panels, cards */
+  --color-surface-alt: #0f3460;   /* deeper blue — active states, hover */
+  --color-border: #2a2a4a;        /* subtle panel borders */
+  --color-accent: #ca7df9;        /* lavender — primary accent */
+  --color-accent-dim: #9b5cc4;    /* dimmer lavender — secondary accent */
+  --color-text: #e8e8f0;          /* off-white — primary text */
+  --color-text-muted: #9090b0;    /* muted — timestamps, labels, hints */
+  --color-sent: #2d1f4e;          /* user message bubble background */
+  --color-sent-border: #ca7df9;   /* user message bubble border */
+  --color-received: #16213e;      /* companion message bubble background */
+  --color-online: #7fff9a;        /* online/active status dot */
+  --color-away: #f2de7e;          /* away — backend unreachable */
+  --color-offline: #6e6e8a;       /* offline — never connected */
+  --color-danger: #ff6b6b;        /* errors, delete */
+
+  /* Accent at partial opacity — for glows, hovers, focus rings.
+     Kept as tokens so the hex only ever lives in one place above. */
+  --accent-rgb: 202, 125, 249;
+  --accent-glow: rgba(var(--accent-rgb), 0.15);
+  --accent-glow-strong: rgba(var(--accent-rgb), 0.35);
+  --accent-wash: rgba(var(--accent-rgb), 0.08);
+  --danger-wash: rgba(255, 107, 107, 0.1);
+
+  /* --- Typography --------------------------------------------- */
+  --font-mono: 'Courier New', Courier, monospace;   /* UI chrome */
+  --font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* messages */
+
+  --text-xs: 0.6875rem;   /* 11px — badges, timestamps */
+  --text-sm: 0.8125rem;   /* 13px — labels, buttons */
+  --text-base: 0.9375rem; /* 15px — body, messages */
+  --text-lg: 1.125rem;    /* 18px — panel headings */
+  --text-xl: 1.5rem;      /* 24px — app title */
+
+  /* --- Spacing scale ------------------------------------------ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* --- Shape & depth ------------------------------------------ */
+  /* Retro OS windows have hard edges — keep radii tiny. */
+  --radius: 4px;
+  --radius-sm: 2px;
+  --border-thin: 1px solid var(--color-border);
+  --border-accent: 1px solid var(--color-accent);
+
+  /* Shadows are accent-tinted, never warm grey. */
+  --shadow-panel: 0 0 8px rgba(var(--accent-rgb), 0.15);
+  --shadow-lift: 0 0 16px rgba(var(--accent-rgb), 0.22);
+  --shadow-window: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 12px var(--accent-glow);
+  --glow-text: 0 0 12px var(--accent-glow-strong);
+
+  /* --- Motion -------------------------------------------------- */
+  --ease: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --transition: 140ms var(--ease);
+
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===============================================================
+   Base elements
+   =============================================================== */
+
+body {
+  min-height: 100%;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  /* Faint starfield: two soft lavender pools, no visible gradient banding. */
+  background-image:
+    radial-gradient(ellipse 60% 50% at 20% 0%, rgba(var(--accent-rgb), 0.06), transparent),
+    radial-gradient(ellipse 50% 50% at 85% 100%, rgba(15, 52, 96, 0.5), transparent);
+  background-attachment: fixed;
+}
+
+#root {
+  min-height: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+p {
+  margin: 0 0 var(--space-3);
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+code,
+kbd {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--color-accent-dim);
+  color: var(--color-text);
+}
+
+/* Keyboard focus is always visible — never remove it without a
+   replacement. Mouse clicks don't get the ring (:focus-visible). */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* --- Scrollbars, palette-matched ------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-left: var(--border-thin);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border: 2px solid var(--color-bg);
+  border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-dim);
+}
+
+/* ===============================================================
+   Shared primitives
+   Components use these classes for the retro window chrome so the
+   look stays consistent across screens.
+   =============================================================== */
+
+/* --- Panels: old-OS windows with hairline borders --------------- */
+.panel {
+  background: var(--color-surface);
+  border: var(--border-thin);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+
+/* A floating window (SetupScreen, QuirksPanel) sits above the page. */
+.window {
+  background: var(--color-surface);
+  border: var(--border-thin);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-window);
+}
+
+/* Title bar strip across the top of a panel. */
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+  border-bottom: var(--border-thin);
+}
+
+.divider {
+  height: 1px;
+  margin: var(--space-3) 0;
+  border: 0;
+  background: var(--color-border);
+}
+
+/* --- App title, with the soft lavender glow -------------------- */
+.app-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  letter-spacing: 0.16em;
+  color: var(--color-accent);
+  text-shadow: var(--glow-text);
+}
+
+/* --- Buttons: monospace, bracketed, command-line energy --------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+  background: transparent;
+  border: var(--border-accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    box-shadow var(--transition),
+    color var(--transition);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--accent-wash);
+  box-shadow: var(--shadow-lift);
+}
+
+.btn:active:not(:disabled) {
+  background: var(--color-surface-alt);
+}
+
+.btn:disabled {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Primary action — filled, for the one button that matters most. */
+.btn-primary {
+  color: var(--color-bg);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  font-weight: 700;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-accent-dim);
+  border-color: var(--color-accent-dim);
+}
+
+/* Quiet action — sits in a sidebar without competing. */
+.btn-ghost {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--color-text);
+  border-color: var(--color-accent-dim);
+}
+
+/* Destructive action — "forget", "start over". */
+.btn-danger {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-wash);
+  box-shadow: none;
+}
+
+/* --- Form controls --------------------------------------------- */
+.label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--accent-glow-strong);
+  outline: none;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.8;
+}
+
+.textarea {
+  resize: none;
+  line-height: 1.45;
+}
+
+.select {
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+/* Pill toggles (gender, tone) — square-ish, not modern pills. */
+.pill {
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--transition),
+    border-color var(--transition),
+    background var(--transition);
+}
+
+.pill:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent-dim);
+}
+
+.pill[aria-pressed='true'] {
+  color: var(--color-accent);
+  background: var(--accent-wash);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-panel);
+}
+
+/* --- Status indicators ----------------------------------------- */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-online);
+  box-shadow: 0 0 6px rgba(127, 255, 154, 0.6);
+}
+
+/* Columba steps out when the backend is unreachable, and comes back
+   on the next successful call — like a friend returning to their desk. */
+.status-dot-away {
+  background: var(--color-away);
+  box-shadow: 0 0 6px rgba(242, 222, 126, 0.55);
+}
+
+.status-dot-offline {
+  background: var(--color-offline);
+  box-shadow: none;
+}
+
+.status-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+/* Confidence badges in the quirks panel: LOW / MEDIUM / HIGH. */
+.badge {
+  padding: 1px var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+}
+
+.badge-medium {
+  color: var(--color-accent-dim);
+  border-color: var(--color-accent-dim);
+}
+
+.badge-high {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-panel);
+}
+
+/* --- Warm inline errors ----------------------------------------
+   Errors are never technical and never take over the page — they
+   sit next to the action that failed. See the error copy table in
+   SPEC.md; components pass the friendly string in.                */
+.notice-error {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  background: var(--danger-wash);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+}
+
+/* --- Muted helper text ------------------------------------------ */
+.muted {
+  color: var(--color-text-muted);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.timestamp {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* Visible to screen readers only. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ===============================================================
+   Animations
+   Loading should feel like a companion thinking, never like a
+   machine stalling — soft, slow, low contrast.
+   =============================================================== */
+
+/* Typing indicator dots (ChatScreen). Apply .typing-dot to three
+   spans and stagger with --dot-delay. */
+@keyframes columba-blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  animation: columba-blink 1.4s var(--dot-delay, 0s) infinite ease-in-out;
+}
+
+/* Gentle glow pulse — the app title, the avatar, the "connecting" state. */
+@keyframes columba-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.pulse {
+  animation: columba-pulse 2.4s infinite ease-in-out;
+}
+
+/* Slide-in for the quirks panel. */
+@keyframes columba-slide-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in {
+  animation: columba-slide-in 200ms var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===============================================================
+   App shell
+   =============================================================== */
+
+.app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-5);
+}
+
+/* Full-screen "connecting... 🕊️" state while GET /character runs. */
+.app-loading {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  color: var(--color-accent);
+  text-shadow: var(--glow-text);
+}
