@@ -22,7 +22,8 @@
   --color-received: #16213e;      /* companion message bubble background */
   --color-online: #7fff9a;        /* online/active status dot */
   --color-away: #f2de7e;          /* away — backend unreachable */
-  --color-offline: #6e6e8a;       /* offline — never connected */
+  --color-offline: #9090b0;       /* offline — an open ring, so it needs
+                                     more contrast than a filled dot */
   --color-danger: #ff6b6b;        /* errors, delete */
 
   /* Accent at partial opacity — for glows, hovers, focus rings.
@@ -383,8 +384,15 @@ kbd {
   box-shadow: 0 0 6px rgba(242, 222, 126, 0.55);
 }
 
+/* Offline is an OPEN circle, not a filled one. A filled grey dot at 8px
+   reads too close to the body text — hollow says "nobody's there."
+   Slightly larger than the filled dots: a 1px ring carries less visual
+   weight, so 10px is what makes it match them optically. */
 .status-dot-offline {
-  background: var(--color-offline);
+  width: 10px;
+  height: 10px;
+  background: transparent;
+  border: 1px solid var(--color-offline);
   box-shadow: none;
 }
 

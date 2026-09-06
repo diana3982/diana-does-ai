@@ -52,6 +52,18 @@ Low confidence quirks are surfaced for user confirmation before being used. User
 ### 🌟 Inclusive by Design
 Columba is built for everyone — no assumptions about who you are, where you come from, or what you believe. Every user is met with the same warmth and respect. Users are invited to share how they'd like to be addressed, in a way that helps them feel seen and valued. Every choice is always optional and judgment free.
 
+### 🤫 Private by Default
+What someone tells their companion — and what it learns about them — never leaves
+their machine. Think therapist and patient: the conversation doesn't leave the room.
+
+The character config and the quirks profile are written to local JSON and are
+**gitignored, permanently**. They are not committed, not synced, not uploaded.
+The repo carries `character.example.json` and `quirks.example.json` instead — a
+fabricated test user — so anyone reading the code can understand the data shapes
+without a single real person's story being published.
+
+Your privacy isn't something you have to think about here. It's the foundation — built in from the start, not bolted on after. Your session data stays local to you.
+
 ### 🔒 Responsible AI, Always
 - Crisis escalation built in — users in distress are always encouraged to reach out to a trusted adult or contact the **988 Suicide and Crisis Lifeline**
 - Trauma-informed response design — users feel *seen* before being redirected
@@ -64,12 +76,14 @@ Columba is built for everyone — no assumptions about who you are, where you co
 
 | Layer | Technology |
 |---|---|
-| Language | Python |
-| Backend | Flask |
+| Backend | Python + Flask |
+| Frontend | React (Vite) |
+| Styling | Plain CSS + custom properties — no framework |
+| State | React `useState` / `useEffect` — no Redux |
 | AI Models | Anthropic API |
 | Conversation | Claude Opus-class (warm, context-aware responses) |
 | Quirk Extraction | Claude Haiku-class (silent background processing) |
-| Data | JSON (character config + quirks store) |
+| Data | Local JSON (character config + quirks store), gitignored |
 | Environment | python-dotenv |
 
 ### Why Two Models?
@@ -92,16 +106,25 @@ diana-does-ai/
 │   ├── companion.py    ← Claude API logic + dual-call architecture
 │   ├── quirks.py       ← Quirks management (scoring, confidence, sentiment)
 │   └── data/
-│       ├── character.json    ← Saved character config
-│       └── quirks.json       ← User quirks store
+│       ├── README.md              ← why the real data is never committed
+│       ├── character.example.json ← sample config (committed)
+│       ├── quirks.example.json    ← sample quirks (committed)
+│       ├── character.json         ← yours — gitignored, stays local
+│       └── quirks.json            ← yours — gitignored, stays local
 │
-├── frontend/           ← Coming soon: AIM/MSN Messenger aesthetic 👀
-│   ├── index.html
-│   ├── style.css
-│   └── app.js
+├── frontend/           ← React + Vite, AIM/MSN Messenger aesthetic
+│   ├── src/
+│   │   ├── api/columba.js   ← every call to the Flask API
+│   │   ├── components/      ← MessageBubble, StatSlider, TitleBar, ...
+│   │   ├── pages/           ← SetupScreen, ChatScreen
+│   │   ├── App.jsx          ← setup-vs-chat routing
+│   │   └── App.css          ← design tokens + global styles
+│   └── package.json
 │
 ├── experiments/        ← Early prototypes and explorations
 ├── .env                ← API keys (never committed)
+├── .env.example        ← copy this to .env to get started
+├── SPEC.md             ← frontend specification
 ├── .gitignore
 └── requirements.txt
 ```
@@ -111,7 +134,8 @@ diana-does-ai/
 ## Running Locally
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.10+
+- Node 20+ (for the frontend — the repo pins it in `frontend/.nvmrc`)
 - An [Anthropic API key](https://console.anthropic.com)
 
 ### Setup
@@ -121,24 +145,41 @@ diana-does-ai/
 git clone https://github.com/diana3982/diana-does-ai.git
 cd diana-does-ai
 
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate  # Mac/Linux
+# Create and activate the virtual environment (it lives in backend/)
+python3 -m venv backend/venv
+source backend/venv/bin/activate  # Mac/Linux
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Set up your environment variables
-touch .env
-# Add this line to .env:
-# ANTHROPIC_API_KEY=your-key-here
-
-# Start the Flask backend
-cd backend
-python app.py
+# Set up your API key
+cp .env.example .env
+# then open .env and paste your key after ANTHROPIC_API_KEY=
 ```
 
-The backend will be running at `http://127.0.0.1:5000` 🎉
+### Running
+
+Two terminals — backend and frontend.
+
+```bash
+# Terminal 1 — backend
+source backend/venv/bin/activate
+cd backend
+python app.py            # → http://127.0.0.1:5000
+```
+
+```bash
+# Terminal 2 — frontend
+cd frontend
+nvm use                  # Node 20, per .nvmrc
+npm install
+npm run dev              # → http://localhost:5173
+```
+
+Open `http://localhost:5173` and you'll be met with companion setup 🎉
+
+No data files to create — they're generated on first use, and they stay on your
+machine.
 
 ---
 
@@ -157,9 +198,9 @@ The backend will be running at `http://127.0.0.1:5000` 🎉
 
 ## What's Coming
 
-- 🎨 **Frontend UI** — AIM/MSN Messenger aesthetic because Y2K never died and we refuse to let it
-- 💾 **Persistent sessions** — conversations that survive a server restart
-- 👤 **User profiles** — save your companion and quirks across sessions
+- 🎨 **Frontend UI** — *in progress.* AIM/MSN Messenger aesthetic, because Y2K never died and we refuse to let it
+- 💾 **Persistent sessions** — conversations that survive closing the app, with an AIM-style sign-in
+- 🕊️ **A gentler error screen** — if the connection drops, Phact (the dove, named for Alpha Columbae) shows up with something to do. What she offers depends on the conversation: a journal prompt, something drawn from your own interests, or — if things were heavy — just 988 and nothing else competing for your attention
 - 🌙 **Aquarius mode** — a celestial-themed companion variant (because of course)
 
 ---
