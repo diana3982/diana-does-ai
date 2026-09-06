@@ -4,4 +4,4 @@
 # The app itself never imports these -- keeping them out of
 # requirements.txt means a plain install stays lean.
 
-pytest>=8.4.2          # backend test suite (backend/tests/)
+pytest>=8.4.2,<10        # backend test suite (backend/tests/)

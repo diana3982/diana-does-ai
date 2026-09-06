@@ -7,6 +7,20 @@ so entries are grouped by the phase in `SPEC.md` they belong to.
 
 ---
 
+## Housekeeping · 2026-09-06
+
+One virtualenv, at the repo root next to `requirements.txt`. There were two,
+holding different versions of the Anthropic SDK — everything had been running
+against `anthropic 0.95.0`, below the `>=0.122.0` the project itself declares,
+so a fresh clone would have installed a library nothing had been tested on.
+
+Dependencies now carry major-version caps. An unbounded `>=` will happily
+install the next breaking release on someone else's machine; the floors are
+the versions actually verified against the live API, and raising a cap is now
+a deliberate act with a test to run first.
+
+---
+
 ## Phase 3.5 — What the companion notices · 2026-09-06
 
 Four signals now ride the one Haiku call that already ran on every message:

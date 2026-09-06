@@ -192,9 +192,9 @@ asserted never to appear over a heavy conversation.
 git clone https://github.com/diana3982/diana-does-ai.git
 cd diana-does-ai
 
-# Create and activate the virtual environment (it lives in backend/)
-python3 -m venv backend/venv
-source backend/venv/bin/activate  # Mac/Linux
+# Create and activate the virtual environment (repo root, next to requirements.txt)
+python3 -m venv venv
+source venv/bin/activate  # Mac/Linux
 
 # Install dependencies
 pip install -r requirements.txt
@@ -210,7 +210,7 @@ Two terminals — backend and frontend.
 
 ```bash
 # Terminal 1 — backend
-source backend/venv/bin/activate
+source venv/bin/activate
 cd backend
 python app.py            # → http://127.0.0.1:5000
 ```
