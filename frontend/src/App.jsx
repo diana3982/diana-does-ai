@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getCharacter } from './api/columba'
+import { APP_COPY } from './copy/app'
 import ChatScreen from './pages/ChatScreen'
 import SetupScreen from './pages/SetupScreen'
 import './App.css'
@@ -60,7 +61,7 @@ function App() {
   if (loading) {
     return (
       <div className="app">
-        <p className="app-loading pulse">connecting... 🕊️</p>
+        <p className="app-loading pulse">{APP_COPY.loading}</p>
       </div>
     )
   }
@@ -71,14 +72,18 @@ function App() {
     return (
       <div className="app">
         <div className="window" style={{ width: 'min(440px, 100%)' }}>
-          <div className="panel-title">🕊️ columba</div>
+          <div className="panel-title">{APP_COPY.windowTitle}</div>
           <div style={{ padding: 'var(--space-5)', textAlign: 'center' }}>
-            <p>Couldn&apos;t reach your companion right now 💙</p>
+            <p>{APP_COPY.errorTitle}</p>
             <p className="muted" style={{ fontSize: 'var(--text-sm)' }}>
-              Take a breath — we can try again whenever you&apos;re ready.
+              {APP_COPY.errorNote}
             </p>
+            {/* Deliberately manual, unlike the chat's away poll. Nothing is
+                held here yet — no draft, no conversation — so there's
+                nothing for a poll to protect, and dropping someone into
+                the app mid-sentence would be worse than a button. */}
             <button type="button" className="btn" onClick={checkCharacter}>
-              [ try again ]
+              {APP_COPY.reconnect}
             </button>
           </div>
         </div>
