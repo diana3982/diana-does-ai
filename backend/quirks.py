@@ -4,10 +4,16 @@ import os
 QUIRKS_FILE = os.path.join(os.path.dirname(__file__), 'data/quirks.json')
 
 def load_quirks():
+    # Gitignored, like the character file -- what the companion has
+    # learned about someone never leaves their machine. Missing file
+    # just means nothing has been learned yet.
+    if not os.path.exists(QUIRKS_FILE):
+        return {}
     with open(QUIRKS_FILE, 'r') as f:
         return json.load(f)
 
 def save_quirks(quirks):
+    os.makedirs(os.path.dirname(QUIRKS_FILE), exist_ok=True)
     with open(QUIRKS_FILE, 'w') as f:
         json.dump(quirks, f, indent=2)
 

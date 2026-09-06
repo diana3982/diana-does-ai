@@ -11,10 +11,16 @@ client = anthropic.Anthropic()
 CHARACTER_FILE = os.path.join(os.path.dirname(__file__), 'data/character.json')
 
 def load_character():
+    # The real character file is gitignored -- it holds one person's
+    # companion. A fresh clone has no file at all, so treat "missing"
+    # the same as "no character yet" instead of crashing.
+    if not os.path.exists(CHARACTER_FILE):
+        return {}
     with open(CHARACTER_FILE, 'r') as f:
         return json.load(f)
 
 def save_character(character):
+    os.makedirs(os.path.dirname(CHARACTER_FILE), exist_ok=True)
     with open(CHARACTER_FILE, 'w') as f:
         json.dump(character, f, indent=2)
 

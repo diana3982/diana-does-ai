@@ -1,0 +1,23 @@
+{
+  "music": {
+    "score": 4.5,
+    "mentions": 6,
+    "confidence": "HIGH",
+    "sentiment": "positive",
+    "category": "music"
+  },
+  "pizza": {
+    "score": 2.5,
+    "mentions": 3,
+    "confidence": "MEDIUM",
+    "sentiment": "positive",
+    "category": "food"
+  },
+  "running": {
+    "score": 0.0,
+    "mentions": 1,
+    "confidence": "LOW",
+    "sentiment": "negative",
+    "category": "sports"
+  }
+}

@@ -5,8 +5,24 @@ venv/
 __pycache__/
 *.pyc
 
-# Environment variables (we'll use this later for your API key!)
+# Environment variables — API keys live here, never commit
 .env
+.env.*
+!.env.example
+
+# ─────────────────────────────────────────
+# PRIVATE USER DATA — never commit
+# ─────────────────────────────────────────
+# What someone tells their companion, and what it learns about them,
+# stays on their machine. The *.example.json files are committed
+# instead so the data shapes are documented publicly.
+# See backend/data/README.md
+backend/data/*.json
+!backend/data/*.example.json
+
+# Node
+node_modules/
+dist/
 
 # Mac junk
 .DS_Store
