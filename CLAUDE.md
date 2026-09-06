@@ -21,13 +21,17 @@ diana-does-ai/
 │   ├── app.py           ← Flask REST API
 │   ├── companion.py     ← Claude API logic + dual-model architecture
 │   ├── quirks.py        ← Quirks management (scoring, confidence, sentiment)
-│   └── data/
+│   ├── tests/           ← pytest suite (see backend/tests/README.md)
+│   │   └── logs/        ← one summary per run, gitignored
+│   └── data/            ← gitignored; only *.example.json is committed
 │       ├── character.json
 │       └── quirks.json
 │
-├── frontend/            ← React app (this is what we're building)
+├── frontend/            ← React app
+│   ├── README.md        ← frontend conventions and scripts
 │   ├── src/
 │   │   ├── components/
+│   │   ├── copy/        ← every word the user reads (see below)
 │   │   ├── pages/
 │   │   ├── api/         ← Flask API calls live here
 │   │   └── App.jsx
@@ -46,9 +50,10 @@ diana-does-ai/
 |---|---|
 | Backend | Python + Flask (already built, do not modify unless asked) |
 | Frontend | React (Vite) |
-| Styling | CSS Modules or plain CSS — NO Tailwind, NO styled-components |
+| Styling | Plain CSS + custom properties — NO Tailwind, NO CSS Modules, NO styled-components |
 | AI | Anthropic API (claude-opus-4-5 for chat, claude-haiku-4-5 for quirks) |
-| State | React useState/useEffect — no Redux, keep it simple |
+| State | React useState/useEffect — no Redux, no router, keep it simple |
+| Tests | pytest (backend) · Vitest (frontend) |
 
 ---
 
@@ -99,15 +104,22 @@ Warm, gentle, non-clinical. The UI should feel like a safe space — never steri
 ## React Component Map
 
 ### Pages / Screens
-1. **SetupScreen** — first-time character creation (name, age, gender, tone, stat sliders). Shows if no character is saved yet.
-2. **ChatScreen** — main chat interface. Message list + input. Shows once character exists.
-3. **QuirksPanel** — slide-out or side panel showing what the companion has learned. Delete buttons per quirk.
+1. **SetupScreen** ✅ — first-time character creation (name, age, gender, tone, stat sliders). Shows if no character is saved yet.
+2. **ChatScreen** ✅ — main chat interface. Message list + input. Shows once character exists.
+3. **My settings** — *not built yet.* Everything about the user in one place: edit your companion (setup form, prefilled), read and delete what it has noticed, and start over with checkboxes rather than an "are you sure". Not called a *profile* — a profile implies something other people see, and nothing here is.
 
 ### Shared Components
-- `MessageBubble` — renders a single chat message (user vs companion styling)
-- `StatSlider` — labeled slider for compassion/real talk/creativity/humor (1–5)
-- `CompanionAvatar` — small avatar/icon for the companion in chat
-- `ResetButton` — clears conversation history via POST /chat/reset
+- `MessageBubble` ✅ — renders a single chat message (user vs companion styling)
+- `StatSlider` ✅ — labeled slider for compassion/real talk/creativity/humor (1–5)
+- `CompanionAvatar` ✅ — small avatar/icon for the companion in chat
+- `TitleBar` ✅ — the Y2K window chrome
+- `TypingIndicator` ✅ — three dots plus the companion's typing status
+
+### `src/copy/`
+Every word the user reads lives here, never inline in a component. The wording
+in this app is not decoration — an error message lands on someone who may
+already be having the worst day of their year — so it is reviewed as writing
+and some of it is tested as behaviour.
 
 ---
 
@@ -119,6 +131,8 @@ Warm, gentle, non-clinical. The UI should feel like a safe space — never steri
 - Props should be explicit — no spreading unknown props
 - Comment non-obvious logic
 - Keep components focused — if it's doing too much, split it
+- User-facing strings go in `src/copy/`, never inline
+- **Run `pytest` before every commit** and report the result
 
 ---
 
@@ -150,17 +164,30 @@ The frontend must support this:
 ## Running the Project
 
 ```bash
-# Backend (already built)
+# Backend
 cd backend
 python app.py
 # Runs at http://127.0.0.1:5000
 
-# Frontend (React/Vite)
+# Frontend (React/Vite) — needs Node 20+, pinned in .nvmrc
 cd frontend
+nvm use
 npm install
 npm run dev
 # Runs at http://localhost:5173
 ```
+
+## Testing
+
+```bash
+cd backend && pytest      # offline, free, under a second
+cd frontend && npm test   # Vitest
+```
+
+Both suites run without touching the Anthropic API or any real data file —
+`isolated_data` in `conftest.py` is autouse, so every test writes to a temp
+directory. Live tests are opt-in (`COLUMBA_LIVE=1`) and capped by a counter
+around the client.
 
 ---
 

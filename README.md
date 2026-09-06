@@ -76,14 +76,15 @@ Your privacy isn't something you have to think about here. It's the foundation �
 
 | Layer | Technology |
 |---|---|
-| Backend | Python + Flask |
-| Frontend | React (Vite) |
-| Styling | Plain CSS + custom properties — no framework |
-| State | React `useState` / `useEffect` — no Redux |
+| Backend | Python 3.10+ · Flask · flask-cors |
+| Frontend | React 19 · Vite 8 (Node 20+, pinned in `.nvmrc`) |
+| Styling | Plain CSS + custom properties — no framework, no CSS-in-JS |
+| State | React `useState` / `useEffect` — no Redux, no router |
 | AI Models | Anthropic API |
 | Conversation | Claude Opus-class (warm, context-aware responses) |
-| Quirk Extraction | Claude Haiku-class (silent background processing) |
-| Data | Local JSON (character config + quirks store), gitignored |
+| Background analysis | Claude Haiku-class (silent, never seen by the user) |
+| Data | Local JSON (companion + quirks), gitignored, never leaves the machine |
+| Tests | pytest (backend) · Vitest (frontend) |
 | Environment | python-dotenv |
 
 ### Why Two Models?
@@ -102,9 +103,11 @@ This pattern keeps costs manageable without sacrificing the quality of the core 
 diana-does-ai/
 │
 ├── backend/
-│   ├── app.py          ← Flask REST API (character, chat, quirks endpoints)
+│   ├── app.py          ← Flask REST API (character, chat, quirks)
 │   ├── companion.py    ← Claude API logic + dual-call architecture
 │   ├── quirks.py       ← Quirks management (scoring, confidence, sentiment)
+│   ├── tests/          ← pytest suite + its own README
+│   │   └── logs/       ← a summary per run, gitignored
 │   └── data/
 │       ├── README.md              ← why the real data is never committed
 │       ├── character.example.json ← sample config (committed)
@@ -113,21 +116,37 @@ diana-does-ai/
 │       └── quirks.json            ← yours — gitignored, stays local
 │
 ├── frontend/           ← React + Vite, AIM/MSN Messenger aesthetic
-│   ├── src/
-│   │   ├── api/columba.js   ← every call to the Flask API
-│   │   ├── components/      ← MessageBubble, StatSlider, TitleBar, ...
-│   │   ├── pages/           ← SetupScreen, ChatScreen
-│   │   ├── App.jsx          ← setup-vs-chat routing
-│   │   └── App.css          ← design tokens + global styles
-│   └── package.json
+│   ├── README.md            ← frontend conventions and scripts
+│   ├── .nvmrc               ← Node 20
+│   └── src/
+│       ├── api/columba.js   ← every call to the Flask API
+│       ├── components/      ← CompanionAvatar, MessageBubble, StatSlider,
+│       │                       TitleBar, TypingIndicator
+│       ├── copy/            ← every word the user reads, kept out of the
+│       │                       components: app, setup, chat, status,
+│       │                       quirks, about
+│       ├── pages/           ← SetupScreen, ChatScreen
+│       ├── App.jsx          ← setup-vs-chat routing
+│       ├── App.css          ← design tokens + global styles
+│       └── index.css        ← structural reset only
 │
 ├── experiments/        ← Early prototypes and explorations
+├── CLAUDE.md           ← project context for Claude Code
+├── SPEC.md             ← frontend specification and build order
+├── CHANGELOG.md        ← what changed, and why
 ├── .env                ← API keys (never committed)
 ├── .env.example        ← copy this to .env to get started
-├── SPEC.md             ← frontend specification
 ├── .gitignore
-└── requirements.txt
+├── requirements.txt
+└── requirements-dev.txt
 ```
+
+**Why `copy/` is its own directory.** Every word someone reads lives there
+rather than inline in a component. The wording in an app like this is not
+decoration — an error message lands on a person who may already be having the
+worst day of their year — so it gets reviewed as its own thing, and it can be
+tested. Some of it is unit-tested: the lighter status lines, for instance, are
+asserted never to appear over a heavy conversation.
 
 ---
 
@@ -254,10 +273,16 @@ since it's a record of your runs rather than of the project.
 
 ## What's Coming
 
-- 🎨 **Frontend UI** — *in progress.* AIM/MSN Messenger aesthetic, because Y2K never died and we refuse to let it
+- 🎨 **Frontend UI** — *setup and chat are built.* AIM/MSN Messenger aesthetic, because Y2K never died and we refuse to let it. Still to come: a *my settings* screen for editing your companion and reading (or deleting) everything it has noticed
 - 💾 **Persistent sessions** — conversations that survive closing the app, with an AIM-style sign-in
 - 🕊️ **A gentler error screen** — if the connection drops, Phact (the dove, named for Alpha Columbae) shows up with something to do. What she offers depends on the conversation: a journal prompt, something drawn from your own interests, or — if things were heavy — just 988 and nothing else competing for your attention
 - 🌙 **Aquarius mode** — a celestial-themed companion variant (because of course)
+
+---
+
+## Changelog
+
+[`CHANGELOG.md`](CHANGELOG.md) — what changed and, more usefully, why.
 
 ---
 

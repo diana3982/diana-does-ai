@@ -27,6 +27,10 @@ dist/
 # Mac junk
 .DS_Store
 
+# Test tooling scratch
+.pytest_cache/
+__pycache__/
+
 # Test run logs. These stay on the machine that produced them -- everything
 # in the directory is ignored regardless of name or extension, so a log can
 # never be pushed by accident. Only the README explaining it is tracked.
