@@ -27,6 +27,8 @@ dist/
 # Mac junk
 .DS_Store
 
-# Test run logs -- a record of local runs, not of the project.
-backend/tests/logs/*.md
+# Test run logs. These stay on the machine that produced them -- everything
+# in the directory is ignored regardless of name or extension, so a log can
+# never be pushed by accident. Only the README explaining it is tracked.
+backend/tests/logs/*
 !backend/tests/logs/README.md
