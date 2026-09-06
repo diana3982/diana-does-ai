@@ -60,7 +60,11 @@ export const INTENSITY = {
 const OFFER_OK = [INTENSITY.LIGHT, INTENSITY.MEDIUM]
 
 /** The tones offered on SetupScreen. `warm` is the fallback. */
-const TONES = ['warm', 'chill', 'uplifting', 'playful', 'gentle']
+// Exported so a test can hold it against setup.js: these are lookup keys
+// for the message pools, and renaming a tone in the picker without renaming
+// it here would silently drop every companion of that tone back to the warm
+// voice. That has happened once already.
+export const TONES = ['warm', 'chill', 'uplifting', 'playful', 'gentle']
 
 const MESSAGES = {
   [STATUS.ONLINE]: {

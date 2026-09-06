@@ -26,3 +26,7 @@ dist/
 
 # Mac junk
 .DS_Store
+
+# Test run logs -- a record of local runs, not of the project.
+backend/tests/logs/*.md
+!backend/tests/logs/README.md

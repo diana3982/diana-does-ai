@@ -183,6 +183,60 @@ machine.
 
 ---
 
+## Testing
+
+```bash
+# Backend — 76 tests, offline, under a second
+pip install -r requirements.txt -r requirements-dev.txt
+cd backend && pytest
+
+# Frontend — 34 tests
+cd frontend && npm test
+```
+
+Neither suite calls the Anthropic API. The backend swaps in a fake client that
+dispatches on model name the way the real code does — Haiku gets JSON back,
+Opus gets prose — so the endpoint tests exercise the whole Flask path for
+nothing.
+
+**No test can touch your data.** The `isolated_data` fixture is *autouse*:
+every test is pointed at a temp directory before it runs, so nothing in the
+suite can read or write a real `character.json` or `quirks.json`. It's autouse
+rather than opt-in on purpose — the protection has to cover tests written later
+by someone who never read the fixture.
+
+What the suites are actually guarding:
+
+- **Extraction fails closed.** An API error, a garbage reply or an empty one
+  all return "nothing found" rather than taking the conversation down.
+- **Fenced JSON parses.** The model likes to wrap its JSON in a code fence,
+  which once made every extraction silently return nothing for an entire
+  build. That case is pinned now.
+- **Low-confidence quirks never reach the model**, and the never-announce rule
+  travels with the ones that do.
+- **Lighter status lines can't appear over a heavy conversation** — and an
+  unknown intensity behaves like the worst case, not the best.
+- **Away is distinguishable from a failed send.** A request that never left the
+  machine is marked `status: 0`, which is what the chat window branches on.
+- **Every setting survives into the system prompt**, the 988 crisis line
+  included.
+
+### Live tests
+
+```bash
+cd backend && COLUMBA_LIVE=1 pytest tests/test_live.py
+```
+
+Skipped unless asked for. They cover the one thing a fake client can't: that
+the prompts still come back in the shape we parse. `MAX_CALLS` is enforced by a
+counting wrapper around the client rather than documented and hoped for — an
+accidental loop there spends real money.
+
+A markdown summary of each run lands in `backend/tests/logs/`, gitignored,
+since it's a record of your runs rather than of the project.
+
+---
+
 ## API Endpoints
 
 | Method | Endpoint | Description |

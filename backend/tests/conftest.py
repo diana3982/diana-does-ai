@@ -75,3 +75,111 @@ def api(monkeypatch):
     flask_app.app.config['TESTING'] = True
     with flask_app.app.test_client() as client:
         yield client
+
+
+# ---------------------------------------------------------------------------
+# Run log
+#
+# Every run drops a short markdown summary in tests/logs/ so a result can be
+# looked back at later without re-running anything -- what ran, what came of
+# it, and anything worth a second look.
+# ---------------------------------------------------------------------------
+
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+
+#: Timed here rather than read off the reporter -- pytest has renamed that
+#: private attribute between versions, and a run log is not worth a crash.
+_RUN = {}
+
+
+def pytest_sessionstart(session):
+    import time
+    _RUN['started'] = time.time()
+
+
+def _notable(reporter, live):
+    """Anything a reader should notice, beyond pass/fail counts."""
+    notes = []
+
+    if live:
+        notes.append(
+            'Live run -- real API calls were made, capped by MAX_CALLS in test_live.py.'
+        )
+    else:
+        notes.append('Offline run -- no API calls, no cost. Live tests skipped by design.')
+
+    slow = []
+    for reports in reporter.stats.values():
+        for report in reports:
+            duration = getattr(report, 'duration', 0)
+            if getattr(report, 'when', None) == 'call' and duration > 1.0:
+                slow.append(f'{report.nodeid} ({duration:.1f}s)')
+    if slow:
+        notes.append('Slow tests (>1s): ' + ', '.join(sorted(slow)))
+
+    if reporter.stats.get('error'):
+        notes.append('Collection or fixture errors occurred -- read those before the failures.')
+
+    return notes
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    import datetime
+
+    reporter = terminalreporter
+    counts = {
+        outcome: len(reporter.stats.get(outcome, []))
+        for outcome in ('passed', 'failed', 'error', 'skipped', 'xfailed', 'xpassed')
+    }
+    live = os.getenv('COLUMBA_LIVE') == '1'
+    import time
+
+    started = datetime.datetime.now()
+    duration = time.time() - _RUN.get('started', time.time())
+
+    # Group by file, so the log reads like the suite is laid out.
+    per_file = {}
+    for outcome in ('passed', 'failed', 'skipped'):
+        for report in reporter.stats.get(outcome, []):
+            # A skip is recorded during setup; everything else during the call.
+            allowed = ('setup',) if outcome == 'skipped' else (None, 'call')
+            if getattr(report, 'when', None) not in allowed:
+                continue
+            path = report.nodeid.split('::')[0]
+            bucket = per_file.setdefault(path, {'passed': 0, 'failed': 0, 'skipped': 0})
+            bucket[outcome] += 1
+
+    lines = [
+        f"# Test run — {started:%Y-%m-%d %H:%M:%S}",
+        '',
+        f"**{'PASSED' if exitstatus == 0 else 'FAILED'}** — "
+        f"{counts['passed']} passed, {counts['failed']} failed, "
+        f"{counts['skipped']} skipped in {duration:.2f}s",
+        '',
+        '## By file',
+        '',
+        '| file | passed | failed | skipped |',
+        '| --- | --- | --- | --- |',
+    ]
+    for path in sorted(per_file):
+        b = per_file[path]
+        lines.append(f"| `{path}` | {b['passed']} | {b['failed']} | {b['skipped']} |")
+
+    failures = reporter.stats.get('failed', []) + reporter.stats.get('error', [])
+    if failures:
+        lines += ['', '## Failures', '']
+        for report in failures:
+            summary = str(getattr(report, 'longrepr', '')).strip().splitlines()
+            reason = summary[-1] if summary else 'no detail'
+            lines.append(f'- `{report.nodeid}` — {reason}')
+
+    lines += ['', '## Worth noting', '']
+    lines += [f'- {note}' for note in _notable(reporter, live)]
+    lines.append('')
+
+    os.makedirs(LOG_DIR, exist_ok=True)
+    filename = f"{started:%Y-%m-%d_%H%M%S}{'_live' if live else ''}.md"
+    with open(os.path.join(LOG_DIR, filename), 'w') as f:
+        f.write('\n'.join(lines))
+
+    reporter.write_line(f'run log: tests/logs/{filename}')
