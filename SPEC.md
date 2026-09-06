@@ -130,12 +130,14 @@ Each slider has:
 - On click: POST /character with form data, then transition to ChatScreen
 
 ### Acceptance Criteria
-- [ ] All fields are present and functional
-- [ ] Sliders update descriptors in real time
-- [ ] "Choose for me" fills in valid random values for all fields
-- [ ] POST /character is called with correct payload on submit
-- [ ] On success, ChatScreen renders
-- [ ] Error state shown warmly if POST fails ("Something went wrong — try again in a moment 💙")
+- [x] All fields are present and functional
+- [x] Sliders update descriptors in real time
+- [x] "Choose for me" fills in valid random values for all fields
+- [x] An age range is required — nothing is pre-selected, and submitting
+      without one is caught warmly
+- [x] POST /character is called with correct payload on submit
+- [x] On success, ChatScreen renders
+- [x] Error state shown warmly if POST fails ("Hmm, couldn't save that. Give it another try?")
 
 ---
 
