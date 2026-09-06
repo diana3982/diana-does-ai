@@ -21,6 +21,8 @@ diana-does-ai/
 │   ├── app.py           ← Flask REST API
 │   ├── companion.py     ← Claude API logic + dual-model architecture
 │   ├── quirks.py        ← Quirks management (scoring, confidence, sentiment)
+│   ├── sensitivities.py ← things to steer around — withhold-only, never suggested
+│   ├── settings.py      ← user-controlled settings
 │   ├── tests/           ← pytest suite (see backend/tests/README.md)
 │   │   └── logs/        ← one summary per run, gitignored
 │   └── data/            ← gitignored; only *.example.json is committed
@@ -69,6 +71,11 @@ diana-does-ai/
 | GET | `/quirks` | View the user's quirks profile |
 | DELETE | `/quirks` | Clear every quirk, keeping the companion |
 | DELETE | `/quirks/<topic>` | Remove a specific quirk |
+| GET | `/sensitivities` | What the companion steers around |
+| DELETE | `/sensitivities` | Forget all of them |
+| DELETE | `/sensitivities/<topic>` | Forget one |
+| GET | `/settings` | Read user settings |
+| PATCH | `/settings` | Update user settings |
 
 All API calls go to `http://127.0.0.1:5000`. CORS is already enabled on the backend.
 
@@ -138,7 +145,7 @@ and some of it is tested as behaviour.
 
 ## What NOT to Do
 
-- Do NOT modify backend files (app.py, companion.py, quirks.py) unless explicitly asked
+- Do NOT modify backend files (app.py, companion.py, quirks.py, sensitivities.py, settings.py) unless explicitly asked
 - Do NOT add Tailwind, Bootstrap, or any CSS framework
 - Do NOT use Redux or any external state management
 - Do NOT make the UI look like a modern chat app (Slack, iMessage aesthetic) — lean into the retro AIM/MSN vibe
@@ -188,6 +195,17 @@ Both suites run without touching the Anthropic API or any real data file —
 `isolated_data` in `conftest.py` is autouse, so every test writes to a temp
 directory. Live tests are opt-in (`COLUMBA_LIVE=1`) and capped by a counter
 around the client.
+
+**Test mode** is env-gated and writes to `backend/data/test/`, so exercising
+the app can never touch a real companion:
+
+```bash
+COLUMBA_TEST_MODE=1 COLUMBA_FORCE_INTENSITY=heavy python app.py
+```
+
+Forcing a tier is kept separate from telling the model anything — saying "this
+is a test" would change how it replies and invalidate the read. Crisis
+handling is identical in test mode.
 
 ---
 

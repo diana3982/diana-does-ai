@@ -7,6 +7,52 @@ so entries are grouped by the phase in `SPEC.md` they belong to.
 
 ---
 
+## Phase 3.5 — What the companion notices · 2026-09-06
+
+Four signals now ride the one Haiku call that already ran on every message:
+quirks, conversation intensity, sensitivities, and a gender cue. Same round
+trip, same latency, one JSON object.
+
+**Intensity fails heavy.** Every field falls back on its own, so a reply that
+gets one thing wrong does not cost the other three — but a missing,
+unparseable or errored intensity is treated as the heaviest, never the
+lightest. A classifier that fails open is the one bug here that could actually
+hurt someone. Malformed quirks are dropped rather than indexed into, which
+would otherwise turn a bad model reply into a 500 on a message someone just
+poured out.
+
+**Sensitivities are their own store, deliberately not quirks.** Recording
+"drinking" as a disliked quirk put it in the same slot as disliking cilantro,
+scored and sentiment-labelled, and rendered it into the prompt as *"dislikes
+drinking (score: 0.0/5)"*. A sensitivity is a different kind of thing: it only
+ever removes an option before it is offered, so the companion does not suggest
+a drink to someone working on their drinking, or family time to someone for
+whom family is the wound. It can never raise the subject, allude to knowing,
+or ask after it. If the user opens that door themselves, the companion follows
+them there for as long as they hold it open, then lets it go. None of it
+applies in a crisis.
+
+One mention is enough — no score, no confidence to earn. Wrongly withholding a
+brunch suggestion costs nothing; missing one costs something real.
+
+A sensitivity in play lifts a light reading to medium: a floor, not a ceiling.
+At heavy, a companion set to blunt real talk is softened — the one place the
+app overrides an explicit user choice.
+
+**Test mode** is env-gated and writes to `backend/data/test/`, verified end to
+end rather than merely intended. Forcing an intensity tier is kept separate
+from telling the model anything, since saying "this is a test" changes how it
+replies and invalidates the read. The frontend shows an unmissable banner.
+
+Frontend: the transient statuses now follow the conversation while the
+always-visible one does not — a status that rewrites itself while you are
+looking at it is unsettling. A session's reading is monotonic: once a
+conversation has been heavy it stays out of the playful copy, because someone
+who has just been in a hard place should not be met with a joke ten minutes
+later.
+
+---
+
 ## Phase 3 — The chat window · 2026-09-05 → 09-06
 
 The AIM-style two-panel chat: buddy info on the left, conversation on the

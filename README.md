@@ -87,6 +87,30 @@ Your privacy isn't something you have to think about here. It's the foundation �
 | Tests | pytest (backend) · Vitest (frontend) |
 | Environment | python-dotenv |
 
+### What the background call does
+
+The Haiku call returns four things about each message in one JSON object:
+quirks, **conversation intensity** (`light` / `medium` / `heavy`),
+**sensitivities**, and a **gender cue** if the user referred to their
+companion by pronoun.
+
+Every field falls back on its own, and intensity falls back to `heavy`. A
+missing, unparseable or errored tag must never unlock the lighter copy — a
+classifier that fails *open* is the one bug in this system that could actually
+hurt someone.
+
+**Sensitivities are not quirks.** A quirk pushes the companion toward
+something; a sensitivity only ever removes an option before it is offered. It
+can never raise a subject, never allude to knowing, never ask after it —
+doing so would tell someone that a list is being kept about them, which is its
+own harm. If they bring it up themselves, the companion follows them there for
+as long as they stay with it, and lets it go when they move on. None of it
+applies in a crisis. It can be read, deleted item by item, and switched off
+entirely.
+
+At `heavy`, a companion set to blunt real talk is softened — the one place the
+app overrides an explicit choice someone made, and a deliberate one.
+
 ### Why Two Models?
 Columba uses a **dual API call architecture** — a deliberate production-grade design decision:
 
@@ -106,6 +130,8 @@ diana-does-ai/
 │   ├── app.py          ← Flask REST API (character, chat, quirks)
 │   ├── companion.py    ← Claude API logic + dual-call architecture
 │   ├── quirks.py       ← Quirks management (scoring, confidence, sentiment)
+│   ├── sensitivities.py ← things to steer around — withhold-only
+│   ├── settings.py     ← the handful of choices the user controls
 │   ├── tests/          ← pytest suite + its own README
 │   │   └── logs/       ← a summary per run, gitignored
 │   └── data/
@@ -113,7 +139,9 @@ diana-does-ai/
 │       ├── character.example.json ← sample config (committed)
 │       ├── quirks.example.json    ← sample quirks (committed)
 │       ├── character.json         ← yours — gitignored, stays local
-│       └── quirks.json            ← yours — gitignored, stays local
+│       ├── quirks.json            ← yours — gitignored, stays local
+│       ├── sensitivities.json     ← yours — gitignored, stays local
+│       └── test/                  ← where test mode writes instead
 │
 ├── frontend/           ← React + Vite, AIM/MSN Messenger aesthetic
 │   ├── README.md            ← frontend conventions and scripts
@@ -268,6 +296,15 @@ since it's a record of your runs rather than of the project.
 | GET | `/quirks` | View the user's quirks profile |
 | DELETE | `/quirks` | Clear every quirk, keeping the companion |
 | DELETE | `/quirks/<topic>` | Remove a specific quirk |
+| GET | `/sensitivities` | What the companion is quietly steering around |
+| DELETE | `/sensitivities` | Forget all of them |
+| DELETE | `/sensitivities/<topic>` | Forget one |
+| GET | `/settings` | Read the user's settings |
+| PATCH | `/settings` | Update them (unknown keys ignored) |
+
+There is deliberately no `POST /sensitivities`. One is only ever recorded from
+what someone said about themselves — never added by hand, and never by anyone
+but them.
 
 ---
 

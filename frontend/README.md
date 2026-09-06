@@ -72,6 +72,14 @@ companion's profile holds together for every combination of settings.
 
 There are no component tests yet.
 
+## Test mode
+
+When the backend runs with `COLUMBA_TEST_MODE=1`, a banner sits above
+everything saying so. It is the one element in this app allowed to be loud:
+everything else is built to be gentle, and this exists so a test session can
+never be mistaken for a real conversation — which matters most to whoever is
+reading over a shoulder.
+
 ## Conventions
 
 - Functional components only; `async/await`, never `.then()` chains.
