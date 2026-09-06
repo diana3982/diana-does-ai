@@ -57,6 +57,15 @@ def update_quirk(topic, sentiment, enthusiasm, category):
     save_quirks(quirks)
     return quirks
 
+def clear_quirks():
+    """Forget everything at once -- offered when someone starts over.
+
+    Never called on its own: starting over asks first, and keeping quirks
+    is just as valid a choice as clearing them.
+    """
+    save_quirks({})
+    return True
+
 def forget_quirk(topic):
     quirks = load_quirks()
     topic = topic.lower().strip()

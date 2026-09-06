@@ -1,0 +1,113 @@
+/* SetupScreen — an MSN-style sign-in window: branding on the left,
+   the form on the right, the whole thing floating on the page. */
+
+.setup {
+  width: min(700px, 100%);
+}
+
+.setup-body {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+}
+
+/* --- Left: branding ------------------------------------------------- */
+.setup-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+  background: var(--color-bg);
+  border-right: var(--border-thin);
+}
+
+.setup-dove {
+  font-size: 40px;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px var(--accent-glow-strong));
+}
+
+.setup-tagline {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* --- Right: the form ------------------------------------------------ */
+.setup-form {
+  padding: var(--space-5);
+  overflow-y: auto;
+  max-height: 78vh;
+}
+
+.setup-field {
+  margin-bottom: var(--space-4);
+}
+
+/* fieldset carries browser defaults worth clearing */
+.setup-group {
+  padding: 0;
+  margin-inline: 0;
+  border: 0;
+}
+
+.setup-group > .label {
+  padding: 0;
+}
+
+.setup-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.setup-error {
+  margin-bottom: var(--space-3);
+}
+
+.setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  padding-top: var(--space-2);
+  border-top: var(--border-thin);
+  margin-top: var(--space-4);
+}
+
+.setup-actions .btn {
+  flex: 1 1 auto;
+}
+
+/* --- Narrow screens: stack the panels -------------------------------- */
+@media (max-width: 640px) {
+  .setup-body {
+    grid-template-columns: 1fr;
+  }
+
+  .setup-brand {
+    border-right: 0;
+    border-bottom: var(--border-thin);
+    padding: var(--space-4);
+  }
+
+  .setup-form {
+    padding: var(--space-4);
+    max-height: none;
+  }
+}
+
+/* The "picked one for you" note after [ choose for me ]. Sits where an
+   error would, but reads as a nudge rather than a problem. */
+.setup-note {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+  background: var(--accent-wash);
+  border: 1px solid var(--color-accent-dim);
+  border-radius: var(--radius-sm);
+}

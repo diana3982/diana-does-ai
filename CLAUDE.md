@@ -58,9 +58,11 @@ diana-does-ai/
 |---|---|---|
 | GET | `/character` | Check if a character config is saved |
 | POST | `/character` | Save a new character config |
+| DELETE | `/character` | Start over — forget the companion (quirks are kept) |
 | POST | `/chat` | Send a message, get a reply |
 | POST | `/chat/reset` | Clear conversation history |
 | GET | `/quirks` | View the user's quirks profile |
+| DELETE | `/quirks` | Clear every quirk, keeping the companion |
 | DELETE | `/quirks/<topic>` | Remove a specific quirk |
 
 All API calls go to `http://127.0.0.1:5000`. CORS is already enabled on the backend.
@@ -133,7 +135,7 @@ Warm, gentle, non-clinical. The UI should feel like a safe space — never steri
 
 ## Responsible AI Notes (Read These)
 
-Columba is an emotional support app for vulnerable users, including teenagers. The backend already handles:
+Columba is an emotional support app for anyone who might be struggling — any age, any background. The backend already handles:
 - Crisis escalation to 988
 - Trauma-informed response design
 - Pronoun inclusivity

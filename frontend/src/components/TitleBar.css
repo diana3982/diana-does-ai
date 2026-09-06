@@ -1,0 +1,51 @@
+/* TitleBar — window chrome. Borrows .panel-title's look from App.css and
+   adds the layout and the [– □ ×] cluster. */
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+  border-bottom: var(--border-thin);
+}
+
+.titlebar-icon {
+  font-size: var(--text-sm);
+}
+
+.titlebar-title {
+  color: var(--color-accent);
+  letter-spacing: 0.16em;
+}
+
+.titlebar-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.titlebar-close {
+  padding: 0 var(--space-1);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1;
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.titlebar-close:hover {
+  color: var(--color-danger);
+}

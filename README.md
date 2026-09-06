@@ -189,9 +189,11 @@ machine.
 |---|---|---|
 | GET | `/character` | Check if a character is saved |
 | POST | `/character` | Save a new character config |
+| DELETE | `/character` | Start over — forget the companion (quirks are kept) |
 | POST | `/chat` | Send a message, get a response |
 | POST | `/chat/reset` | Clear conversation history |
 | GET | `/quirks` | View the user's quirks profile |
+| DELETE | `/quirks` | Clear every quirk, keeping the companion |
 | DELETE | `/quirks/<topic>` | Remove a specific quirk |
 
 ---

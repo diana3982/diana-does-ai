@@ -10,8 +10,8 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
 # in the same folder as app.py
 sys.path.insert(0, os.path.dirname(__file__))
 
-from companion import chat, load_character, save_character, build_system_prompt
-from quirks import load_quirks, forget_quirk
+from companion import chat, load_character, save_character, delete_character, build_system_prompt
+from quirks import load_quirks, forget_quirk, clear_quirks
 
 app = Flask(__name__)
 CORS(app)
@@ -107,6 +107,36 @@ def set_character():
         return fail("Hmm, couldn't save that. Give it another try?", str(e))
 
 
+@app.route('/character', methods=['DELETE'])
+def clear_character():
+    """Start over -- forget the companion and run setup again.
+
+    Quirks survive by default: they belong to the person, not the companion,
+    so a new companion can carry them forward. Pass ?clear_quirks=true to
+    wipe them instead. The UI asks which one before calling this.
+    """
+    global conversation_history
+
+    try:
+        # Quirks are kept unless explicitly asked for: ?clear_quirks=true
+        # They belong to the person, not the companion, so carrying them to
+        # a new companion is the default and clearing them is a choice.
+        wants_clear = request.args.get('clear_quirks', '').lower() in ('1', 'true', 'yes')
+
+        existed = delete_character()
+        if wants_clear:
+            clear_quirks()
+        conversation_history = []
+
+        return jsonify({
+            "success": True,
+            "existed": existed,
+            "quirks_cleared": wants_clear,
+        }), 200
+    except Exception as e:
+        return fail("Couldn't start over just now. Try again in a moment?", str(e))
+
+
 # ─────────────────────────────────────────
 # CHAT ROUTES
 # ─────────────────────────────────────────
@@ -166,6 +196,21 @@ def get_quirks():
         return jsonify({"quirks": quirks}), 200
     except Exception as e:
         return fail("Couldn't load quirks right now.", str(e))
+
+
+@app.route('/quirks', methods=['DELETE'])
+def clear_all_quirks():
+    """Forget everything the companion has learned, keeping the companion.
+
+    Separate from DELETE /character on purpose: starting over on what's
+    known about you and starting over on who you're talking to are two
+    different decisions, and someone may want either one alone.
+    """
+    try:
+        clear_quirks()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return fail("Couldn't clear those just now — try again?", str(e))
 
 
 @app.route('/quirks/<topic>', methods=['DELETE'])

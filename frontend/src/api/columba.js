@@ -87,6 +87,21 @@ export async function saveCharacter(character) {
   return request('/character', { method: 'POST', body: character })
 }
 
+/**
+ * Start over — forget the companion so setup runs again.
+ *
+ * Quirks are kept by default: they belong to the user, not the companion,
+ * so a new companion can carry them forward. Pass { clearQuirks: true } to
+ * wipe them instead. Ask before calling this either way.
+ *
+ * @param {{clearQuirks?: boolean}} [options]
+ * @returns {Promise<{success: boolean, existed: boolean, quirks_cleared: boolean}>}
+ */
+export async function deleteCharacter({ clearQuirks = false } = {}) {
+  const query = clearQuirks ? '?clear_quirks=true' : ''
+  return request(`/character${query}`, { method: 'DELETE' })
+}
+
 // ─────────────────────────────────────────
 // CHAT
 // ─────────────────────────────────────────
@@ -118,6 +133,15 @@ export async function resetChat() {
  */
 export async function getQuirks() {
   return request('/quirks')
+}
+
+/**
+ * Forget everything the companion has learned, keeping the companion.
+ * Separate from starting over — these are two different decisions.
+ * @returns {Promise<{success: boolean}>}
+ */
+export async function clearQuirks() {
+  return request('/quirks', { method: 'DELETE' })
 }
 
 /**

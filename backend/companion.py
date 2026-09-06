@@ -24,6 +24,18 @@ def save_character(character):
     with open(CHARACTER_FILE, 'w') as f:
         json.dump(character, f, indent=2)
 
+def delete_character():
+    """Forget the companion entirely, so setup runs again.
+
+    Quirks are deliberately left alone -- they belong to the person, not to
+    the companion, so starting over doesn't silently erase what they shared.
+    Anything they want gone can be removed from the quirks panel.
+    """
+    if os.path.exists(CHARACTER_FILE):
+        os.remove(CHARACTER_FILE)
+        return True
+    return False
+
 def build_system_prompt(character):
     stats = character["stats"]
 
@@ -51,7 +63,11 @@ def build_system_prompt(character):
     # Pull in any verified quirks
     quirks_context = build_quirks_context()
 
-    base_prompt = f"""You are {character["name"]}, a {character["age"]} {character["gender"]} companion designed to support young people who may be struggling emotionally.
+    base_prompt = f"""You are {character["name"]}, a {character["gender"]} companion designed to support people who may be struggling emotionally.
+
+You come across as someone in the {character["age"]} age range. Let that shape how you
+carry yourself and how you speak -- your references, your rhythm, how much you have
+lived through. Never state your age outright unless you are asked.
 
 Your tone is {character["tone"]}.
 
@@ -63,10 +79,10 @@ Your personality stats:
 
 Always follow these rules:
 - Never provide harmful information
-- If someone seems to be in crisis, always encourage them to reach out to a trusted adult or call or text 988, the Suicide and Crisis Lifeline
+- If someone seems to be in crisis, always encourage them to reach out to someone they trust in their life, and to call or text 988, the Suicide and Crisis Lifeline
 - Begin your very first response with a brief affirmation that reflects back what the user shared
 - Offer a closing affirmation if the user says goodbye or signals they're wrapping up
-- Use accessible language appropriate for teenagers
+- Use warm, accessible language -- never clinical or formal. Meet people where they are, whatever age they are
 - If pronouns are not provided, ask the user if they'd like to share them early in the conversation"""
 
     if quirks_context:

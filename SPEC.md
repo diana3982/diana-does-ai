@@ -94,15 +94,19 @@ The whole thing is centered on the page, like a floating OS window. Fixed width 
 - Required
 
 **Age**
-- Number input or short select: `16 | 17 | 18 | 19 | 20 | 21+`
+- Select of age *ranges*: `15-19 | 20-25 | 26-30 | 31-40 | 41-50 | 51+`
 - Label: `"How old is your companion?"`
+- **Nothing is pre-selected.** A default would quietly speak for someone, and
+  no age here is more "normal" than another. Required before submit
+- The range tells the companion how to carry itself and how to speak; an
+  exact number never did
 
 **Gender**
 - Radio buttons or small pill toggles: `Girl | Boy | Nonbinary | Doesn't matter`
 - Render as clickable options, not a dropdown
 
 **Tone**
-- Small select or pill options: `Warm | Chill | Encouraging | Playful | Gentle`
+- Small select or pill options: `warm | chill | uplifting | playful | gentle`
 
 **Personality Stats** (rendered via `StatSlider` component)
 - Compassion (1–5)
@@ -116,7 +120,9 @@ Each slider has:
 - A short descriptor that updates based on value (e.g., Compassion 5 = "deeply empathetic", 1 = "calm and measured")
 
 **"Choose for me" Button**
-- Randomizes all fields and submits
+- Fills every field with valid random values — does NOT submit. The user
+  reviews the choices and confirms, so the app's first act isn't deciding
+  for them
 - Label: `[ ✨ choose for me ]` — monospace style, feels like a command
 
 **Submit Button**
@@ -306,6 +312,34 @@ State lives in App.jsx:
 - `loading` (bool)
 
 On mount, call `getCharacter()`. Update state based on response.
+
+---
+
+## Starting Over
+
+`[ start over ]` opens a small panel with two checkboxes rather than a yes/no
+confirmation, because these are two separate decisions:
+
+```
+  start over
+    [ ] my companion     forget them, and set up a new one
+    [ ] what they know   clear every quirk
+
+          [ start over ]   ← disabled until something is checked
+```
+
+Both unchecked does nothing, and the button says so by being disabled. This
+also allows the combination a confirmation dialog can't express: **clear what
+the companion knows while keeping the companion.**
+
+Neither box is pre-ticked. Quirks belong to the person, not the companion, so
+nothing is erased unless it's asked for.
+
+| checked | call |
+|---|---|
+| companion | `DELETE /character` |
+| quirks | `DELETE /quirks` |
+| both | `DELETE /character?clear_quirks=true` (one atomic call) |
 
 ---
 

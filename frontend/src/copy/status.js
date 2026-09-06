@@ -60,7 +60,7 @@ export const INTENSITY = {
 const OFFER_OK = [INTENSITY.LIGHT, INTENSITY.MEDIUM]
 
 /** The tones offered on SetupScreen. `warm` is the fallback. */
-const TONES = ['warm', 'chill', 'encouraging', 'playful', 'gentle']
+const TONES = ['warm', 'chill', 'uplifting', 'playful', 'gentle']
 
 const MESSAGES = {
   [STATUS.ONLINE]: {
@@ -88,7 +88,7 @@ const MESSAGES = {
       ],
       light: ['just vibing', 'breathing easy', 'all good'],
     },
-    encouraging: {
+    uplifting: {
       always: [
         "here whenever you're ready",
         'here, and on your side',
@@ -143,7 +143,7 @@ const MESSAGES = {
       always: ['typing... one sec', 'hang on, writing', 'mulling it over', 'no rush, just thinking'],
       light: ['gimme a sec'],
     },
-    encouraging: {
+    uplifting: {
       always: [
         'putting this into words',
         'working on it',
@@ -197,7 +197,7 @@ const MESSAGES = {
       ],
       light: ['brb, all good'],
     },
-    encouraging: {
+    uplifting: {
       always: [
         "back in a moment — i'm not going far",
         "hold tight — i'll be right here",
