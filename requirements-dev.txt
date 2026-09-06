@@ -1,0 +1,7 @@
+# Development-only dependencies.
+#   pip install -r requirements.txt -r requirements-dev.txt
+#
+# The app itself never imports these -- keeping them out of
+# requirements.txt means a plain install stays lean.
+
+pytest>=8.4.2          # backend test suite (backend/tests/)
