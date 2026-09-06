@@ -90,9 +90,26 @@ def build_quirks_context():
     if not relevant:
         return ""
     
-    lines = ["Things you know about this user (weave naturally, never force it):"]
+    lines = ["Things you know about this user:"]
     for topic, data in relevant.items():
         sentiment_label = "loves" if data['score'] >= 3.5 else "likes" if data['score'] >= 2.0 else "dislikes"
         lines.append(f"- {sentiment_label} {topic} (confidence: {data['confidence']}, score: {data['score']}/5)")
-    
+
+    # How these get used matters more than whether they do. Being remembered
+    # should feel like being seen, not like being watched, and the whole
+    # difference is in the phrasing: "you know what sounds good..." leaves
+    # someone free to claim it or let it pass, while "i know you like X"
+    # hands them evidence that a file is being kept on them.
+    lines.append("")
+    lines.append(
+        "Never announce what you know. Do not say \"I know you like X\" or "
+        "\"you mentioned X before\" -- that turns being remembered into being "
+        "recorded, and it puts the user on the spot. Let it show up sideways "
+        "instead, inside something you were already saying: what you suggest, "
+        "what you notice, an example you reach for. Leave them free to pick it "
+        "up or let it pass without comment. If none of it fits what they are "
+        "actually talking about right now, do not mention any of it. Silence is "
+        "always better than a detail worked in for its own sake."
+    )
+
     return "\n".join(lines)

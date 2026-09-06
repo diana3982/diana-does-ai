@@ -4,8 +4,8 @@ import CompanionAvatar from '../components/CompanionAvatar'
 import MessageBubble from '../components/MessageBubble'
 import TitleBar from '../components/TitleBar'
 import TypingIndicator from '../components/TypingIndicator'
+import { buildAboutMe } from '../copy/about'
 import { CHAT_COPY } from '../copy/chat'
-import { STATS } from '../copy/setup'
 import { getStatusMessage, STATUS } from '../copy/status'
 import './ChatScreen.css'
 
@@ -17,14 +17,6 @@ const ERROR_TIMEOUT_MS = 4000
 
 /** How often to quietly check the link while away. */
 const RECONNECT_POLL_MS = 5000
-
-/** The two highest stats, for the "about me" panel. */
-function topStats(stats = {}) {
-  return [...STATS]
-    .filter((stat) => typeof stats[stat.key] === 'number')
-    .sort((a, b) => stats[b.key] - stats[a.key])
-    .slice(0, 2)
-}
 
 /**
  * ChatScreen — the buddy-list and chat window.
@@ -55,6 +47,7 @@ function ChatScreen({ character }) {
 
   const name = character?.name ?? 'your companion'
   const tone = character?.tone
+  const aboutMe = buildAboutMe(character)
 
   /**
    * The status line is chosen once per session and then stays put — it
@@ -295,11 +288,9 @@ function ChatScreen({ character }) {
 
           <div className="chat-about">
             <p className="label">{CHAT_COPY.aboutLabel}</p>
-            {character?.tone && <p className="chat-about-line">{character.tone}</p>}
-            {topStats(character?.stats).map((stat) => (
-              <p className="chat-about-line" key={stat.key}>
-                <span aria-hidden="true">{stat.emoji}</span> {stat.label}{' '}
-                <span className="chat-about-value">{character.stats[stat.key]}</span>
+            {aboutMe.map((line) => (
+              <p className="chat-about-line" key={line}>
+                {line}
               </p>
             ))}
           </div>
@@ -416,7 +407,7 @@ function ChatScreen({ character }) {
             />
             <button
               type="button"
-              className="btn"
+              className="btn chat-send"
               disabled={waiting || !draft.trim()}
               onClick={handleSend}
             >

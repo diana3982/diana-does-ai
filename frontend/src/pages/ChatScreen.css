@@ -51,15 +51,18 @@
   color: var(--color-text-muted);
 }
 
+/* Profile prose, not a stat readout -- so it takes the reading font and
+   a line height that lets three short lines breathe. */
 .chat-about-line {
-  margin: 0 0 var(--space-1);
-  font-family: var(--font-mono);
+  margin: 0 0 var(--space-2);
   font-size: var(--text-sm);
+  line-height: 1.5;
   color: var(--color-text);
 }
 
-.chat-about-value {
-  float: right;
+/* The opening line is the companion's voice; the rest is what they're
+   like. Giving the first line the accent makes it read as a signature. */
+.chat-about-line:first-of-type {
   color: var(--color-accent);
 }
 
@@ -122,7 +125,9 @@
 .chat-composer {
   display: flex;
   gap: var(--space-2);
-  align-items: flex-end;
+  /* stretch, not flex-end: send stays exactly as tall as the box it sends
+     from, including while the box is growing to three lines. */
+  align-items: stretch;
   padding-top: var(--space-3);
   border-top: var(--border-thin);
 }
@@ -134,9 +139,32 @@
   overflow-y: auto;
 }
 
-.chat-composer .btn {
+.chat-send {
   flex: none;
-  height: 38px;
+}
+
+/* Outline at rest, solid on hover — the button fills in as you reach for
+   it. Same move as the accent border, just committed to.
+
+   The glow is stronger than the shared --shadow-lift it replaces: that one
+   is tuned to read against a transparent button, and it disappears under a
+   filled one. This is the same colour, roughly twice the alpha. */
+.chat-send:hover:not(:disabled) {
+  color: var(--color-bg);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.45);
+  font-weight: 700;
+}
+
+/* With nothing typed this button spends most of its life disabled, which
+   is exactly when someone is looking at it. The shared grey disabled state
+   made the composer read as broken rather than waiting, so it keeps the
+   lavender here and just steps back. */
+.chat-send:disabled {
+  color: var(--color-accent-dim);
+  border-color: var(--color-accent-dim);
+  opacity: 0.6;
 }
 
 /* --- Clearing, second step ------------------------------------------- */
