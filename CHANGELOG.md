@@ -1,13 +1,21 @@
 # Changelog
 
-What changed and, more usefully, *why*. Newest first.
+What changed, why it changed, and what prompted it. Newest first.
 
 This is a build log rather than a release log — Columba has no versions yet,
 so entries are grouped by the phase in `SPEC.md` they belong to.
 
+Every entry opens with what triggered it, because a decision is only really
+legible alongside the thing that forced it. Several of the choices here came
+from a bug, a stray observation, or a question asked mid-conversation, and
+saying so is more honest than presenting them as a plan that went to plan.
+
 ---
 
 ## Housekeeping · 2026-09-06
+
+> **Triggered by** a README refresh, which turned up two virtualenvs — with
+> the docs pointing at the one nobody was running.
 
 One virtualenv, at the repo root next to `requirements.txt`. There were two,
 holding different versions of the Anthropic SDK — everything had been running
@@ -22,6 +30,11 @@ a deliberate act with a test to run first.
 ---
 
 ## Phase 3.5 — What the companion notices · 2026-09-06
+
+> **Triggered by** a question about the practical use of knowing someone's
+> struggles: if the companion knows a person is working on their drinking, it
+> should not suggest a mimosa at brunch. That is the app doing its job — care,
+> not surveillance — and it did not fit anywhere in the quirks system.
 
 Four signals now ride the one Haiku call that already ran on every message:
 quirks, conversation intensity, sensitivities, and a gender cue. Same round
@@ -68,6 +81,10 @@ later.
 ---
 
 ## Phase 3 — The chat window · 2026-09-05 → 09-06
+
+> **Triggered by** the setup flow being finished, and then by the first real
+> conversation with a companion — which is where the recall bug and the
+> phrasing question both surfaced.
 
 The AIM-style two-panel chat: buddy info on the left, conversation on the
 right. Message bubbles, a typing indicator, Enter to send, an input that grows
@@ -119,6 +136,10 @@ entry per thing, with no `other` category to escape through.
 
 ## Tests · 2026-09-06
 
+> **Triggered by** a quirk-extraction bug that ran silently for an entire
+> build. Nothing failed, nothing logged, and the feature simply never worked.
+> Lint and a manual click-through cannot catch that class of thing.
+
 76 backend tests and 34 frontend ones, all offline and free. The backend swaps
 in a fake client that dispatches on model name the way the real code does, so
 the endpoint tests exercise the whole Flask path without spending anything.
@@ -140,6 +161,10 @@ your runs, not of the project.
 
 ## Phase 2 — Setup · 2026-09-05
 
+> **Triggered by** the API layer and routing being in place, and by a review
+> of the prototypes in `experiments/`, which had been written as though the
+> only people who might need this were teenagers.
+
 Companion creation: name, age range, gender, tone, and four personality
 sliders, each with a descriptor that changes as you move it.
 
@@ -156,6 +181,10 @@ the user did not choose.
 ---
 
 ## Phase 1 — Foundation · 2026-09-04 → 09-05
+
+> **Triggered by** the backend being finished and needing something to talk
+> to, and by a pass over `.gitignore` before the first push — which is when
+> the question of what must never leave the machine got settled properly.
 
 Vite + React, the full design-token system in `App.css`, and every backend
 call behind `src/api/columba.js`.
