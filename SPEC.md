@@ -390,22 +390,24 @@ every message for quirk extraction — one round trip, one JSON schema, one
 defensive parse. These are entangled (a sensitivity sets the intensity floor),
 so building them apart means building the same seam twice.
 
-12. **Intensity tagging** — `light` / `medium` / `heavy`, per message.
+12. ✅ **Intensity tagging** — `light` / `medium` / `heavy`, per message.
     **Fails heavy**: a missing, unparseable or errored tag must never unlock
     the light lines. A classifier that fails open is the one bug here that
     could actually hurt someone.
-13. **Sensitivities** — a separate store from quirks. **Withhold-only**: it
+13. ✅ **Sensitivities** — a separate store from quirks. **Withhold-only**: it
     removes an option before it is offered, and can never raise a topic. Opens
     only when the user opens it, and only while they hold it open. Sets the
     intensity floor to `medium` while in play. Visible and deletable in *my
     settings*; a toggle, default on.
 14. **Gender cues** — when someone picked "any", learn a preference from how
     they refer to their companion. Never announced, never confirmed aloud.
+    *Detected and normalised; not yet acted on -- the companion does not
+    change how it presents itself yet.*
 15. **Tightened quirk extraction** — concrete nameable things only, max 3 per
     message, no `other` category. ✅
-16. **`real_talk` capped at heavy** — soften a 4-5 setting when someone is in
+16. ✅ **`real_talk` capped at heavy** — soften a 4-5 setting when someone is in
     crisis. The one place the app overrides an explicit user choice.
-17. **Test mode** — env-gated, never a user-reachable toggle. Unmistakable
+17. ✅ **Test mode** — env-gated, never a user-reachable toggle. Unmistakable
     indicator while active. Must not write real quirks or history. Crisis
     escalation stays fully live. "Force the tier" stays separate from "tell
     the model it is a test".

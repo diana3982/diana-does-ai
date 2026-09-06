@@ -11,6 +11,8 @@ someone having a bad night.
 """
 import companion
 import quirks
+import sensitivities
+import settings
 
 
 def warm(response):
@@ -23,7 +25,12 @@ def warm(response):
 
 class TestCharacter:
     def test_none_saved_yet(self, api):
-        assert api.get('/character').get_json() == {'exists': False}
+        assert api.get('/character').get_json() == {'exists': False, 'test_mode': False}
+
+    def test_test_mode_is_reported_before_anyone_types(self, api, monkeypatch):
+        # The banner has to be able to show on a fresh, empty app.
+        monkeypatch.setenv('COLUMBA_TEST_MODE', '1')
+        assert api.get('/character').get_json()['test_mode'] is True
 
     def test_save_then_read_back(self, api, character):
         # 201, not 200 -- saving a character creates one.
@@ -79,6 +86,56 @@ class TestChat:
         assert body['reply'] == "hey. i'm here."
         assert body['history_length'] == 2
 
+    def test_the_reply_carries_the_intensity(self, api, character, fake_model):
+        # The frontend gates its own copy on this.
+        fake_model.extraction = {'found': False, 'quirks': [], 'intensity': 'light'}
+        api.post('/character', json=character)
+        assert api.post('/chat', json={'message': 'hi'}).get_json()['intensity'] == 'light'
+
+    def test_an_unreadable_analysis_still_answers_and_reports_heavy(
+        self, api, character, fake_model
+    ):
+        fake_model.extraction = {'intensity': 'nonsense'}
+        api.post('/character', json=character)
+        body = api.post('/chat', json={'message': 'hi'}).get_json()
+        assert body['reply']
+        assert body['intensity'] == 'heavy'
+
+    def test_a_sensitivity_is_recorded_and_lifts_the_floor(
+        self, api, character, fake_model
+    ):
+        fake_model.extraction = {
+            'found': False, 'quirks': [], 'intensity': 'light',
+            'sensitivities': [{'topic': 'drinking', 'kind': 'substance'}],
+        }
+        api.post('/character', json=character)
+        body = api.post('/chat', json={'message': 'been drinking too much'}).get_json()
+
+        assert 'drinking' in sensitivities.load_sensitivities()
+        assert body['intensity'] == 'medium'
+
+    def test_nothing_is_recorded_when_sensitivities_are_off(
+        self, api, character, fake_model
+    ):
+        settings.save_settings({'sensitivities_enabled': False})
+        fake_model.extraction = {
+            'found': False, 'quirks': [], 'intensity': 'light',
+            'sensitivities': [{'topic': 'drinking', 'kind': 'substance'}],
+        }
+        api.post('/character', json=character)
+        api.post('/chat', json={'message': 'been drinking too much'})
+        assert sensitivities.load_sensitivities() == {}
+
+    def test_a_heavy_message_softens_a_blunt_companion(self, api, character, fake_model):
+        character['stats']['real_talk'] = 5
+        fake_model.extraction = {'found': False, 'quirks': [], 'intensity': 'heavy'}
+        api.post('/character', json=character)
+        api.post('/chat', json={'message': 'i cannot do this anymore'})
+
+        system = [c for c in fake_model.calls if 'opus' in c['model']][0]['system']
+        assert 'never sugarcoating' not in system
+        assert '988' in system
+
     def test_history_accumulates(self, api, character, fake_model):
         api.post('/character', json=character)
         api.post('/chat', json={'message': 'hi'})
@@ -127,6 +184,71 @@ class TestChat:
         assert api.post('/chat/reset').status_code == 200
         body = api.post('/chat', json={'message': 'hi again'}).get_json()
         assert body['history_length'] == 2
+
+
+class TestSensitivities:
+    def test_empty_to_start(self, api):
+        body = api.get('/sensitivities').get_json()
+        assert body == {'sensitivities': {}, 'enabled': True}
+
+    def test_listing(self, api):
+        sensitivities.note_sensitivity('drinking', 'substance')
+        assert 'drinking' in api.get('/sensitivities').get_json()['sensitivities']
+
+    def test_forget_one(self, api):
+        sensitivities.note_sensitivity('drinking', 'substance')
+        sensitivities.note_sensitivity('family', 'family')
+        assert api.delete('/sensitivities/drinking').status_code == 200
+        assert list(sensitivities.load_sensitivities()) == ['family']
+
+    def test_forgetting_an_unknown_one_says_so(self, api):
+        response = api.delete('/sensitivities/nothing')
+        assert response.status_code == 404
+        warm(response)
+
+    def test_clear_them_all(self, api):
+        sensitivities.note_sensitivity('drinking', 'substance')
+        assert api.delete('/sensitivities').status_code == 200
+        assert sensitivities.load_sensitivities() == {}
+
+    def test_there_is_no_way_to_add_one_by_hand(self, api):
+        # Only ever recorded from what someone said about themselves.
+        assert api.post('/sensitivities', json={'topic': 'x'}).status_code == 405
+
+    def test_starting_over_clears_them_with_the_quirks(self, api, character):
+        api.post('/character', json=character)
+        sensitivities.note_sensitivity('drinking', 'substance')
+        quirks.update_quirk('french toast', 'positive', 2, 'food')
+
+        api.delete('/character?clear_quirks=true')
+
+        # "what they know" has to mean everything, or the checkbox lies.
+        assert sensitivities.load_sensitivities() == {}
+        assert quirks.load_quirks() == {}
+
+    def test_starting_over_keeps_them_by_default(self, api, character):
+        api.post('/character', json=character)
+        sensitivities.note_sensitivity('drinking', 'substance')
+
+        api.delete('/character')
+
+        assert 'drinking' in sensitivities.load_sensitivities()
+
+
+class TestSettings:
+    def test_defaults(self, api):
+        assert api.get('/settings').get_json() == {'sensitivities_enabled': True}
+
+    def test_switching_sensitivities_off(self, api):
+        body = api.patch('/settings', json={'sensitivities_enabled': False}).get_json()
+        assert body['sensitivities_enabled'] is False
+        assert api.get('/settings').get_json()['sensitivities_enabled'] is False
+
+    def test_unknown_keys_are_ignored(self, api):
+        assert 'nonsense' not in api.patch('/settings', json={'nonsense': 1}).get_json()
+
+    def test_an_empty_body_is_harmless(self, api):
+        assert api.patch('/settings').status_code == 200
 
 
 class TestQuirks:

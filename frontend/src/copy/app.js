@@ -18,4 +18,11 @@ export const APP_COPY = {
   errorTitle: "couldn't reach your companion right now 💙",
   errorNote: "take a breath — we can try again whenever you're ready.",
   reconnect: '[ reconnect ]',
+
+  /**
+   * Shown only when the backend is running in test mode. Deliberately
+   * plain and deliberately loud -- the one place in this app where the
+   * point is to interrupt, not to reassure.
+   */
+  testMode: 'TEST MODE — this session is not real, and nothing here is saved to your companion',
 }

@@ -50,6 +50,24 @@ export const STATUS = {
  * How heavy the conversation is right now, per the backend's tag.
  * The same three tiers the gentle fallback uses, so one tag drives both.
  */
+/** Lightest first. The order is what makes `stricter` meaningful. */
+export const TIERS = ['light', 'medium', 'heavy']
+
+/**
+ * The more careful of two readings.
+ *
+ * Once a conversation has been somewhere heavy, the session stays out of
+ * the playful copy even if the talk lightens again -- someone who has just
+ * been in a hard place should not be met with a joke ten minutes later. An
+ * unrecognised or missing reading counts as the most careful one, so this
+ * can only ever tighten, never loosen.
+ */
+export function stricter(current, next) {
+  if (!TIERS.includes(next)) return 'heavy'
+  if (!TIERS.includes(current)) return next
+  return TIERS.indexOf(next) > TIERS.indexOf(current) ? next : current
+}
+
 export const INTENSITY = {
   LIGHT: 'light',   // ordinary conversation — the funny lines are fine
   MEDIUM: 'medium', // something real, not a crisis — warm, but no jokes

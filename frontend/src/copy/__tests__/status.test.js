@@ -13,6 +13,7 @@ import {
   TONES,
   getStatusMessage,
   getWaitOffer,
+  stricter,
 } from '../status'
 import { TONES as SELECTABLE_TONES } from '../setup'
 
@@ -125,6 +126,39 @@ describe('getWaitOffer', () => {
       for (const seed of SEEDS) {
         expect(getWaitOffer('guitar', 'warm', seed, intensity)).not.toContain('?')
       }
+    }
+  })
+})
+
+describe('stricter', () => {
+  it('takes the heavier of two readings', () => {
+    expect(stricter('light', 'heavy')).toBe('heavy')
+    expect(stricter('medium', 'heavy')).toBe('heavy')
+    expect(stricter('light', 'medium')).toBe('medium')
+  })
+
+  it('never lightens once a conversation has been heavy', () => {
+    // Someone who has just been in a hard place should not be met with a
+    // joke ten minutes later, however the talk has moved on.
+    expect(stricter('heavy', 'light')).toBe('heavy')
+    expect(stricter('heavy', 'medium')).toBe('heavy')
+    expect(stricter('medium', 'light')).toBe('medium')
+  })
+
+  it('accepts the first real reading from nothing', () => {
+    expect(stricter(null, 'light')).toBe('light')
+    expect(stricter(undefined, 'medium')).toBe('medium')
+  })
+
+  it('treats an unusable new reading as heavy', () => {
+    for (const bad of [undefined, null, '', 'nonsense', 3, {}]) {
+      expect(stricter('light', bad)).toBe('heavy')
+    }
+  })
+
+  it('is idempotent', () => {
+    for (const tier of ['light', 'medium', 'heavy']) {
+      expect(stricter(tier, tier)).toBe(tier)
     }
   })
 })

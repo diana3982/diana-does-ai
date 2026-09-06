@@ -18,14 +18,44 @@ sys.path.insert(0, BACKEND)
 import app as flask_app          # noqa: E402
 import companion                 # noqa: E402
 import quirks                    # noqa: E402
+import sensitivities             # noqa: E402
+import settings                  # noqa: E402
+
+
+#: Every module that writes to disk, and the constant it writes through.
+#: A new store must be added here -- a test suite that can reach real user
+#: data is worse than no test suite.
+STORAGE = (
+    (companion, 'CHARACTER_FILE', 'character.json'),
+    (quirks, 'QUIRKS_FILE', 'quirks.json'),
+    (sensitivities, 'SENSITIVITIES_FILE', 'sensitivities.json'),
+    (settings, 'SETTINGS_FILE', 'settings.json'),
+)
 
 
 @pytest.fixture(autouse=True)
 def isolated_data(tmp_path, monkeypatch):
-    """Point both storage modules at a temp directory. Never opt out."""
-    monkeypatch.setattr(companion, 'CHARACTER_FILE', str(tmp_path / 'character.json'))
-    monkeypatch.setattr(quirks, 'QUIRKS_FILE', str(tmp_path / 'quirks.json'))
+    """Point every storage module at a temp directory. Never opt out."""
+    for module, constant, filename in STORAGE:
+        monkeypatch.setattr(module, constant, str(tmp_path / filename))
     return tmp_path
+
+
+def test_every_storage_constant_is_isolated():
+    """A guard on the guard.
+
+    If a module gains a *_FILE constant and nobody adds it to STORAGE, the
+    isolation above silently stops covering it -- which is how two real data
+    files got written during this suite's own development.
+    """
+    covered = {(module.__name__, constant) for module, constant, _ in STORAGE}
+    for module in (companion, quirks, sensitivities, settings):
+        for name in dir(module):
+            if name.endswith('_FILE') and not name.startswith('_'):
+                assert (module.__name__, name) in covered, (
+                    f'{module.__name__}.{name} writes to disk but is not isolated '
+                    f'-- add it to STORAGE in conftest.py'
+                )
 
 
 @pytest.fixture

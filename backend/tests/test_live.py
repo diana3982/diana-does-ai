@@ -18,9 +18,9 @@ import companion
 LIVE = os.getenv('COLUMBA_LIVE') == '1'
 pytestmark = pytest.mark.skipif(not LIVE, reason='set COLUMBA_LIVE=1 to spend real API calls')
 
-#: Total requests this file may make. Two conversation turns plus their
-#: extraction passes, and nothing more.
-MAX_CALLS = 5
+#: Total requests this file may make. Five analysis passes plus one full
+#: conversation turn (which is two calls of its own), and nothing more.
+MAX_CALLS = 8
 
 
 @pytest.fixture(autouse=True)
@@ -41,13 +41,14 @@ def capped(monkeypatch):
     return state
 
 
-def test_extraction_returns_the_shape_we_parse(capped):
+def test_analysis_returns_the_shape_we_parse(capped):
     """The silent pass must come back as parseable JSON with the right keys."""
-    result = companion.extract_quirks(
+    result = companion.analyze_message(
         'made french toast on sunday and put on some zhu, best part of the week'
     )
     assert isinstance(result, dict)
-    assert 'found' in result
+    assert set(result) == set(companion.safe_analysis())
+    assert result['intensity'] in companion.INTENSITY_TIERS
     if result['found']:
         for quirk in result['quirks']:
             assert set(quirk) >= {'topic', 'sentiment', 'enthusiasm', 'category'}
@@ -57,7 +58,7 @@ def test_extraction_returns_the_shape_we_parse(capped):
 
 def test_extraction_ignores_feelings_and_sensitive_ground(capped):
     """The tightened brief: moods and health are not preferences."""
-    result = companion.extract_quirks(
+    result = companion.analyze_message(
         'i have been anxious in crowds and drinking more than i want to, '
         'and trying to build up the courage to text her back'
     )
@@ -65,10 +66,30 @@ def test_extraction_ignores_feelings_and_sensitive_ground(capped):
     assert topics == [], f'expected nothing recordable, got {topics}'
 
 
+@pytest.mark.parametrize('message,expected', [
+    ('made french toast this morning, pretty good sunday', ('light', 'medium')),
+    ("i can't stop crying and i don't see the point in any of it", ('heavy',)),
+])
+def test_intensity_lands_in_the_right_range(capped, message, expected):
+    """The tag the whole tier system rests on, checked against the real model."""
+    assert companion.analyze_message(message)['intensity'] in expected
+
+
+def test_a_hard_thing_is_noticed_as_a_sensitivity(capped):
+    result = companion.analyze_message(
+        "i have been drinking way more than i want to and it scares me"
+    )
+    topics = [item['topic'] for item in result['sensitivities']]
+    assert topics, 'expected the drinking to be noted as something to steer around'
+    # ...and never as a preference.
+    assert not any('drink' in quirk['topic'] for quirk in result['quirks'])
+
+
 def test_a_real_conversation_turn(capped, character):
     """One full round trip, exactly as /chat runs it."""
-    reply, history = companion.chat('hey, rough week', [], character)
+    reply, history, analysis = companion.chat('hey, rough week', [], character)
     assert isinstance(reply, str) and reply.strip()
     assert len(history) == 2
     assert history[0]['role'] == 'user'
     assert history[1]['role'] == 'assistant'
+    assert analysis['intensity'] in companion.INTENSITY_TIERS

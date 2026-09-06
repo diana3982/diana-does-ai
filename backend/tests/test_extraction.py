@@ -35,7 +35,7 @@ class TestParsing:
 
 
 class TestFailsClosed:
-    """A failure must return "nothing found", never propagate into the chat."""
+    """A failure must return the cautious answer, never reach the chat."""
 
     def _client_that(self, behaviour):
         def create(**kwargs):
@@ -46,16 +46,24 @@ class TestFailsClosed:
         def boom():
             raise RuntimeError('api down')
         monkeypatch.setattr(companion, 'client', self._client_that(boom))
-        assert companion.extract_quirks('hi') == {'found': False, 'quirks': []}
+        assert companion.analyze_message('hi') == companion.safe_analysis()
 
     def test_unparseable_reply(self, monkeypatch):
         def garbage():
             return SimpleNamespace(content=[SimpleNamespace(text='no json here')])
         monkeypatch.setattr(companion, 'client', self._client_that(garbage))
-        assert companion.extract_quirks('hi') == {'found': False, 'quirks': []}
+        assert companion.analyze_message('hi') == companion.safe_analysis()
+
+    def test_every_failure_is_heavy(self, monkeypatch):
+        # The whole point: an intensity that fails open would let the
+        # playful copy land on someone in crisis.
+        def boom():
+            raise RuntimeError('api down')
+        monkeypatch.setattr(companion, 'client', self._client_that(boom))
+        assert companion.analyze_message('hi')['intensity'] == 'heavy'
 
     def test_empty_reply(self, monkeypatch):
         def empty():
             return SimpleNamespace(content=[SimpleNamespace(text='')])
         monkeypatch.setattr(companion, 'client', self._client_that(empty))
-        assert companion.extract_quirks('hi') == {'found': False, 'quirks': []}
+        assert companion.analyze_message('hi') == companion.safe_analysis()

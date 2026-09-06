@@ -1,0 +1,10 @@
+{
+  "drinking": {
+    "kind": "substance",
+    "mentions": 2
+  },
+  "family dinners": {
+    "kind": "family",
+    "mentions": 1
+  }
+}

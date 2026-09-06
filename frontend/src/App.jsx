@@ -20,6 +20,7 @@ function App() {
   // companion's name, tone and stats without a second request.
   const [character, setCharacter] = useState(null)
   const [connectionFailed, setConnectionFailed] = useState(false)
+  const [testMode, setTestMode] = useState(false)
 
   const checkCharacter = useCallback(async () => {
     setLoading(true)
@@ -28,6 +29,7 @@ function App() {
       const data = await getCharacter()
       setCharacterExists(Boolean(data?.exists))
       setCharacter(data?.character ?? null)
+      setTestMode(Boolean(data?.test_mode))
     } catch (err) {
       // Backend down or the request failed. Never surface err.detail —
       // the user sees warm copy, the details go to the console.
@@ -93,6 +95,8 @@ function App() {
 
   return (
     <div className="app">
+      {/* A test session must never be mistaken for a real one. */}
+      {testMode && <p className="test-mode-banner">{APP_COPY.testMode}</p>}
       {characterExists ? (
         <ChatScreen character={character} />
       ) : (

@@ -10,8 +10,29 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
 # in the same folder as app.py
 sys.path.insert(0, os.path.dirname(__file__))
 
-from companion import chat, load_character, save_character, delete_character, build_system_prompt
+import companion
+import quirks as quirks_module
+import sensitivities as sensitivities_module
+
+from companion import (
+    chat, load_character, save_character, delete_character, build_system_prompt,
+    test_mode_enabled,
+)
 from quirks import load_quirks, forget_quirk, clear_quirks
+from sensitivities import load_sensitivities, forget_sensitivity, clear_sensitivities
+from settings import load_settings, save_settings
+
+# Test mode writes to its own directory. The requirement is that exercising
+# the app can never touch someone's real companion or what it has learned,
+# and the cheapest way to guarantee that is to point the storage somewhere
+# else entirely rather than to remember not to write.
+if test_mode_enabled():
+    _TEST_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/test')
+    companion.CHARACTER_FILE = os.path.join(_TEST_DATA, 'character.json')
+    quirks_module.QUIRKS_FILE = os.path.join(_TEST_DATA, 'quirks.json')
+    sensitivities_module.SENSITIVITIES_FILE = os.path.join(_TEST_DATA, 'sensitivities.json')
+    app_logger_note = 'TEST MODE -- data is being written to backend/data/test/'
+    print(f'\n*** {app_logger_note} ***\n')
 
 app = Flask(__name__)
 CORS(app)
@@ -67,8 +88,14 @@ def validate_character(character):
 
     return problems
 
-# We store conversation history in memory for now
-# (resets when server restarts -- we'll persist this later!)
+# One conversation for the whole app, in memory, reset on restart.
+#
+# Global on purpose: two browser tabs are the same conversation, because a
+# companion that forgets you when you open a new window is the failure this
+# app exists to avoid. That is only safe while "global" and "this one
+# person" mean the same thing. If Columba is ever hosted for more than one
+# person, scoping becomes mandatory -- and the boundary is per user, not per
+# tab. Persistence and a rolling summary are Phase 7.
 conversation_history = []
 
 # ─────────────────────────────────────────
@@ -80,9 +107,16 @@ def get_character():
     """Frontend asks: is there a saved character?"""
     try:
         character = load_character()
+        # test_mode rides along so the frontend can say so on screen before
+        # anyone has typed anything. A test session must never be mistaken
+        # for a real one.
         if character:
-            return jsonify({"exists": True, "character": character}), 200
-        return jsonify({"exists": False}), 200
+            return jsonify({
+                "exists": True,
+                "character": character,
+                "test_mode": test_mode_enabled(),
+            }), 200
+        return jsonify({"exists": False, "test_mode": test_mode_enabled()}), 200
     except Exception as e:
         return fail("Couldn't reach your companion right now.", str(e))
 
@@ -125,7 +159,10 @@ def clear_character():
 
         existed = delete_character()
         if wants_clear:
+            # Sensitivities go with them. The checkbox says "what they know",
+            # and leaving anything behind would make that label a lie.
             clear_quirks()
+            clear_sensitivities()
         conversation_history = []
 
         return jsonify({
@@ -161,7 +198,7 @@ def send_message():
                 status=400,
             )
 
-        reply, conversation_history = chat(
+        reply, conversation_history, analysis = chat(
             message=message,
             conversation_history=conversation_history,
             character=character
@@ -169,7 +206,11 @@ def send_message():
 
         return jsonify({
             "reply": reply,
-            "history_length": len(conversation_history)
+            "history_length": len(conversation_history),
+            # The frontend gates its own copy on this -- what the app is
+            # allowed to be playful about while this is going on.
+            "intensity": analysis["intensity"],
+            "test_mode": test_mode_enabled(),
         }), 200
 
     except Exception as e:
@@ -187,6 +228,70 @@ def reset_chat():
 # ─────────────────────────────────────────
 # QUIRKS ROUTES
 # ─────────────────────────────────────────
+
+# ─────────────────────────────────────────
+# SENSITIVITY ROUTES
+#
+# Things to be careful with. Read and delete only -- nothing here can be
+# added by hand, because a sensitivity is only ever recorded from what
+# someone said about themselves.
+# ─────────────────────────────────────────
+
+@app.route('/sensitivities', methods=['GET'])
+def get_sensitivities():
+    """Everything the companion is quietly steering around."""
+    try:
+        return jsonify({
+            "sensitivities": load_sensitivities(),
+            "enabled": load_settings().get('sensitivities_enabled', True),
+        }), 200
+    except Exception as e:
+        return fail("Couldn't load that just now 💙", str(e))
+
+
+@app.route('/sensitivities', methods=['DELETE'])
+def delete_all_sensitivities():
+    try:
+        clear_sensitivities()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return fail("Couldn't clear those just now 💙", str(e))
+
+
+@app.route('/sensitivities/<topic>', methods=['DELETE'])
+def delete_sensitivity(topic):
+    try:
+        if forget_sensitivity(topic):
+            return jsonify({"success": True}), 200
+        return fail(
+            "Couldn't find that one to forget 💙",
+            f"No sensitivity recorded for {topic!r}",
+            status=404,
+        )
+    except Exception as e:
+        return fail("Couldn't forget that one — try again?", str(e))
+
+
+# ─────────────────────────────────────────
+# SETTINGS ROUTES
+# ─────────────────────────────────────────
+
+@app.route('/settings', methods=['GET'])
+def get_settings():
+    try:
+        return jsonify(load_settings()), 200
+    except Exception as e:
+        return fail("Couldn't load your settings just now 💙", str(e))
+
+
+@app.route('/settings', methods=['PATCH'])
+def patch_settings():
+    """Partial update. Unknown keys are ignored rather than stored."""
+    try:
+        return jsonify(save_settings(request.get_json(silent=True) or {})), 200
+    except Exception as e:
+        return fail("Couldn't save that just now 💙", str(e))
+
 
 @app.route('/quirks', methods=['GET'])
 def get_quirks():

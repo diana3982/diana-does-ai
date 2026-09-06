@@ -20,6 +20,9 @@ __pycache__/
 backend/data/*.json
 !backend/data/*.example.json
 
+# Test mode writes here instead of over someone's real companion.
+backend/data/test/
+
 # Node
 node_modules/
 dist/

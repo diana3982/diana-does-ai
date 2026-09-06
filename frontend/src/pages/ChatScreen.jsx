@@ -6,7 +6,7 @@ import TitleBar from '../components/TitleBar'
 import TypingIndicator from '../components/TypingIndicator'
 import { buildAboutMe } from '../copy/about'
 import { CHAT_COPY } from '../copy/chat'
-import { getStatusMessage, STATUS } from '../copy/status'
+import { getStatusMessage, stricter, STATUS } from '../copy/status'
 import './ChatScreen.css'
 
 /** Textarea grows with what's typed, up to three lines. */
@@ -38,6 +38,12 @@ function ChatScreen({ character }) {
    */
   const [error, setError] = useState(null)
   const [away, setAway] = useState(false)
+  /**
+   * How heavy this conversation has been, as the backend read it. Starts
+   * unset, which the copy treats as heavy -- nothing has been said yet, so
+   * nothing has earned the lighter lines.
+   */
+  const [intensity, setIntensity] = useState(null)
 
   const endRef = useRef(null)
   const inputRef = useRef(null)
@@ -57,9 +63,13 @@ function ChatScreen({ character }) {
   // Lazy state initialiser, not useMemo — this needs to run exactly once,
   // and useMemo is a performance hint React is free to re-run.
   const [seed] = useState(() => Math.floor(Math.random() * 1000))
+  // The online line is deliberately not gated on intensity: it sits on
+  // screen the whole time, and a status that rewrites itself while someone
+  // is looking at it is unsettling. Making it context-aware is Phase 5.
   const onlineStatus = getStatusMessage(STATUS.ONLINE, tone, seed)
-  const typingStatus = getStatusMessage(STATUS.TYPING, tone, seed)
-  const awayStatus = getStatusMessage(STATUS.AWAY, tone, seed)
+  // These two only appear for a moment, so they can follow the conversation.
+  const typingStatus = getStatusMessage(STATUS.TYPING, tone, seed, intensity)
+  const awayStatus = getStatusMessage(STATUS.AWAY, tone, seed, intensity)
 
   /**
    * Declared above the effects because the reconnect poll uses it.
@@ -170,6 +180,7 @@ function ChatScreen({ character }) {
     try {
       const data = await sendMessage(text)
       setAway(false)
+      setIntensity((current) => stricter(current, data.intensity))
       addMessage('companion', data.reply)
     } catch (err) {
       console.error('[columba] message failed', err)
@@ -230,6 +241,9 @@ function ChatScreen({ character }) {
       setMessages([])
       setError(null)
       setConfirmingClear(false)
+      // A cleared chat is a new conversation: nothing said in it yet, so
+      // nothing has earned the lighter copy.
+      setIntensity(null)
     } catch (err) {
       console.error('[columba] could not clear the chat', err)
       showError(CHAT_COPY.clearFailed)

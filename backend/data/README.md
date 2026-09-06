@@ -38,3 +38,20 @@ cp quirks.example.json quirks.json
 ```
 
 Those copies are gitignored, so they will not be committed.
+
+## sensitivities.json
+
+Things this person has had a hard time with, so the companion can steer
+around them -- a substance they are working on, a relationship that hurts, a
+loss. **Withhold-only**: nothing in this file can make the companion raise a
+subject, only stop it suggesting one. No scores and no confidence, because
+being noticed once is the whole bar: wrongly withholding a brunch suggestion
+costs nothing, and missing one costs something real.
+
+Readable and deletable item by item in *my settings*, and the whole feature
+can be switched off there.
+
+## settings.json
+
+The handful of choices someone makes about how the app behaves. Missing keys
+fall back to defaults, so a file written by an older version still loads.
