@@ -390,6 +390,11 @@ every message for quirk extraction — one round trip, one JSON schema, one
 defensive parse. These are entangled (a sensitivity sets the intensity floor),
 so building them apart means building the same seam twice.
 
+11.5. **Multi-part companion replies** — *next up.* The other half of the
+    abstraction Phase 4.5 built: one turn rendered as several bubbles,
+    paced, the way a person sends a thought in pieces. The user's side
+    is done and `frontend/src/lib/sendQueue.js` is the model for it —
+    a bubble is not a turn, in either direction.
 12. ✅ **Intensity tagging** — `light` / `medium` / `heavy`, per message.
     **Fails heavy**: a missing, unparseable or errored tag must never unlock
     the light lines. A classifier that fails open is the one bug here that
@@ -420,7 +425,8 @@ so building them apart means building the same seam twice.
 ### Phase 4.5 — Messages that read like texting
 Both ends of the same idea: a bubble is not a turn.
 
-18.5. ✅ **Compounding user messages** — fragments sent close together are held
+18.5. ✅ **Compounding user messages** *(the companion's side of this is
+    Phase 3.5 item 11.5, which is next up)* — fragments sent close together are held
     client-side and sent as one turn, so the companion answers the finished
     thought rather than the first line of it. The composer never locks.
     Quiet windows: 2s after something substantial, 5s after something short
@@ -430,8 +436,6 @@ Both ends of the same idea: a bubble is not a turn.
     Lives entirely in the frontend — `/chat` is request/response and cannot
     see typing, and history is written before the call, so a sent turn can
     never be taken back.
-18.6. **Multi-part companion replies** — the same shape in the other
-    direction: one turn rendered as several bubbles, paced.
 
 ### Phase 5 — Polish
 21. Status message selection: static per session, context-aware
