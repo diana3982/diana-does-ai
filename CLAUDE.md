@@ -35,6 +35,7 @@ diana-does-ai/
 │   ├── src/
 │   │   ├── components/
 │   │   ├── copy/        ← every word the user reads (see below)
+│   │   ├── lib/         ← client-side logic with no DOM (send queue)
 │   │   ├── pages/
 │   │   ├── api/         ← Flask API calls live here
 │   │   └── App.jsx

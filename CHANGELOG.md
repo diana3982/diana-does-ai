@@ -12,6 +12,59 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Letting someone finish their thought · 2026-09-07
+
+> **Triggered by** a question asked from the other end. We had been talking
+> about the companion sending several bubbles the way a person texts, and the
+> question was: what happens when the *user* does that? The answer, in the
+> code as it stood, was that they couldn't — `waiting` disabled the composer,
+> so the person most likely to text in fragments was the one the UI locked
+> out mid-sentence.
+
+**A bubble is no longer a turn.** Fragments sent close together are held in
+`frontend/src/lib/sendQueue.js`, joined with newlines, and sent as one turn.
+The companion answers the whole thought instead of answering "hi" while
+someone is still typing the part that mattered.
+
+**The composer never locks.** Someone mid-thought must always be able to keep
+going, including while a turn is in flight. Anything sent during a live
+request is collected and goes out after it, rather than being refused.
+
+**Two silences, not one.** A short window (2s) covers the gap between sending
+one fragment and starting the next. Once typing resumes, each keystroke buys
+a longer one (5s) — room to finish a sentence without being interrupted. A
+20s ceiling means nobody's words are ever held indefinitely. The first window
+is deliberately not shorter: firing inside the pause before someone starts
+typing again is the exact failure the queue exists to prevent, and it costs
+nothing to wait, because the reply takes several seconds regardless.
+
+**The typing indicator goes up on send, before anything is sent.** This was
+the one genuinely debatable call. Strictly, the companion isn't typing yet —
+the app is waiting. It stays because it is how people actually text: you see
+the dots, you know you were heard, and you keep writing. It also tells the
+truth about the thing that matters, which is that the message landed.
+
+**Why none of this is on the backend.** `/chat` is request/response, so the
+server has no idea anyone is typing between calls, and giving it that would
+mean WebSockets or SSE against a module-level `conversation_history` — a
+concurrency problem bought for information the composer already has. Worth
+recording separately: `companion.py` appends the user's message to history
+*before* the API call, so once a request is out it cannot be taken back. All
+joining has to happen before the send, never by cancelling one.
+
+**Component tests, finally.** `@testing-library/react` and `jsdom` are in as
+dev dependencies. `ChatScreen` opts into jsdom per-file rather than switching
+the whole suite, so the pure logic tests stay fast. The pure queue tests can
+prove the timing rule but not that the screen is wired to it — that a bubble
+appears before the send, that the composer never disables, that a failure
+returns the words.
+
+**One bug caught in review, in the new code's own error path.** The failed
+send removed the last *n* bubbles by position; a fragment sent while that
+batch was in the air sits behind it, so a failure would have deleted the
+wrong message. Removal is by id now.
+
+
 ## Code review — best practices pass · 2026-09-07
 
 > **Triggered by** a request to check the code against six specific habits:

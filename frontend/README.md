@@ -48,9 +48,13 @@ src/
 │   ├── quirks.js       ← the "about quirks" explainer
 │   ├── about.js        ← builds the companion's profile blurb
 │   └── __tests__/
+├── lib/
+│   ├── sendQueue.js    ← holds fragments so a thought can finish
+│   └── __tests__/      ← the timing rule, on fake timers
 ├── pages/
 │   ├── SetupScreen.jsx ← first-time companion creation
-│   └── ChatScreen.jsx  ← the chat interface
+│   ├── ChatScreen.jsx  ← the chat interface
+│   └── __tests__/      ← the send-queue wiring, on jsdom
 ├── App.jsx             ← setup-vs-chat routing
 ├── App.css             ← design tokens + global styles
 └── index.css           ← structural reset only
@@ -65,12 +69,18 @@ shared primitives live in `App.css`.
 npm test
 ```
 
-Vitest, no jsdom — these cover the pure logic, which is where a bug here is
-silent rather than visible: what the API layer does with a failure, whether
-the lighter status copy can reach a heavy conversation, and whether the
-companion's profile holds together for every combination of settings.
+Vitest. Most of these cover pure logic, which is where a bug here is silent
+rather than visible: what the API layer does with a failure, whether the
+lighter status copy can reach a heavy conversation, whether the companion's
+profile holds together for every combination of settings, and when the send
+queue decides someone has finished typing.
 
-There are no component tests yet.
+`ChatScreen` is the one component test, and it opts into jsdom per-file with
+a `// @vitest-environment jsdom` docblock rather than switching the whole
+suite over — the logic tests are faster without it. It covers the wiring the
+pure tests can't reach: that a fragment shows a bubble before anything is
+sent, that a burst arrives at the API as one turn, that the composer is
+never disabled, and that a failed send hands back every word.
 
 ## Test mode
 
@@ -90,5 +100,8 @@ reading over a shoulder.
   `SPEC.md`. The technical reason lives on `err.detail`, for an expander.
 - **Copy goes in `src/copy/`**, never inline in a component. It gets reviewed
   as writing, and some of it is tested as behaviour.
+- **The composer never disables.** Someone in the middle of a thought must
+  always be able to keep typing, including while a turn is in flight. Timing
+  logic goes in `src/lib/` where it can be tested without a DOM.
 
 See `../SPEC.md` for the full component spec and `../CLAUDE.md` for project context.

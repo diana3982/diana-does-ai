@@ -417,6 +417,19 @@ so building them apart means building the same seam twice.
 19. What your companion knows — quirks list, sensitivities list, *about quirks*
 20. Start over — `[ ] my companion` `[ ] what they know`, neither pre-ticked
 
+### Phase 4.5 — Messages that read like texting
+Both ends of the same idea: a bubble is not a turn.
+
+18.5. ✅ **Compounding user messages** — fragments sent close together are held
+    client-side and sent as one turn, so the companion answers the finished
+    thought rather than the first line of it. The composer never locks. Two
+    windows: short after a send, longer once typing resumes, with a ceiling.
+    Lives entirely in the frontend — `/chat` is request/response and cannot
+    see typing, and history is written before the call, so a sent turn can
+    never be taken back.
+18.6. **Multi-part companion replies** — the same shape in the other
+    direction: one turn rendered as several bubbles, paced.
+
 ### Phase 5 — Polish
 21. Status message selection: static per session, context-aware
 22. Personalized statuses from quirks, under the existing guardrails

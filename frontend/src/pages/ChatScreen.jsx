@@ -7,6 +7,7 @@ import TypingIndicator from '../components/TypingIndicator'
 import { buildAboutMe } from '../copy/about'
 import { CHAT_COPY } from '../copy/chat'
 import { getStatusMessage, stricter, STATUS } from '../copy/status'
+import { createSendQueue } from '../lib/sendQueue'
 import './ChatScreen.css'
 
 /** Textarea grows with what's typed, up to three lines. */
@@ -29,6 +30,12 @@ function ChatScreen({ character }) {
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [waiting, setWaiting] = useState(false)
+  /**
+   * How many fragments are sent but still being held, waiting to see
+   * whether the thought is finished. Drives the typing indicator: as far
+   * as the user is concerned, held and in flight are the same thing.
+   */
+  const [held, setHeld] = useState(0)
   const [clearing, setClearing] = useState(false)
   const [confirmingClear, setConfirmingClear] = useState(false)
   const [reconnecting, setReconnecting] = useState(false)
@@ -50,6 +57,15 @@ function ChatScreen({ character }) {
   const errorTimer = useRef(null)
   const cancelClearRef = useRef(null)
   const confirmRef = useRef(null)
+  /**
+   * The send queue, and the two things it needs to read when its timer
+   * fires. It outlives every render, so it can't close over `flushBatch`
+   * or `waiting` directly — either would be whichever render built it.
+   * All three are only touched in effects and event handlers.
+   */
+  const queueRef = useRef(null)
+  const flushRef = useRef(null)
+  const waitingRef = useRef(false)
 
   const name = character?.name ?? 'your companion'
   const tone = character?.tone
@@ -91,10 +107,24 @@ function ChatScreen({ character }) {
 
   useEffect(() => () => clearTimeout(errorTimer.current), [])
 
+  // Built here rather than during render: it owns timers, so it has to be
+  // torn down, and nothing should go out on behalf of a screen that has
+  // gone away.
+  useEffect(() => {
+    queueRef.current = createSendQueue({
+      onFlush: (batch) => flushRef.current?.(batch),
+      isBusy: () => waitingRef.current,
+    })
+    return () => {
+      queueRef.current?.cancel()
+      queueRef.current = null
+    }
+  }, [])
+
   // Follow the conversation down as it grows, including while waiting.
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' })
-  }, [messages, waiting])
+  }, [messages, waiting, held])
 
   // Land on "nevermind" when the confirmation opens. Keyboard users should
   // have to move towards the destructive answer, never away from it.
@@ -161,19 +191,26 @@ function ChatScreen({ character }) {
     return () => document.removeEventListener('mousedown', dismiss)
   }, [confirmingClear])
 
-  const addMessage = (role, text) =>
-    setMessages((current) => [
-      ...current,
-      { id: crypto.randomUUID(), role, text, at: new Date() },
-    ])
+  const addMessage = (role, text, id = crypto.randomUUID()) => {
+    setMessages((current) => [...current, { id, role, text, at: new Date() }])
+    return id
+  }
 
-  const handleSend = async () => {
-    const text = draft.trim()
-    if (!text || waiting) return
+  /**
+   * Sends one held batch as a single turn.
+   *
+   * The fragments are joined with newlines rather than spaces — they were
+   * separate sends, and running them together would change what was said.
+   *
+   * @param {{id: string, text: string}[]} batch  fragments in the order
+   *        they were sent, carrying the id of the bubble each one drew
+   */
+  const flushBatch = async (batch) => {
+    const text = batch.map((fragment) => fragment.text).join('\n')
 
-    addMessage('user', text)
-    setDraft('')
+    setHeld(0)
     setWaiting(true)
+    waitingRef.current = true
     clearTimeout(errorTimer.current)
     setError(null)
 
@@ -185,12 +222,17 @@ function ChatScreen({ character }) {
     } catch (err) {
       console.error('[columba] message failed', err)
 
-      // Take the unsent message back out and put the words in the box.
+      // Take the unsent messages back out and put the words in the box.
       // Losing what someone just wrote is the worst possible failure here —
       // they may not have it in them to type it twice. It also means
       // "try again" is just another send: the words are already in place.
-      setMessages((current) => current.slice(0, -1))
-      setDraft(text)
+      // By id, not by position: anything sent while this was in the air is
+      // sitting behind it in the list and is still perfectly good.
+      const failed = new Set(batch.map((fragment) => fragment.id))
+      setMessages((current) => current.filter((message) => !failed.has(message.id)))
+      // Anything typed while the send was in the air keeps its place at the
+      // end. Nothing they wrote is worth less than anything else they wrote.
+      setDraft((current) => (current.trim() ? `${text}\n${current}` : text))
 
       // Away is reserved for "the app can't be reached at all" (status 0).
       // A send that fails mid-conversation is not the companion stepping
@@ -204,8 +246,39 @@ function ChatScreen({ character }) {
       )
     } finally {
       setWaiting(false)
+      waitingRef.current = false
       inputRef.current?.focus()
     }
+  }
+  // Refreshed after every render so the queue's timer, whenever it fires,
+  // calls the live send rather than one from three renders ago.
+  useEffect(() => {
+    flushRef.current = flushBatch
+  })
+
+  /**
+   * Hands the message to the queue rather than the network.
+   *
+   * Nothing is sent yet, and deliberately so — a second fragment arriving
+   * in the next couple of seconds belongs to the same thought. The bubble
+   * and the typing indicator both appear immediately, so from the user's
+   * side the message has landed and the companion is thinking about it.
+   * That is true; it just isn't the whole truth yet.
+   */
+  const handleSend = () => {
+    const text = draft.trim()
+    const queue = queueRef.current
+    // No queue means the screen hasn't finished mounting. Bail before the
+    // bubble goes up, so nothing is shown as sent that never will be.
+    if (!text || !queue) return
+
+    const id = addMessage('user', text)
+    setDraft('')
+    queue.push({ id, text })
+    setHeld(queue.size())
+
+    // The box shrinks back on its own — it grew to fit words that are gone.
+    if (inputRef.current) inputRef.current.style.height = 'auto'
   }
 
   /**
@@ -235,6 +308,10 @@ function ChatScreen({ character }) {
 
   /** Clears this conversation. The companion and quirks are untouched. */
   const handleClear = async () => {
+    // Drop anything still being held. Clearing the chat and then watching a
+    // held fragment arrive in the empty window would be its own small horror.
+    queueRef.current?.cancel()
+    setHeld(0)
     setClearing(true)
     try {
       await resetChat()
@@ -263,6 +340,11 @@ function ChatScreen({ character }) {
 
   const handleDraftChange = (event) => {
     setDraft(event.target.value)
+
+    // Still typing — if anything is being held, it keeps being held. This
+    // is the whole reason the wait can't live on the backend: only the
+    // composer knows this is happening.
+    queueRef.current?.noteTyping()
 
     // Grow to fit, up to MAX_INPUT_LINES, then scroll inside.
     const field = event.target
@@ -356,7 +438,7 @@ function ChatScreen({ character }) {
         {/* ── Chat window ────────────────────────────────────────── */}
         <section className="chat-main">
           <div className="chat-history">
-            {messages.length === 0 && !waiting && (
+            {messages.length === 0 && !waiting && held === 0 && (
               <p className="chat-empty">{CHAT_COPY.empty}</p>
             )}
 
@@ -370,7 +452,12 @@ function ChatScreen({ character }) {
               />
             ))}
 
-            {waiting && <TypingIndicator companionName={name} status={typingStatus} />}
+            {/* Held and in flight look the same from here, on purpose: the
+                message has landed either way, and the wait is the companion
+                giving them room to finish rather than answering half of it. */}
+            {(waiting || held > 0) && (
+              <TypingIndicator companionName={name} status={typingStatus} />
+            )}
 
             {/* scroll anchor */}
             <div ref={endRef} />
@@ -384,7 +471,7 @@ function ChatScreen({ character }) {
                 <button
                   type="button"
                   className="btn btn-ghost chat-error-action"
-                  disabled={waiting || !draft.trim()}
+                  disabled={!draft.trim()}
                   onClick={handleSend}
                 >
                   {CHAT_COPY.retry}
@@ -414,7 +501,6 @@ function ChatScreen({ character }) {
               className="textarea chat-input"
               rows="1"
               value={draft}
-              disabled={waiting}
               placeholder={CHAT_COPY.placeholder}
               onChange={handleDraftChange}
               onKeyDown={handleKeyDown}
@@ -422,7 +508,7 @@ function ChatScreen({ character }) {
             <button
               type="button"
               className="btn chat-send"
-              disabled={waiting || !draft.trim()}
+              disabled={!draft.trim()}
               onClick={handleSend}
             >
               {waiting ? CHAT_COPY.sending : CHAT_COPY.send}
