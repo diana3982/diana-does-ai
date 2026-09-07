@@ -154,6 +154,8 @@ diana-does-ai/
 │       ├── copy/            ← every word the user reads, kept out of the
 │       │                       components: app, setup, chat, status,
 │       │                       quirks, about
+│       ├── lib/             ← client-side logic with no DOM: the send
+│       │                       queue that holds fragments together
 │       ├── pages/           ← SetupScreen, ChatScreen
 │       ├── App.jsx          ← setup-vs-chat routing
 │       ├── App.css          ← design tokens + global styles
