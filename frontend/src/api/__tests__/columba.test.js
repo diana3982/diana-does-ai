@@ -113,6 +113,28 @@ describe('errors', () => {
     await expect(sendMessage('hi')).rejects.toMatchObject({ status: 0 })
   })
 
+  it('separates a timeout from a backend that is not there', async () => {
+    // A hang and an unreachable app are different situations and the chat
+    // window treats them differently: unreachable marks the companion away,
+    // a timeout leaves the dot on and offers "try again". A request that
+    // never settles at all would leave the composer disabled forever, which
+    // is why the timeout exists in the first place.
+    const timeout = new Error('signal timed out')
+    timeout.name = 'TimeoutError'
+    fetch.mockRejectedValue(timeout)
+
+    const error = await sendMessage('hi').catch((e) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error.status).not.toBe(0)
+    expect(error.status).toBe(408)
+  })
+
+  it('asks fetch to give up rather than waiting forever', async () => {
+    fetch.mockResolvedValue(json({ reply: 'hi' }))
+    await sendMessage('hi')
+    expect(fetch.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal)
+  })
+
   it('still fails usefully when the body is not JSON', async () => {
     fetch.mockResolvedValue({
       ok: false,

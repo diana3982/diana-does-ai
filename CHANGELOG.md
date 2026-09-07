@@ -12,6 +12,58 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Code review — best practices pass · 2026-09-07
+
+> **Triggered by** a request to check the code against six specific habits:
+> no unnecessary dependency injection, no hand-rolled crypto, no redundant
+> state, no leaks or unhandled failure paths, no needless complexity, and no
+> configuration invented before it is needed. Reading for those six turned up
+> two real bugs neither of us was looking for.
+
+**Test mode was writing to the real settings file.** The redirect in `app.py`
+named three of the four stores by hand, and `settings.py` — added later — was
+never added to it. So switching sensitivities off during a test session wrote
+to the live `data/settings.json` and quietly disarmed the feature for the real
+companion. That is the exact failure test mode exists to prevent.
+
+The store list now lives in `backend/storage.py`, and both things that need
+it — the test-mode redirect and the `isolated_data` fixture — read from there.
+The list had already drifted once before, when `sensitivities.py` and
+`settings.py` each wrote a real file during a test run. Two copies of a safety
+list is one copy too many. The guard test also now reads the source of every
+module in `backend/` rather than a hand-kept list of imports, so it catches a
+whole new module and not just a new constant in an old one.
+
+**A hung backend left the composer disabled forever.** `fetch` had no timeout,
+so a request that was accepted and then stalled never settled: `waiting` stayed
+true, the input stayed disabled, and no error ever rendered. Every other
+failure in this app has a warm path; that one had no path at all. Requests now
+give up after 30 seconds and report as a timeout rather than as an unreachable
+backend — the companion has not stepped out, so the dot stays on and the offer
+is "try again", with the message still sitting in the box.
+
+The rest was weight, not danger. `extract_quirks` was an alias for
+`analyze_message` kept "for callers that only want the quirk half", and there
+were none. `getStatusLabel` was exported, unused, and returned its argument.
+`App.jsx` held `characterExists` alongside `character` — two variables for one
+fact, and two things that can disagree; the character is now both the routing
+decision and the data. `status.js` spelled the three intensity tiers twice, as
+an object and an array; the array is derived from the object now.
+
+One deletion taught something. The mount effect in `App.jsx` carried a
+`cancelled` flag it read before its first `await`, so the flag could never be
+true and protected nothing. Removing it broke the lint — not for the flag, but
+because the async wrapper around it was what satisfied
+`react-hooks/set-state-in-effect`. The wrapper is back, now labelled for the
+reason that is actually true rather than the reason someone assumed.
+
+Nothing was found under hand-rolled crypto or premature configuration. There
+is no crypto in this app at all, which is right for local single-user storage —
+encrypting a file with a key sitting beside it buys nothing. If Phase 7 ever
+encrypts persisted history, that is a library's job, never a homemade scheme.
+
+---
+
 ## Housekeeping · 2026-09-06
 
 > **Triggered by** a README refresh, which turned up two virtualenvs — with

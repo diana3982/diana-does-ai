@@ -7,6 +7,8 @@ that holds for tests written later by someone who never read this comment.
 """
 import json
 import os
+import pathlib
+import re
 import sys
 from types import SimpleNamespace
 
@@ -20,23 +22,18 @@ import companion                 # noqa: E402
 import quirks                    # noqa: E402
 import sensitivities             # noqa: E402
 import settings                  # noqa: E402
-
-
-#: Every module that writes to disk, and the constant it writes through.
-#: A new store must be added here -- a test suite that can reach real user
-#: data is worse than no test suite.
-STORAGE = (
-    (companion, 'CHARACTER_FILE', 'character.json'),
-    (quirks, 'QUIRKS_FILE', 'quirks.json'),
-    (sensitivities, 'SENSITIVITIES_FILE', 'sensitivities.json'),
-    (settings, 'SETTINGS_FILE', 'settings.json'),
-)
+from storage import STORES       # noqa: E402
 
 
 @pytest.fixture(autouse=True)
 def isolated_data(tmp_path, monkeypatch):
-    """Point every storage module at a temp directory. Never opt out."""
-    for module, constant, filename in STORAGE:
+    """Point every storage module at a temp directory. Never opt out.
+
+    The list of stores lives in storage.py because test mode needs exactly
+    the same one. Keeping a second copy here is how the two drifted apart
+    the first time.
+    """
+    for module, constant, filename in STORES:
         monkeypatch.setattr(module, constant, str(tmp_path / filename))
     return tmp_path
 
@@ -44,18 +41,24 @@ def isolated_data(tmp_path, monkeypatch):
 def test_every_storage_constant_is_isolated():
     """A guard on the guard.
 
-    If a module gains a *_FILE constant and nobody adds it to STORAGE, the
-    isolation above silently stops covering it -- which is how two real data
-    files got written during this suite's own development.
+    If anything in backend/ gains a *_FILE constant and nobody adds it to
+    STORES, both the isolation above and the test-mode redirect silently
+    stop covering it -- which is how two real data files got written during
+    this suite's own development, and how test mode wrote a real settings
+    file for a while afterwards.
+
+    This reads the source rather than the imported modules, so it also
+    catches a whole new module that nobody thought to import here.
     """
-    covered = {(module.__name__, constant) for module, constant, _ in STORAGE}
-    for module in (companion, quirks, sensitivities, settings):
-        for name in dir(module):
-            if name.endswith('_FILE') and not name.startswith('_'):
-                assert (module.__name__, name) in covered, (
-                    f'{module.__name__}.{name} writes to disk but is not isolated '
-                    f'-- add it to STORAGE in conftest.py'
-                )
+    covered = {(module.__name__, constant) for module, constant, _ in STORES}
+    declaration = re.compile(r'^([A-Z][A-Z0-9_]*_FILE)\s*=', re.MULTILINE)
+
+    for path in sorted(pathlib.Path(BACKEND).glob('*.py')):
+        for constant in declaration.findall(path.read_text()):
+            assert (path.stem, constant) in covered, (
+                f'{path.stem}.{constant} writes to disk but is not isolated '
+                f'-- add it to STORES in backend/storage.py'
+            )
 
 
 @pytest.fixture

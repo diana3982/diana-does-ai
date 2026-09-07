@@ -15,20 +15,24 @@ import './App.css'
  */
 function App() {
   const [loading, setLoading] = useState(true)
-  const [characterExists, setCharacterExists] = useState(false)
-  // The character itself is kept here so ChatScreen can render the
-  // companion's name, tone and stats without a second request.
+  // The character is both the routing decision and the data: a saved
+  // companion means ChatScreen, and null means setup. Keeping a separate
+  // `exists` flag alongside it was two variables holding one fact, which
+  // is two things that can disagree. It also means ChatScreen is only
+  // ever rendered when there is actually a companion to render.
   const [character, setCharacter] = useState(null)
   const [connectionFailed, setConnectionFailed] = useState(false)
   const [testMode, setTestMode] = useState(false)
 
   const checkCharacter = useCallback(async () => {
-    setLoading(true)
-    setConnectionFailed(false)
+    // Deliberately does not reset `loading` or `connectionFailed` itself.
+    // On mount those already hold the values it would set, so setting them
+    // is a no-op that makes this an effect which re-renders synchronously.
+    // They belong to the retry below, which is the only caller that needs
+    // to put the screen back to loading.
     try {
       const data = await getCharacter()
-      setCharacterExists(Boolean(data?.exists))
-      setCharacter(data?.character ?? null)
+      setCharacter(data?.exists ? (data.character ?? null) : null)
       setTestMode(Boolean(data?.test_mode))
     } catch (err) {
       // Backend down or the request failed. Never surface err.detail —
@@ -40,24 +44,32 @@ function App() {
     }
   }, [])
 
+  /** The reconnect button: back to the loading screen, then ask again. */
+  const retryConnection = () => {
+    setLoading(true)
+    setConnectionFailed(false)
+    checkCharacter()
+  }
+
+  // The async wrapper is the shape react-hooks/set-state-in-effect asks
+  // for: an effect body may not call something that sets state, and this
+  // is how React's own docs write "kick off a fetch on mount".
+  //
+  // What it is NOT is a cancellation guard. The version that lived here
+  // carried a `cancelled` flag it read before its first await, so the flag
+  // could never be true and protected nothing -- and App is the root, so
+  // there is no unmount to protect against anyway. A guard that looks like
+  // safety and isn't is worse than none, because the next person trusts it.
   useEffect(() => {
-    // `cancelled` keeps a slow response from setting state after unmount
-    // (React StrictMode mounts effects twice in development).
-    let cancelled = false
     const run = async () => {
-      if (cancelled) return
       await checkCharacter()
     }
     run()
-    return () => {
-      cancelled = true
-    }
   }, [checkCharacter])
 
   /** SetupScreen calls this once POST /character succeeds. */
   const handleCharacterCreated = (savedCharacter) => {
     setCharacter(savedCharacter)
-    setCharacterExists(true)
   }
 
   if (loading) {
@@ -84,7 +96,7 @@ function App() {
                 held here yet — no draft, no conversation — so there's
                 nothing for a poll to protect, and dropping someone into
                 the app mid-sentence would be worse than a button. */}
-            <button type="button" className="btn" onClick={checkCharacter}>
+            <button type="button" className="btn" onClick={retryConnection}>
               {APP_COPY.reconnect}
             </button>
           </div>
@@ -97,7 +109,7 @@ function App() {
     <div className="app">
       {/* A test session must never be mistaken for a real one. */}
       {testMode && <p className="test-mode-banner">{APP_COPY.testMode}</p>}
-      {characterExists ? (
+      {character ? (
         <ChatScreen character={character} />
       ) : (
         <SetupScreen onCharacterCreated={handleCharacterCreated} />

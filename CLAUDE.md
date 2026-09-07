@@ -23,6 +23,7 @@ diana-does-ai/
 │   ├── quirks.py        ← Quirks management (scoring, confidence, sentiment)
 │   ├── sensitivities.py ← things to steer around — withhold-only, never suggested
 │   ├── settings.py      ← user-controlled settings
+│   ├── storage.py       ← every file this app writes, in one list
 │   ├── tests/           ← pytest suite (see backend/tests/README.md)
 │   │   └── logs/        ← one summary per run, gitignored
 │   └── data/            ← gitignored; only *.example.json is committed
@@ -145,7 +146,7 @@ and some of it is tested as behaviour.
 
 ## What NOT to Do
 
-- Do NOT modify backend files (app.py, companion.py, quirks.py, sensitivities.py, settings.py) unless explicitly asked
+- Do NOT modify backend files (app.py, companion.py, quirks.py, sensitivities.py, settings.py, storage.py) unless explicitly asked
 - Do NOT add Tailwind, Bootstrap, or any CSS framework
 - Do NOT use Redux or any external state management
 - Do NOT make the UI look like a modern chat app (Slack, iMessage aesthetic) — lean into the retro AIM/MSN vibe
@@ -193,7 +194,8 @@ cd frontend && npm test   # Vitest
 
 Both suites run without touching the Anthropic API or any real data file —
 `isolated_data` in `conftest.py` is autouse, so every test writes to a temp
-directory. Live tests are opt-in (`COLUMBA_LIVE=1`) and capped by a counter
+directory. It reads the store list from `backend/storage.py`, the same one
+test mode redirects — one list, so the two cannot drift apart. Live tests are opt-in (`COLUMBA_LIVE=1`) and capped by a counter
 around the client.
 
 **Test mode** is env-gated and writes to `backend/data/test/`, so exercising

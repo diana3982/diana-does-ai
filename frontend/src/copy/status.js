@@ -49,9 +49,19 @@ export const STATUS = {
 /**
  * How heavy the conversation is right now, per the backend's tag.
  * The same three tiers the gentle fallback uses, so one tag drives both.
+ *
+ * Declared LIGHTEST FIRST, and that order is load-bearing: TIERS reads it
+ * straight off this object, and `stricter` compares by position in it.
+ * Reordering these lines would quietly invert which reading wins.
  */
-/** Lightest first. The order is what makes `stricter` meaningful. */
-export const TIERS = ['light', 'medium', 'heavy']
+export const INTENSITY = {
+  LIGHT: 'light',   // ordinary conversation — the funny lines are fine
+  MEDIUM: 'medium', // something real, not a crisis — warm, but no jokes
+  HEAVY: 'heavy',   // something hard is being said — `always` only
+}
+
+/** The same three, as an ordered list. Derived so they cannot drift. */
+export const TIERS = Object.values(INTENSITY)
 
 /**
  * The more careful of two readings.
@@ -63,15 +73,9 @@ export const TIERS = ['light', 'medium', 'heavy']
  * can only ever tighten, never loosen.
  */
 export function stricter(current, next) {
-  if (!TIERS.includes(next)) return 'heavy'
+  if (!TIERS.includes(next)) return INTENSITY.HEAVY
   if (!TIERS.includes(current)) return next
   return TIERS.indexOf(next) > TIERS.indexOf(current) ? next : current
-}
-
-export const INTENSITY = {
-  LIGHT: 'light',   // ordinary conversation — the funny lines are fine
-  MEDIUM: 'medium', // something real, not a crisis — warm, but no jokes
-  HEAVY: 'heavy',   // something hard is being said — `always` only
 }
 
 /** Tiers where a personalized wait offer is welcome rather than intrusive. */
@@ -332,9 +336,4 @@ export function getWaitOffer(topic, tone, seed = 0, intensity) {
   }
   const index = Math.abs(Math.trunc(seed)) % WAIT_OFFERS.length
   return WAIT_OFFERS[index](topic.trim())
-}
-
-/** The short label beside the dot: "online" / "typing" / "away" / "offline". */
-export function getStatusLabel(state) {
-  return Object.values(STATUS).includes(state) ? state : STATUS.OFFLINE
 }

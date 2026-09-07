@@ -347,11 +347,6 @@ def analyze_message(message):
         return safe_analysis()
 
 
-def extract_quirks(message):
-    """Kept for callers that only want the quirk half."""
-    return analyze_message(message)
-
-
 def chat(message, conversation_history, character):
     """One conversation turn.
 

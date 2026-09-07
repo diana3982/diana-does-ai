@@ -10,13 +10,9 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
 # in the same folder as app.py
 sys.path.insert(0, os.path.dirname(__file__))
 
-import companion
-import quirks as quirks_module
-import sensitivities as sensitivities_module
-
+import storage
 from companion import (
-    chat, load_character, save_character, delete_character, build_system_prompt,
-    test_mode_enabled,
+    chat, load_character, save_character, delete_character, test_mode_enabled,
 )
 from quirks import load_quirks, forget_quirk, clear_quirks
 from sensitivities import load_sensitivities, forget_sensitivity, clear_sensitivities
@@ -26,13 +22,16 @@ from settings import load_settings, save_settings
 # the app can never touch someone's real companion or what it has learned,
 # and the cheapest way to guarantee that is to point the storage somewhere
 # else entirely rather than to remember not to write.
+#
+# Redirecting through storage.STORES rather than naming files here is what
+# makes that guarantee hold: this used to list three of the four stores, so
+# toggling sensitivities off in a test session wrote to the real settings
+# file and quietly disarmed the feature for the real companion.
 if test_mode_enabled():
-    _TEST_DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/test')
-    companion.CHARACTER_FILE = os.path.join(_TEST_DATA, 'character.json')
-    quirks_module.QUIRKS_FILE = os.path.join(_TEST_DATA, 'quirks.json')
-    sensitivities_module.SENSITIVITIES_FILE = os.path.join(_TEST_DATA, 'sensitivities.json')
-    app_logger_note = 'TEST MODE -- data is being written to backend/data/test/'
-    print(f'\n*** {app_logger_note} ***\n')
+    storage.redirect_to(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/test')
+    )
+    print('\n*** TEST MODE -- data is being written to backend/data/test/ ***\n')
 
 app = Flask(__name__)
 CORS(app)

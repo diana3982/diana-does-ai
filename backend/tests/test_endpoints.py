@@ -168,7 +168,7 @@ class TestChat:
 
     def test_a_failed_extraction_does_not_break_the_reply(self, api, character,
                                                           fake_model, monkeypatch):
-        monkeypatch.setattr(companion, 'extract_quirks',
+        monkeypatch.setattr(companion, 'analyze_message',
                             lambda message: (_ for _ in ()).throw(RuntimeError('boom')))
         api.post('/character', json=character)
         response = api.post('/chat', json={'message': 'hi'})

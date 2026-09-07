@@ -132,6 +132,7 @@ diana-does-ai/
 │   ├── quirks.py       ← Quirks management (scoring, confidence, sentiment)
 │   ├── sensitivities.py ← things to steer around — withhold-only
 │   ├── settings.py     ← the handful of choices the user controls
+│   ├── storage.py      ← every file this app writes, in one list
 │   ├── tests/          ← pytest suite + its own README
 │   │   └── logs/       ← a summary per run, gitignored
 │   └── data/

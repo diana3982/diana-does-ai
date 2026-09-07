@@ -16,6 +16,20 @@
 
 const BASE_URL = 'http://127.0.0.1:5000'
 
+/**
+ * How long to wait before giving up on a request.
+ *
+ * Without this, a backend that accepts the connection and then stalls --
+ * a wedged model call, a breakpoint someone forgot -- never settles the
+ * promise at all. The composer stays disabled, no error ever renders, and
+ * the person is stuck looking at a typing indicator that will never stop.
+ * Every other failure in this app has a path; that one had none.
+ *
+ * 30s is well clear of a long reply (max_tokens is 1024) while still
+ * surfacing a hang before someone gives up on their own.
+ */
+const REQUEST_TIMEOUT_MS = 30_000
+
 /** Error thrown by every function in this module. */
 export class ApiError extends Error {
   constructor(message, { status = 0, detail = null } = {}) {
@@ -39,8 +53,21 @@ async function request(path, { method = 'GET', body } = {}) {
       method,
       headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })
   } catch (cause) {
+    // A timeout is a different failure from an unreachable backend, and the
+    // UI should treat it differently: Flask is there, it just didn't finish,
+    // so the companion has not stepped out and the dot should stay on.
+    // Reported as 408 rather than 0 because that is what routes it to the
+    // "try again" path — no new field, no new concept for callers to learn.
+    if (cause.name === 'TimeoutError') {
+      throw new ApiError('Columba took too long to answer', {
+        status: 408,
+        detail: `No response within ${REQUEST_TIMEOUT_MS}ms`,
+      })
+    }
+
     // Backend down, CORS, offline — the request never reached Flask.
     throw new ApiError(`Could not reach Columba at ${BASE_URL}`, { detail: cause.message })
   }
