@@ -12,6 +12,31 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Two findings written into Phase 7 · 2026-09-07
+
+> **Triggered by** a question asked while testing the send queue in the
+> browser: is losing the conversation on reload the intended behaviour? It
+> is, for now — but the more interesting half was the observation attached
+> to it, that the companion still remembered what had been said.
+
+It does, because history has never been in the browser. `conversation_history`
+is a module-level global in `app.py`; the frontend only ever held a copy for
+rendering, and a reload throws that copy away while the server keeps every
+turn. Two consequences are now recorded as Phase 7 items 28 and 29.
+
+The conversation goes invisible rather than away — someone can return to a
+blank window and get a reply that plainly remembers something they can no
+longer see. And `[ clear this chat ]` gates on `messages.length === 0`, so
+after a reload the one control that would clear that history is disabled
+while the history is still there. Nothing else in the UI reaches it; starting
+genuinely fresh means restarting Flask.
+
+Neither is fixed here. Both belong to the phase that makes sessions last, and
+they change what that phase has to account for: the button has to gate on what
+the server holds rather than on what is on screen.
+
+---
+
 ## Letting someone finish their thought · 2026-09-07
 
 > **Triggered by** a question asked from the other end. We had been talking

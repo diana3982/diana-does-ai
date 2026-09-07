@@ -442,9 +442,34 @@ Both ends of the same idea: a bubble is not a turn.
 24. The error-screen game, tiered by conversation intensity
 
 ### Phase 7 — Sessions that last
+
+Two findings from testing Phase 4.5 in the browser, recorded here because
+they are the same problem this phase exists to solve. History today is
+`conversation_history`, a module-level global in `app.py`. It is the server
+that remembers a conversation; the browser only ever held a copy for
+rendering. A reload throws that copy away and nothing tells the user, so:
+
+- **The conversation goes invisible, not away.** After a reload the chat
+  window shows the empty state while the companion still has every turn.
+  Someone can come back to a blank window, say something that reads as a
+  fresh start, and get a reply that clearly remembers a conversation they
+  can no longer see. The gap between what the app shows and what it knows
+  is the part that matters -- being remembered is the point, but only when
+  the person can see what is being remembered.
+- **`[ clear this chat ]` is disabled exactly when it is needed.** It gates
+  on `messages.length === 0`, which after a reload is true even though the
+  backend holds a full history. The one control that would clear it cannot
+  be pressed, and nothing else in the UI reaches it -- starting genuinely
+  fresh currently means restarting Flask. Whatever 25 does about persistence,
+  the button has to gate on what the *server* holds, not on what is on
+  screen.
+
 25. Conversation history persists locally, cleared only when the user clears it
 26. Rolling summary of the older turns rather than a truncation window
 27. AIM-style login / returning-visit flow
+28. Reload restores the visible conversation, so what is shown and what the
+    companion knows are never out of step
+29. Clearing gates on the stored history rather than the rendered list
 
 ---
 
