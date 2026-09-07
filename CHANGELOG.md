@@ -30,6 +30,39 @@ someone is still typing the part that mattered.
 going, including while a turn is in flight. Anything sent during a live
 request is collected and goes out after it, rather than being refused.
 
+**The composer itself became the signal.** Testing in the browser turned up
+replies landing mid-sentence when typing resumed just after a window closed.
+No window is short or long enough to fix that — moving the number only moves
+where the boundary sits. But words already sitting in the composer are not a
+moment, they are a state, and they say plainly that someone isn't finished.
+Nothing goes out while the box has something in it. The 20s ceiling forces
+past that, so half a sentence somebody typed and walked away from can't hold
+a sent message for good; it never forces past a live request, because the
+backend has already written that turn.
+
+A pre-commit read of that ceiling found it could be dropped: it was passed
+into the flush as an argument, so a ceiling that came due while a request
+was in flight was lost, and a draft left in the composer could then hold the
+batch indefinitely. Coming due is a state on the queue now, so it survives
+the busy moment and acts the first chance it gets.
+
+**A third window, added after the first browser test.** Two seconds turned
+out to be too short in real use: sending "hi" and then thinking about how to
+say the next part reliably ran past it, so the follow-up became its own turn
+and the companion answered twice. A fragment shorter than 30 characters is
+now treated as an opener and gets 5s instead of 2s. The goals genuinely
+conflict — a lone message should go quickly, a follow-up should be caught,
+and only one can win inside any given second — so the length of what was sent
+decides which. The asymmetry makes that safe: guessing "opener" wrong costs a
+few seconds of dots, guessing "complete" wrong costs an interrupted sentence.
+Punctuation would be the obvious signal and is useless here; almost nobody
+puts a full stop on a text.
+
+**A held Enter key sent the same message twice.** `draft` is state, so on the
+second keydown of a repeat it is still the old text. `event.repeat` is now
+ignored. Found while looking for the cause of the doubling above; it wasn't
+the cause, but it was real.
+
 **Two silences, not one.** A short window (2s) covers the gap between sending
 one fragment and starting the next. Once typing resumes, each keystroke buys
 a longer one (5s) — room to finish a sentence without being interrupted. A

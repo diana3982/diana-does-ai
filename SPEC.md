@@ -422,8 +422,11 @@ Both ends of the same idea: a bubble is not a turn.
 
 18.5. ✅ **Compounding user messages** — fragments sent close together are held
     client-side and sent as one turn, so the companion answers the finished
-    thought rather than the first line of it. The composer never locks. Two
-    windows: short after a send, longer once typing resumes, with a ceiling.
+    thought rather than the first line of it. The composer never locks.
+    Quiet windows: 2s after something substantial, 5s after something short
+    enough to read as an opener, 5s once typing resumes, 20s ceiling. Nothing
+    goes out at all while words sit unsent in the composer — the one signal
+    that isn't a guess about timing.
     Lives entirely in the frontend — `/chat` is request/response and cannot
     see typing, and history is written before the call, so a sent turn can
     never be taken back.

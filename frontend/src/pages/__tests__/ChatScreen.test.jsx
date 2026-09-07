@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ChatScreen from '../ChatScreen'
 import { sendMessage } from '../../api/columba'
-import { IDLE_MS, SETTLE_MS } from '../../lib/sendQueue'
+import { CAP_MS, IDLE_MS, OPENER_SETTLE_MS, SETTLE_MS } from '../../lib/sendQueue'
 
 /**
  * The send queue's timing is tested on its own in `src/lib/__tests__`.
@@ -43,6 +43,9 @@ const send = (text) => {
   fireEvent.keyDown(composer(), { key: 'Enter', shiftKey: false })
 }
 
+/** Long enough to read as a whole thought rather than a run-up. */
+const THOUGHT = 'today was genuinely one of the worst days i have had'
+
 /** Lets timers fire and any resulting promise settle. */
 const tick = async (ms) => {
   await act(async () => {
@@ -75,10 +78,36 @@ describe('ChatScreen — holding a thought together', () => {
     expect(sendMessage).not.toHaveBeenCalled()
   })
 
-  it('sends a lone message once the short window passes', async () => {
-    send('hey')
+  it('sends a lone message once its quiet window passes', async () => {
+    send(THOUGHT)
     await tick(SETTLE_MS)
 
+    expect(sendMessage).toHaveBeenCalledTimes(1)
+    expect(sendMessage).toHaveBeenCalledWith(THOUGHT)
+  })
+
+  it('holds an opener long enough for the thought behind it', async () => {
+    send('hey')
+
+    // The short window comes and goes; "hey" is still waiting to be joined.
+    await tick(SETTLE_MS)
+    expect(sendMessage).not.toHaveBeenCalled()
+
+    send(THOUGHT)
+    await tick(SETTLE_MS)
+
+    expect(sendMessage).toHaveBeenCalledTimes(1)
+    expect(sendMessage).toHaveBeenCalledWith(`hey\n${THOUGHT}`)
+  })
+
+  it('ignores a held enter key', async () => {
+    type('hey')
+    fireEvent.keyDown(composer(), { key: 'Enter' })
+    fireEvent.keyDown(composer(), { key: 'Enter', repeat: true })
+
+    await tick(OPENER_SETTLE_MS)
+
+    // Leaning on the key must not say the same thing twice.
     expect(sendMessage).toHaveBeenCalledTimes(1)
     expect(sendMessage).toHaveBeenCalledWith('hey')
   })
@@ -88,26 +117,53 @@ describe('ChatScreen — holding a thought together', () => {
     send('sorry')
     send('today was bad')
 
-    await tick(SETTLE_MS)
+    await tick(OPENER_SETTLE_MS)
 
     expect(sendMessage).toHaveBeenCalledTimes(1)
     expect(sendMessage).toHaveBeenCalledWith('hi\nsorry\ntoday was bad')
   })
 
   it('keeps holding while the next fragment is still being typed', async () => {
-    send('hi')
+    send(THOUGHT)
     type('there is more')
-    await tick(SETTLE_MS)
+    await tick(SETTLE_MS + IDLE_MS)
 
-    // The short window came and went. They are mid-sentence; it waits.
+    // The windows came and went. They are mid-sentence; it waits.
+    expect(sendMessage).not.toHaveBeenCalled()
+  })
+
+  it('goes at the ceiling even with a draft left sitting there', async () => {
+    send(THOUGHT)
+    type('there is more')
+    await tick(CAP_MS)
+
+    // Half a sentence someone walked away from cannot hold a sent message
+    // for good. It goes without the words still in the box.
+    expect(sendMessage).toHaveBeenCalledTimes(1)
+    expect(sendMessage).toHaveBeenCalledWith(THOUGHT)
+    expect(composer().value).toBe('there is more')
+  })
+
+  it('waits on a half-typed reply rather than talking over it', async () => {
+    send('hey')
+
+    // Typing starts just after the window would have closed -- the exact
+    // moment that used to produce a reply landing mid-sentence.
+    await tick(OPENER_SETTLE_MS - 50)
+    type('the thing is')
+    await tick(OPENER_SETTLE_MS + IDLE_MS)
+
     expect(sendMessage).not.toHaveBeenCalled()
 
-    await tick(IDLE_MS)
+    send(`the thing is, ${THOUGHT}`)
+    await tick(SETTLE_MS)
+
     expect(sendMessage).toHaveBeenCalledTimes(1)
+    expect(sendMessage).toHaveBeenCalledWith(`hey\nthe thing is, ${THOUGHT}`)
   })
 
   it('never disables the composer, in flight or held', async () => {
-    send('hey')
+    send(THOUGHT)
     expect(composer().disabled).toBe(false)
 
     await tick(SETTLE_MS)
@@ -120,7 +176,7 @@ describe('ChatScreen — holding a thought together', () => {
 
     send('hi')
     send('today was bad')
-    await tick(SETTLE_MS)
+    await tick(OPENER_SETTLE_MS)
 
     // The bubbles come back out and the words return to the box, joined
     // the same way they were sent, so "try again" is just another send.
@@ -134,7 +190,7 @@ describe('ChatScreen — holding a thought together', () => {
     sendMessage.mockImplementationOnce(() => new Promise((_, r) => { reject = r }))
 
     send('first')
-    await tick(SETTLE_MS)
+    await tick(OPENER_SETTLE_MS)
 
     // Sent while the first turn is in the air — it gets its own bubble and
     // waits its turn rather than being refused.

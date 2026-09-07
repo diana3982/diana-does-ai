@@ -66,6 +66,7 @@ function ChatScreen({ character }) {
   const queueRef = useRef(null)
   const flushRef = useRef(null)
   const waitingRef = useRef(false)
+  const draftRef = useRef('')
 
   const name = character?.name ?? 'your companion'
   const tone = character?.tone
@@ -114,6 +115,7 @@ function ChatScreen({ character }) {
     queueRef.current = createSendQueue({
       onFlush: (batch) => flushRef.current?.(batch),
       isBusy: () => waitingRef.current,
+      hasUnsent: () => draftRef.current.trim().length > 0,
     })
     return () => {
       queueRef.current?.cancel()
@@ -254,6 +256,7 @@ function ChatScreen({ character }) {
   // calls the live send rather than one from three renders ago.
   useEffect(() => {
     flushRef.current = flushBatch
+    draftRef.current = draft
   })
 
   /**
@@ -334,6 +337,10 @@ function ChatScreen({ character }) {
     // Enter sends, Shift+Enter starts a new line.
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
+      // A held Enter repeats. `draft` is state, so it is still the old text
+      // on the second keydown of the same batch -- without this, leaning on
+      // the key sends the same message twice.
+      if (event.repeat) return
       handleSend()
     }
   }
