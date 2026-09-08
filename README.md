@@ -168,6 +168,8 @@ diana-does-ai/
 ├── CHANGELOG.md        ← what changed, and why
 ├── docs/
 │   └── cost-model.md   ← what the app costs to run, and the evidence for it
+├── scripts/
+│   └── hooks/pre-commit ← blocks a commit containing anything the companion learned
 ├── .env                ← API keys (never committed)
 ├── .env.example        ← copy this to .env to get started
 ├── .gitignore
@@ -336,6 +338,27 @@ compound, so caching the expensive call made the cheap one matter *more*.
 
 Every call appends its token counts to a gitignored `usage.jsonl`. Counts
 only, never content, enforced by a test.
+
+---
+
+## Keeping your data out of the repo
+
+The companion's data files are gitignored, but that only covers the files. The
+harder case is a *copy* of something personal ending up in source — a real
+preference used as a test fixture, say, where nothing about it looks like
+personal data.
+
+```bash
+git config core.hooksPath scripts/hooks
+```
+
+That installs a pre-commit hook which reads your local quirks, sensitivities
+and companion name and refuses any commit whose added lines contain one. The
+hook holds no topics itself — it reads them fresh each run — so it is safe to
+commit, and on a clone with no data it simply passes.
+
+It exists because a real quirk did reach a test fixture once, and was caught
+by hand one step before it went public.
 
 ---
 

@@ -143,6 +143,9 @@ and some of it is tested as behaviour.
 - Keep components focused — if it's doing too much, split it
 - User-facing strings go in `src/copy/`, never inline
 - **Run `pytest` before every commit** and report the result
+- **Never use a real quirk, sensitivity or companion name as example or
+  test data.** Invent them. `scripts/hooks/pre-commit` enforces this —
+  install with `git config core.hooksPath scripts/hooks`
 
 ---
 

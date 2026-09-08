@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Refuse a commit that contains something the companion learned about you.
+
+Written after one of the user's real quirks went into a test fixture as what
+looked like an invented example, and was caught by a manual scan one step
+before it went public. Test data is the leak path nobody watches: a tuple of
+three plausible-sounding hobbies does not read as personal data, which is
+exactly the problem.
+
+Deliberately not naming the topic here. This file gets committed, and writing
+it down to explain the tool would be the same mistake the tool exists to
+prevent -- as this hook pointed out when it blocked its own first commit.
+
+The topics live in gitignored files and are read fresh on every run, so this
+script holds none of them and is safe to commit. On a clone with no data --
+anyone else's machine, CI -- there is nothing to compare against and the hook
+passes without comment.
+
+Install:  git config core.hooksPath scripts/hooks
+Bypass:   git commit --no-verify        (after checking the hit is a false one)
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+
+#: The app's own schema words. These collide with real topics by coincidence
+#: -- "food" is both a quirk category in ANALYSIS_PROMPT and, for one user, a
+#: thing they said they liked -- and they appear in committed source already.
+APP_VOCABULARY = {
+    'music', 'food', 'sports', 'hobby', 'media', 'place',
+    'health', 'substance', 'family', 'relationship', 'grief',
+    'money', 'work', 'other',
+}
+
+#: Below this, a topic is too short to match anything but noise.
+MIN_LENGTH = 3
+
+
+def repo_root():
+    return subprocess.check_output(
+        ['git', 'rev-parse', '--show-toplevel'], text=True).strip()
+
+
+def learned_topics(data_dir):
+    """Everything the companion knows, as plain lowercase strings."""
+    topics = set()
+
+    for name in ('quirks.json', 'sensitivities.json'):
+        path = os.path.join(data_dir, name)
+        if os.path.exists(path):
+            with open(path) as f:
+                topics |= {str(k).lower() for k in json.load(f)}
+
+    character = os.path.join(data_dir, 'character.json')
+    if os.path.exists(character):
+        with open(character) as f:
+            name = json.load(f).get('name')
+        if name:
+            topics.add(str(name).lower())
+
+    return {t for t in topics
+            if len(t) >= MIN_LENGTH and t not in APP_VOCABULARY}
+
+
+def added_lines():
+    """Every line this commit adds, paired with the file it lands in."""
+    diff = subprocess.check_output(
+        ['git', 'diff', '--cached', '-U0'], text=True, errors='replace')
+
+    current = '?'
+    for line in diff.splitlines():
+        if line.startswith('+++ b/'):
+            current = line[6:]
+        elif line.startswith('+') and not line.startswith('+++'):
+            yield current, line[1:]
+
+
+def main():
+    try:
+        data_dir = os.path.join(repo_root(), 'backend', 'data')
+        topics = learned_topics(data_dir)
+    except Exception as e:                                   # noqa: BLE001
+        # Fail closed. A privacy guard that waves things through when it
+        # breaks is worse than one that occasionally needs --no-verify.
+        print(f'pre-commit: could not read local data ({e}).')
+        print('Commit blocked. Use --no-verify if you are sure.')
+        return 1
+
+    if not topics:
+        return 0
+
+    patterns = [(t, re.compile(rf'\b{re.escape(t)}\b', re.I)) for t in topics]
+    hits = []
+    for path, line in added_lines():
+        for topic, pattern in patterns:
+            if pattern.search(line):
+                hits.append((path, topic, line.strip()[:70]))
+
+    if not hits:
+        return 0
+
+    print()
+    print('  Something your companion learned about you is in this commit.')
+    print()
+    for path, topic, line in hits[:12]:
+        print(f'    {path}')
+        print(f'      {topic!r}  ->  {line}')
+    if len(hits) > 12:
+        print(f'    ... and {len(hits) - 12} more')
+    print()
+    print('  These come from your local quirks/sensitivities and are never')
+    print('  committed themselves -- but a copy in source code would be.')
+    print()
+    print('  Rename it to something invented, or if this is a coincidence:')
+    print('    git commit --no-verify')
+    print()
+    return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())
