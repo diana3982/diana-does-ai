@@ -361,6 +361,14 @@ safe to commit, and on a clone with no data it simply passes. Only the app's
 own schema words are allowlisted (`food` as a *category*, for instance); a
 specific food someone mentioned is a topic, and stays catchable.
 
+One narrow exemption: a companion named after one of the app's own "choose
+for me" suggestions isn't flagged, since a name offered to every user
+identifies nobody — and those names appear throughout the app's own copy and
+test fixtures. The exemption applies to the companion's name and nothing
+else. A *quirk* spelled like one of those names is still something the user
+said out loud, and is still caught; there are tests for exactly that, because
+it is the one place this could quietly stop working.
+
 The two halves fail differently on purpose. The privacy check fails closed —
 if it can't read your data it blocks — because that one is a promise. The
 test step skips itself when there's no virtualenv, because that one is a

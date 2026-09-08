@@ -53,8 +53,35 @@ def repo_root():
         ['git', 'rev-parse', '--show-toplevel'], text=True).strip()
 
 
-def learned_topics(data_dir):
+def app_suggested_names(root):
+    """The names the app itself offers in setup's "choose for me" list.
+
+    A name this app hands to everyone cannot identify anyone. One of them is
+    also, in committed source, the fixture name in nine tests and an entry in
+    setup.js -- all of it predating any real companion. Flagging a companion
+    called one of these would fire on the app's own copy forever, and a hook
+    that cries wolf is a hook people stop reading.
+
+    Read from source rather than duplicated here, so the two cannot drift.
+    An unreadable list returns nothing, which guards the name as before --
+    the conservative direction.
+
+    **Applied to the companion's name and nothing else.** A quirk spelled
+    like one of these is still a thing the user said out loud, and is still
+    caught.
+    """
+    path = os.path.join(root, 'frontend', 'src', 'copy', 'setup.js')
+    try:
+        with open(path) as f:
+            block = re.search(r'RANDOM_NAMES\s*=\s*\[(.*?)\]', f.read(), re.S)
+        return {n.lower() for n in re.findall(r"['\"]([^'\"]+)['\"]", block.group(1))}
+    except Exception:                                        # noqa: BLE001
+        return set()
+
+
+def learned_topics(root):
     """Everything the companion knows, as plain lowercase strings."""
+    data_dir = os.path.join(root, 'backend', 'data')
     topics = set()
 
     for name in ('quirks.json', 'sensitivities.json'):
@@ -67,7 +94,8 @@ def learned_topics(data_dir):
     if os.path.exists(character):
         with open(character) as f:
             name = json.load(f).get('name')
-        if name:
+        # Only the name gets this exemption; topics never do.
+        if name and str(name).lower() not in app_suggested_names(root):
             topics.add(str(name).lower())
 
     return {t for t in topics
@@ -124,8 +152,7 @@ def run_tests(root):
 
 def check_personal_data(root):
     try:
-        data_dir = os.path.join(root, 'backend', 'data')
-        topics = learned_topics(data_dir)
+        topics = learned_topics(root)
     except Exception as e:                                   # noqa: BLE001
         # Fail closed. A privacy guard that waves things through when it
         # breaks is worse than one that occasionally needs --no-verify.
