@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Refuse a commit that contains something the companion learned about you.
+"""Two checks before a commit lands: nothing personal, and nothing broken.
+
+1. Refuse a commit containing something the companion learned about you.
+2. Refuse a commit that fails the backend test suite.
 
 Written after one of the user's real quirks went into a test fixture as what
 looked like an invented example, and was caught by a manual scan one step
@@ -25,9 +28,16 @@ import re
 import subprocess
 import sys
 
-#: The app's own schema words. These collide with real topics by coincidence
-#: -- "food" is both a quirk category in ANALYSIS_PROMPT and, for one user, a
-#: thing they said they liked -- and they appear in committed source already.
+#: The app's own schema words -- quirk categories from ANALYSIS_PROMPT and
+#: the kinds in sensitivities.KINDS. They collide with real topics by
+#: coincidence, and they already appear throughout committed source, so
+#: matching on them would make the hook fire constantly and get ignored.
+#:
+#: THE RULE: only schema words go in here, never a topic. The category
+#: "food" is general enough to be app vocabulary; a specific food someone
+#: mentioned is exactly what this hook exists to catch, and adding one here
+#: would quietly punch a hole in the thing. If a real topic keeps tripping a
+#: false positive, rename the fixture -- do not widen this set.
 APP_VOCABULARY = {
     'music', 'food', 'sports', 'hobby', 'media', 'place',
     'health', 'substance', 'family', 'relationship', 'grief',
@@ -77,9 +87,44 @@ def added_lines():
             yield current, line[1:]
 
 
-def main():
+def run_tests(root):
+    """The backend suite. Offline, no API calls, well under a second.
+
+    Skipped rather than failed when the virtualenv isn't there: a fresh
+    clone has no venv yet, and blocking every commit until someone runs
+    `pip install` would make the hook the first thing they delete. The
+    privacy check above has no such escape, because that one is a promise
+    and this one is a habit.
+    """
+    python = os.path.join(root, 'venv', 'bin', 'python')
+    if not os.path.exists(python):
+        print('pre-commit: no venv found, skipping tests.')
+        return 0
+
+    result = subprocess.run(
+        [python, '-m', 'pytest', '-q'],
+        cwd=os.path.join(root, 'backend'),
+        capture_output=True, text=True,
+    )
+    if result.returncode == 0:
+        print(f'pre-commit: {result.stdout.strip().splitlines()[-1]}')
+        return 0
+
+    print()
+    print('  The backend tests do not pass.')
+    print()
+    for line in result.stdout.strip().splitlines()[-15:]:
+        print(f'    {line}')
+    print()
+    print('  Fix them, or commit anyway with:')
+    print('    git commit --no-verify')
+    print()
+    return 1
+
+
+def check_personal_data(root):
     try:
-        data_dir = os.path.join(repo_root(), 'backend', 'data')
+        data_dir = os.path.join(root, 'backend', 'data')
         topics = learned_topics(data_dir)
     except Exception as e:                                   # noqa: BLE001
         # Fail closed. A privacy guard that waves things through when it
@@ -117,6 +162,13 @@ def main():
     print('    git commit --no-verify')
     print()
     return 1
+
+
+def main():
+    root = repo_root()
+    # Privacy first: it is the cheaper check and the one that matters more.
+    # A commit that leaks something personal is not fixed by passing tests.
+    return check_personal_data(root) or run_tests(root)
 
 
 if __name__ == '__main__':

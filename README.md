@@ -352,10 +352,20 @@ personal data.
 git config core.hooksPath scripts/hooks
 ```
 
-That installs a pre-commit hook which reads your local quirks, sensitivities
-and companion name and refuses any commit whose added lines contain one. The
-hook holds no topics itself — it reads them fresh each run — so it is safe to
-commit, and on a clone with no data it simply passes.
+That installs a pre-commit hook that does two things: refuses any commit
+whose added lines contain one of your local quirks, sensitivities or your
+companion's name, and refuses any commit that fails the backend suite.
+
+The hook holds no topics itself — it reads them fresh each run — so it is
+safe to commit, and on a clone with no data it simply passes. Only the app's
+own schema words are allowlisted (`food` as a *category*, for instance); a
+specific food someone mentioned is a topic, and stays catchable.
+
+The two halves fail differently on purpose. The privacy check fails closed —
+if it can't read your data it blocks — because that one is a promise. The
+test step skips itself when there's no virtualenv, because that one is a
+habit, and a hook that blocks every commit on a fresh clone is a hook people
+delete.
 
 It exists because a real quirk did reach a test fixture once, and was caught
 by hand one step before it went public.

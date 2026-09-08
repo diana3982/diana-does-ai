@@ -142,7 +142,8 @@ and some of it is tested as behaviour.
 - Comment non-obvious logic
 - Keep components focused — if it's doing too much, split it
 - User-facing strings go in `src/copy/`, never inline
-- **Run `pytest` before every commit** and report the result
+- **Run `pytest` before every commit** and report the result — the
+  pre-commit hook enforces this too, but report the result either way
 - **Never use a real quirk, sensitivity or companion name as example or
   test data.** Invent them. `scripts/hooks/pre-commit` enforces this —
   install with `git config core.hooksPath scripts/hooks`
