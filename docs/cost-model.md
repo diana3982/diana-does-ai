@@ -112,6 +112,15 @@ Per-turn cost, and what the same turn cost before either change:
 
 *Turn 2 is measured. Turns 5+ extrapolate the observed growth rate.*
 
+**One caveat on the absolute numbers.** These were measured against a fresh
+companion with nothing learned yet, so the cached prefix starts at 613
+tokens. A companion that has been used for a while renders its quirks and
+sensitivities into the system prompt, and that prefix runs closer to 1,150 —
+which makes a turn cost more, and makes caching save *more*, than the table
+above. The benefit scales with how much the companion knows about you: the
+longer someone has been talking to it, the more the cache is worth. The
+percentages hold; the dollar figures are a floor.
+
 Over a 20-turn conversation:
 
 | | cost |
