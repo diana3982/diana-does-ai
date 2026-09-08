@@ -325,9 +325,9 @@ but them.
 
 ## What it costs to run
 
-A 20-turn conversation costs **$0.078**. Without the two optimizations in it
+A 20-turn conversation costs **$0.128**. Without the two optimizations in it
 — a cheaper model for the silent background pass, and prompt caching on the
-conversation history — the same conversation costs **$0.283**.
+conversation history — the same conversation costs **$0.414**.
 
 [`docs/cost-model.md`](docs/cost-model.md) is the evidence for that: measured
 token counts, live `response.usage` figures, what is still unoptimized and

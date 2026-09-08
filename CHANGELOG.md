@@ -30,8 +30,16 @@ tokens and over half the total.
 
 **Prompt caching now covers that history.** Measured live: turn 2 read 613
 tokens from cache and paid full price for 2. A 20-turn conversation went from
-$0.283 to $0.078 — about 73% off, with roughly 61% of that from caching and
-29% from the model split.
+$0.414 to $0.128 — about 69% off, with the larger share of that from caching.
+
+Both figures were later re-measured. The first pass counted tokens against
+Opus 4.5's tokenizer and quoted a fresh companion with nothing learned; a
+real companion carries its quirks and sensitivities in the prompt, and Opus
+4.7 and later count roughly 30% more tokens for the same text. The
+percentages held, the dollar figures moved. `docs/cost-model.md` now shows
+the scripted run and a real session side by side, because the gap between
+them is itself the finding: caching is worth more the better the companion
+knows you.
 
 **The two compound, in the direction nobody predicted.** Caching collapses
 the chat call, which makes the background pass a *larger* share of what
@@ -47,8 +55,19 @@ conversation and fails if it appears in the log, rather than being left to
 good intentions. Instrumentation that can take down the thing it measures is
 worse than none, so every failure in it is swallowed; that has a test too.
 
-**The chat model moved to `claude-opus-5`** — the same price as Opus 4.5 and
-a generation newer, so the swap costs nothing. It was not a one-line change:
+**The chat model moved to `claude-opus-5`** — the same price per token as
+Opus 4.5 and a generation newer. The interesting part is that it is also
+*cheaper to run*, which is not obvious: Opus 4.7 and later count ~30% more
+tokens for the same text, so on token counts alone the older model looks like
+the thrifty choice. Measured, Opus 4.5 never engages the cache at all — three
+live turns returned zero cache writes, because its minimum cacheable prefix
+is 1,024 tokens and the prompt sits at ~1,000, and falling short fails
+silently. Opus 5's minimum is 512. So the extra tokens bill at a tenth of the
+price while the older model pays full freight on every one: level for two
+turns, 49% cheaper by turn 20. Comparing them on token counts gives the wrong
+answer.
+
+It was not a one-line change:
 
 - Opus 5 **thinks by default**, and `max_tokens` caps thinking *plus* the
   reply. The old 1024 was sized around the reply alone and would have
