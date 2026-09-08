@@ -24,6 +24,7 @@ diana-does-ai/
 │   ├── sensitivities.py ← things to steer around — withhold-only, never suggested
 │   ├── settings.py      ← user-controlled settings
 │   ├── storage.py       ← every file this app writes, in one list
+│   ├── usage.py         ← token counts per API call — counts only, never content
 │   ├── tests/           ← pytest suite (see backend/tests/README.md)
 │   │   └── logs/        ← one summary per run, gitignored
 │   └── data/            ← gitignored; only *.example.json is committed
@@ -55,7 +56,7 @@ diana-does-ai/
 | Backend | Python + Flask (already built, do not modify unless asked) |
 | Frontend | React (Vite) |
 | Styling | Plain CSS + custom properties — NO Tailwind, NO CSS Modules, NO styled-components |
-| AI | Anthropic API (claude-opus-4-5 for chat, claude-haiku-4-5 for quirks) |
+| AI | Anthropic API (claude-opus-5 for chat, claude-haiku-4-5 for the background pass) — see `docs/cost-model.md` |
 | State | React useState/useEffect — no Redux, no router, keep it simple |
 | Tests | pytest (backend) · Vitest (frontend) |
 
@@ -147,7 +148,7 @@ and some of it is tested as behaviour.
 
 ## What NOT to Do
 
-- Do NOT modify backend files (app.py, companion.py, quirks.py, sensitivities.py, settings.py, storage.py) unless explicitly asked
+- Do NOT modify backend files (app.py, companion.py, quirks.py, sensitivities.py, settings.py, storage.py, usage.py) unless explicitly asked
 - Do NOT add Tailwind, Bootstrap, or any CSS framework
 - Do NOT use Redux or any external state management
 - Do NOT make the UI look like a modern chat app (Slack, iMessage aesthetic) — lean into the retro AIM/MSN vibe

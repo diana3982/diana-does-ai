@@ -85,13 +85,38 @@ def fake_model(monkeypatch):
         calls=[],
         extraction={'found': False, 'quirks': []},
         reply="hey. i'm here.",
+        thinking=True,          # Opus 5 thinks by default
+        stop_reason='end_turn',
+        input_tokens=1000,
+        output_tokens=200,
+        cache_read_tokens=0,
     )
 
     def create(**kwargs):
         recorder.calls.append(kwargs)
         is_extraction = 'haiku' in kwargs.get('model', '')
         text = json.dumps(recorder.extraction) if is_extraction else recorder.reply
-        return SimpleNamespace(content=[SimpleNamespace(text=text)])
+
+        # Shaped like a real Opus 5 reply, not a convenient one: a thinking
+        # block ahead of the text (thinking is on by default there), typed
+        # blocks, a usage object, and a stop_reason. Every one of those is
+        # something the code reads, so a fixture without them tests a model
+        # that does not exist.
+        blocks = []
+        if not is_extraction and recorder.thinking:
+            blocks.append(SimpleNamespace(type='thinking', thinking='...'))
+        blocks.append(SimpleNamespace(type='text', text=text))
+
+        return SimpleNamespace(
+            content=blocks,
+            stop_reason=recorder.stop_reason,
+            usage=SimpleNamespace(
+                input_tokens=recorder.input_tokens,
+                output_tokens=recorder.output_tokens,
+                cache_creation_input_tokens=0,
+                cache_read_input_tokens=recorder.cache_read_tokens,
+            ),
+        )
 
     monkeypatch.setattr(companion, 'client', SimpleNamespace(messages=SimpleNamespace(create=create)))
     return recorder

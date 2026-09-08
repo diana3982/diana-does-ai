@@ -5,12 +5,35 @@ from dotenv import load_dotenv
 from quirks import update_quirk, build_quirks_context
 from sensitivities import KINDS as SENSITIVITY_KINDS, note_sensitivity, build_sensitivities_context
 from settings import load_settings
+import usage
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
 
 client = anthropic.Anthropic()
 
 CHARACTER_FILE = os.path.join(os.path.dirname(__file__), 'data/character.json')
+
+#: The conversation model. Opus 5 is the same price as Opus 4.5 ($5/$25 per
+#: MTok) and supersedes it, so the swap costs nothing and gains a generation.
+CHAT_MODEL = 'claude-opus-5'
+
+#: The silent background pass. A fifth of the chat model's price on both
+#: input and output, which is where the dual-model split earns its keep --
+#: see docs/cost-model.md for the measured version of that claim.
+ANALYSIS_MODEL = 'claude-haiku-4-5-20251001'
+
+#: max_tokens caps thinking PLUS the reply on Opus 5, where thinking is on
+#: by default. The old 1024 was sized around the reply alone and would have
+#: truncated someone mid-sentence. This is a ceiling, not a target -- only
+#: what is actually generated is billed, and the prompt asks for brevity.
+CHAT_MAX_TOKENS = 4096
+
+#: Opus 5 is unusually strong at the lower effort levels, and effort is the
+#: main cost and latency lever. `medium` rather than `low` because reading
+#: someone correctly is this app's whole job and the analysis pass already
+#: sits in front of every reply -- but this is the first dial to turn, and
+#: usage.jsonl now makes the tradeoff measurable instead of theoretical.
+CHAT_EFFORT = 'medium'
 
 def load_character():
     # The real character file is gitignored -- it holds one person's
@@ -119,7 +142,12 @@ Always follow these rules:
 - If someone moves from something heavy to something light, read it as them
   wanting to change the subject. Follow their lead. Name once that the door
   stays open, then let it go -- never ask them to confirm they want to move
-  on, which is pressure wearing the clothes of care"""
+  on, which is pressure wearing the clothes of care
+- Keep it short. Two or three sentences is usually right and one is often
+  better. This is a chat window, not a letter: a wall of text reads as a
+  lecture to someone who is already struggling, and it is harder to take in
+  on a hard night. Say the thing that matters and leave room for them to
+  answer"""
 
     if quirks_context:
         base_prompt += f"\n\n{quirks_context}"
@@ -335,16 +363,45 @@ def analyze_message(message):
     """
     try:
         response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model=ANALYSIS_MODEL,
             max_tokens=500,
             system=ANALYSIS_PROMPT,
             messages=[{"role": "user", "content": message}]
         )
-        return normalise_analysis(_parse_json_object(response.content[0].text))
+        usage.record('analysis', ANALYSIS_MODEL, response)
+        return normalise_analysis(_parse_json_object(_reply_text(response)))
 
     except Exception as e:
         print(f"Message analysis error: {e}")
         return safe_analysis()
+
+
+#: What the companion says if a request is declined by a safety classifier.
+#:
+#: Opus 5 can return stop_reason "refusal" as a normal HTTP 200. It is aimed
+#: at cyber and bio content and should never fire on an ordinary hard
+#: conversation -- but "should never" is not "cannot", and the one place
+#: this app must not fail is a message someone struggled to send. So the
+#: refusal path is warm, keeps the door open, and still names the line.
+REFUSAL_REPLY = (
+    "i'm sorry -- i can't answer that one. that's on me, not on you, and it "
+    "doesn't change anything about you being here. if you're in a hard place "
+    "right now, please reach out to someone you trust, or call or text 988, "
+    "the Suicide and Crisis Lifeline. they're there any hour. \U0001f499"
+)
+
+
+def _reply_text(response):
+    """The visible text of a reply, skipping anything that isn't text.
+
+    Opus 5 thinks by default, so content[0] is no longer guaranteed to be
+    the text block -- indexing it blindly was a crash waiting for the first
+    message someone poured out.
+    """
+    for block in getattr(response, 'content', []) or []:
+        if getattr(block, 'type', 'text') == 'text':
+            return getattr(block, 'text', '') or ''
+    return ''
 
 
 def chat(message, conversation_history, character):
@@ -386,13 +443,32 @@ def chat(message, conversation_history, character):
     })
 
     response = client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=1024,
+        model=CHAT_MODEL,
+        max_tokens=CHAT_MAX_TOKENS,
+        output_config={"effort": CHAT_EFFORT},
+        # Automatic prompt caching. Resent history is the single largest
+        # line item in this app -- 78% of chat input tokens by turn 20 --
+        # and a cache read bills at a tenth of the input price. The SDK
+        # moves the breakpoint forward as the conversation grows, so each
+        # turn pays full price only for what is new. Nothing the model sees
+        # changes; this is purely how the same bytes are billed.
+        cache_control={"type": "ephemeral"},
         system=system_prompt,
         messages=conversation_history
     )
 
-    assistant_message = response.content[0].text
+    usage.record(
+        'chat', CHAT_MODEL, response,
+        history_turns=len(conversation_history),
+    )
+
+    # A declined request comes back as a normal 200, so this has to be
+    # checked before reading the content -- not caught as an exception.
+    if getattr(response, 'stop_reason', None) == 'refusal':
+        conversation_history.append({"role": "assistant", "content": REFUSAL_REPLY})
+        return REFUSAL_REPLY, conversation_history, analysis
+
+    assistant_message = _reply_text(response)
 
     conversation_history.append({
         "role": "assistant",

@@ -17,6 +17,7 @@ import companion
 import quirks
 import sensitivities
 import settings
+import usage
 
 #: (module, constant name, filename).
 #:
@@ -28,6 +29,7 @@ STORES = (
     (quirks, 'QUIRKS_FILE', 'quirks.json'),
     (sensitivities, 'SENSITIVITIES_FILE', 'sensitivities.json'),
     (settings, 'SETTINGS_FILE', 'settings.json'),
+    (usage, 'USAGE_FILE', 'usage.jsonl'),
 )
 
 

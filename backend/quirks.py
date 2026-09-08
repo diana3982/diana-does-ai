@@ -91,7 +91,12 @@ def build_quirks_context():
         return ""
     
     lines = ["Things you know about this user:"]
-    for topic, data in relevant.items():
+    # Sorted, not insertion-ordered. The system prompt sits in front of the
+    # cached conversation prefix, so a byte that moves for no reason costs a
+    # full cache miss -- and dict order here follows whatever sequence the
+    # quirks happened to be learned in.
+    for topic in sorted(relevant):
+        data = relevant[topic]
         sentiment_label = "loves" if data['score'] >= 3.5 else "likes" if data['score'] >= 2.0 else "dislikes"
         lines.append(f"- {sentiment_label} {topic} (confidence: {data['confidence']}, score: {data['score']}/5)")
 

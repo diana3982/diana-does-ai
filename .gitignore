@@ -19,6 +19,10 @@ __pycache__/
 # See backend/data/README.md
 backend/data/*.json
 !backend/data/*.example.json
+# Token counts from real sessions. Numbers only, never content --
+# but it is still a record of when someone talked to their companion,
+# and that is theirs. The *.json rule above does not cover .jsonl.
+backend/data/*.jsonl
 
 # Test mode writes here instead of over someone's real companion.
 backend/data/test/

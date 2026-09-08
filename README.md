@@ -80,7 +80,7 @@ Your privacy isn't something you have to think about here. It's the foundation �
 | Frontend | React 19 · Vite 8 (Node 20+, pinned in `.nvmrc`) |
 | Styling | Plain CSS + custom properties — no framework, no CSS-in-JS |
 | State | React `useState` / `useEffect` — no Redux, no router |
-| AI Models | Anthropic API |
+| AI Models | Anthropic API — `claude-opus-5` (chat) · `claude-haiku-4-5` (background pass) |
 | Conversation | Claude Opus-class (warm, context-aware responses) |
 | Background analysis | Claude Haiku-class (silent, never seen by the user) |
 | Data | Local JSON (companion + quirks), gitignored, never leaves the machine |
@@ -133,6 +133,7 @@ diana-does-ai/
 │   ├── sensitivities.py ← things to steer around — withhold-only
 │   ├── settings.py     ← the handful of choices the user controls
 │   ├── storage.py      ← every file this app writes, in one list
+│   ├── usage.py        ← token counts per API call — counts only, never content
 │   ├── tests/          ← pytest suite + its own README
 │   │   └── logs/       ← a summary per run, gitignored
 │   └── data/
@@ -165,6 +166,8 @@ diana-does-ai/
 ├── CLAUDE.md           ← project context for Claude Code
 ├── SPEC.md             ← frontend specification and build order
 ├── CHANGELOG.md        ← what changed, and why
+├── docs/
+│   └── cost-model.md   ← what the app costs to run, and the evidence for it
 ├── .env                ← API keys (never committed)
 ├── .env.example        ← copy this to .env to get started
 ├── .gitignore
@@ -317,6 +320,22 @@ but them.
 - 💾 **Persistent sessions** — conversations that survive closing the app, with an AIM-style sign-in
 - 🕊️ **A gentler error screen** — if the connection drops, Phact (the dove, named for Alpha Columbae) shows up with something to do. What she offers depends on the conversation: a journal prompt, something drawn from your own interests, or — if things were heavy — just 988 and nothing else competing for your attention
 - 🌙 **Aquarius mode** — a celestial-themed companion variant (because of course)
+
+---
+
+## What it costs to run
+
+A 20-turn conversation costs **$0.078**. Without the two optimizations in it
+— a cheaper model for the silent background pass, and prompt caching on the
+conversation history — the same conversation costs **$0.283**.
+
+[`docs/cost-model.md`](docs/cost-model.md) is the evidence for that: measured
+token counts, live `response.usage` figures, what is still unoptimized and
+why, and one finding that reversed an assumption — the two optimizations
+compound, so caching the expensive call made the cheap one matter *more*.
+
+Every call appends its token counts to a gitignored `usage.jsonl`. Counts
+only, never content, enforced by a test.
 
 ---
 

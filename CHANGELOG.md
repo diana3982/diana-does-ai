@@ -12,6 +12,69 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Cost: measured, then reduced · 2026-09-08
+
+> **Triggered by** a question about the portfolio claim: the dual-model split
+> was described as a cost optimization, and the ask was whether there was any
+> tangible evidence for that. There wasn't — the architecture was reasonable
+> and entirely unmeasured. Measuring it turned up a bigger lever than the one
+> being claimed.
+
+**The claim was true and roughly half the story.** The background pass really
+does cost a fifth as much on Haiku as it would on Opus — exactly 5.0x, since
+Haiku is one fifth of Opus on both input and output. But measuring where the
+money actually went showed the analysis pass was a small share of the bill.
+The dominant cost was conversation history: the API is stateless, so every
+turn resent the whole conversation, which by turn 20 was 78% of chat input
+tokens and over half the total.
+
+**Prompt caching now covers that history.** Measured live: turn 2 read 613
+tokens from cache and paid full price for 2. A 20-turn conversation went from
+$0.283 to $0.078 — about 73% off, with roughly 61% of that from caching and
+29% from the model split.
+
+**The two compound, in the direction nobody predicted.** Caching collapses
+the chat call, which makes the background pass a *larger* share of what
+remains — 24% of a turn by turn 20, against 4% before. Optimizing the
+expensive half made the cheap half matter more, not less. Anyone judging
+either optimization in isolation would get the answer wrong, which is the
+argument for measuring rather than reasoning about it.
+
+**`usage.py` records what every call costs.** Counts only — no message, no
+reply, no topic — appended to a gitignored `data/usage.jsonl`. That guarantee
+is enforced by a test that sends a distinctive string through a real
+conversation and fails if it appears in the log, rather than being left to
+good intentions. Instrumentation that can take down the thing it measures is
+worse than none, so every failure in it is swallowed; that has a test too.
+
+**The chat model moved to `claude-opus-5`** — the same price as Opus 4.5 and
+a generation newer, so the swap costs nothing. It was not a one-line change:
+
+- Opus 5 **thinks by default**, and `max_tokens` caps thinking *plus* the
+  reply. The old 1024 was sized around the reply alone and would have
+  truncated someone mid-sentence. Now 4096, with `effort` set explicitly to
+  `medium` as the cost lever rather than defaulting to `high` by omission.
+- `response.content[0].text` was a **crash waiting to happen** — with
+  thinking on, the first block is a thinking block. It now reads the first
+  text block.
+- A declined request arrives as a normal **HTTP 200 with `stop_reason:
+  "refusal"`**, not an exception. Unhandled, that was a 500 on the message
+  someone found hardest to send. There is now a warm reply that keeps the
+  door open and names 988.
+- Opus 5 writes longer than 4.5 unless told otherwise, so the prompt now asks
+  for brevity — two or three sentences. A wall of text reads as a lecture to
+  someone already struggling, and it is harder to take in on a hard night.
+  This one is a voice change, not just a cost one.
+
+`docs/cost-model.md` carries the full evidence, including what is still
+unoptimized and why. Two entries there are measured negatives rather than
+plans: the analysis prompt does not qualify for Haiku's cache (tested — it
+silently returns zero, sitting below the minimum cacheable prefix), and the
+Batch API's 50% discount is incompatible with same-turn recall, which is the
+feature it would have to be traded for.
+
+---
+
 ## Two findings written into Phase 7 · 2026-09-07
 
 > **Triggered by** a question asked while testing the send queue in the
