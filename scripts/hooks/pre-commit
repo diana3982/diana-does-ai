@@ -136,6 +136,12 @@ def check_personal_data(root):
     if not topics:
         return 0
 
+    # Whole-word, case-insensitive. A known gap, left open deliberately:
+    # a name is caught in any capitalisation, but not with a suffix glued
+    # on -- `name2` or `name-test` slip through. Substring matching would
+    # close that and would also fire on every ordinary word containing a
+    # short topic, which is how a hook stops being trusted. Revisit only
+    # if a near-miss gets through -- this comment is then the reminder.
     patterns = [(t, re.compile(rf'\b{re.escape(t)}\b', re.I)) for t in topics]
     hits = []
     for path, line in added_lines():
