@@ -215,6 +215,27 @@ Forcing a tier is kept separate from telling the model anything — saying "this
 is a test" would change how it replies and invalidate the read. Crisis
 handling is identical in test mode.
 
+## Code Review Workflow
+- All new features and significant changes must be developed on a separate branch, never directly on main
+- Branch naming convention: feature/description-here or fix/description-here
+- Every PR must include a description of what changed and why
+- Any architectural decision must include a brief note on the tradeoff considered before writing any code
+- Any PR over ~10 files, or touching how user data is stored or deleted, gets a second review pass before merging
+- Stop mid-task and confirm the approach if a change is heading past ~10 files, needs a new dependency, or needs a different design than the one agreed — do not finish it and ask afterwards
+- Never merge to main without Diana's explicit approval
+
+Blast radius, not layer count, is what predicts risk. A two-line change
+spanning backend and frontend is safer than a 300-line refactor inside one of
+them. The two real bugs this project has had — the test suite writing to live
+data files, and test mode writing to the live settings file — were both
+single-layer and both small, and both touched how user data is stored.
+
+The stop-and-check rule is there because the expensive failure is not a wrong
+approach, it is a wrong approach finished. A 20-file change handed over
+complete is harder to redirect than a question asked at file three, and it
+puts the reviewer in the position of either accepting it or throwing away
+work.
+
 ---
 
 *🕊️ Columba — for anyone who needs a light in the dark*
