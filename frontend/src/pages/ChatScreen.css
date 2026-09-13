@@ -33,6 +33,18 @@
   text-align: center;
 }
 
+/* Holds the name, the dot and the status line. On a wide panel this is
+   invisible -- a centred column with the same gap the three used to get as
+   direct children of .chat-identity. It earns its keep on narrow screens,
+   where the panel turns into a header strip. */
+.chat-identity-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0; /* so a long name wraps instead of widening the strip */
+}
+
 .chat-name {
   margin: 0;
   font-family: var(--font-mono);
@@ -213,6 +225,22 @@
     flex-direction: row;
     text-align: left;
     align-items: center;
+  }
+
+  /* Name and dot share a line; the status message takes the next one. All
+     four on one row read as a run-on, and left the status nowhere to sit.
+     flex-basis rather than a second wrapper: the break happens inside this
+     box, so the status message lands under the NAME rather than under the
+     avatar, which is the alignment that makes it read as a caption. */
+  .chat-identity-text {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-2);
+  }
+
+  .chat-status-message {
+    flex-basis: 100%;
   }
 
   .chat-about,
