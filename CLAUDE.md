@@ -218,11 +218,16 @@ handling is identical in test mode.
 ## Code Review Workflow
 - All new features and significant changes must be developed on a separate branch, never directly on main
 - Branch naming convention: feature/description-here or fix/description-here
-- Every PR must include a description of what changed and why
+- Every PR must include a description of what changed and why — where *why* names the specific thing that prompted it: a **bug** (what broke, and how it surfaced), a **deliberate design choice** (what else was considered, and what ruled it out), or an **outcome being pursued** (what should be true afterwards that isn't now). "Improves X" and "cleans up Y" are not whys — they are restatements of what
 - Any architectural decision must include a brief note on the tradeoff considered before writing any code
 - Any PR over ~10 files, or touching how user data is stored or deleted, gets a second review pass before merging
 - Stop mid-task and confirm the approach if a change is heading past ~10 files, needs a new dependency, or needs a different design than the one agreed — do not finish it and ask afterwards
 - Never merge to main without Diana's explicit approval
+
+The standard for *why* is the one the CHANGELOG already holds: a decision is
+only legible alongside the thing that forced it. Months later the question is
+never "what does this code do" — that is readable — it is "what did they know
+that made this the right call", and only the prompting fact answers it.
 
 Blast radius, not layer count, is what predicts risk. A two-line change
 spanning backend and frontend is safer than a 300-line refactor inside one of
