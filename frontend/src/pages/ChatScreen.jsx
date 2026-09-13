@@ -375,16 +375,24 @@ function ChatScreen({ character }) {
         <aside className="chat-sidebar">
           <div className="chat-identity">
             <CompanionAvatar name={name} />
-            <p className="chat-name">{name}</p>
 
-            <p className="status-label">
-              <span
-                className={`status-dot ${away ? 'status-dot-away' : ''}`}
-                aria-hidden="true"
-              />{' '}
-              {away ? STATUS.AWAY : STATUS.ONLINE}
-            </p>
-            <p className="chat-status-message">{away ? awayStatus : onlineStatus}</p>
+            {/* Wrapped so the text can lay itself out independently of the
+                avatar. On a narrow screen the panel becomes a header strip
+                and this becomes a wrapping row: name and dot share a line,
+                the status message drops to the next one -- starting under
+                the name, because this box begins where the avatar ends. */}
+            <div className="chat-identity-text">
+              <p className="chat-name">{name}</p>
+
+              <p className="status-label">
+                <span
+                  className={`status-dot ${away ? 'status-dot-away' : ''}`}
+                  aria-hidden="true"
+                />{' '}
+                {away ? STATUS.AWAY : STATUS.ONLINE}
+              </p>
+              <p className="chat-status-message">{away ? awayStatus : onlineStatus}</p>
+            </div>
           </div>
 
           <hr className="divider" />
