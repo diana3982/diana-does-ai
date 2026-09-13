@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from quirks import update_quirk, build_quirks_context
 from sensitivities import KINDS as SENSITIVITY_KINDS, note_sensitivity, build_sensitivities_context
+from user_profile import build_profile_context, clean_pronouns, set_pronouns
 from settings import load_settings
 import usage
 
@@ -138,7 +139,7 @@ Always follow these rules:
 - Begin your very first response with a brief affirmation that reflects back what the user shared
 - Offer a closing affirmation if the user says goodbye or signals they're wrapping up
 - Use warm, accessible language -- never clinical or formal. Meet people where they are, whatever age they are
-- If pronouns are not provided, ask the user if they'd like to share them early in the conversation
+- If you do not know this person's pronouns, you may ask once, early, whether they would like to share them. Never ask a second time
 - If someone moves from something heavy to something light, read it as them
   wanting to change the subject. Follow their lead. Name once that the door
   stays open, then let it go -- never ask them to confirm they want to move
@@ -148,6 +149,12 @@ Always follow these rules:
   lecture to someone who is already struggling, and it is harder to take in
   on a hard night. Say the thing that matters and leave room for them to
   answer"""
+
+    # Ahead of quirks and sensitivities: who someone is changes less often
+    # than what they have mentioned lately.
+    profile_context = build_profile_context()
+    if profile_context:
+        base_prompt += f"\n\n{profile_context}"
 
     if quirks_context:
         base_prompt += f"\n\n{quirks_context}"
@@ -231,6 +238,18 @@ mood alone.
 "she", "he", "they", or null. Only from an actual pronoun they used for the
 companion. Never from anything about the user themselves.
 
+5. USER PRONOUNS -- only if this person stated their own pronouns outright:
+"i use she/her", "i'm they/them", "he/him please". Record exactly the
+pronouns they gave, nothing else.
+
+This is the opposite of the gender cue above, and the two are easy to
+confuse. That one is how they refer to THEIR COMPANION. This one is how they
+refer to THEMSELVES. A message calling the companion "she" says nothing
+about the user.
+
+Never infer this. Not from a name, not from how they write, not from
+anything they say about their life. If they did not state it plainly, null.
+
 Respond ONLY with valid JSON in exactly this format, no other text:
 {
   "found": true or false,
@@ -249,7 +268,8 @@ Respond ONLY with valid JSON in exactly this format, no other text:
       "kind": "health, substance, family, relationship, grief, money, work, other"
     }
   ],
-  "gender_cue": "she or he or they, or null"
+  "gender_cue": "she or he or they, or null",
+  "user_pronouns": "exactly the pronouns they gave for themselves, or null"
 }
 
 "found" refers to quirks only. If a quirk does not fit one of its
@@ -265,6 +285,7 @@ def safe_analysis():
         'intensity': SAFEST_INTENSITY,
         'sensitivities': [],
         'gender_cue': None,
+        'user_pronouns': None,
     }
 
 
@@ -351,6 +372,9 @@ def normalise_analysis(raw):
         'intensity': intensity,
         'sensitivities': sensitivities,
         'gender_cue': cue,
+        # Validated by the store rather than here, so the shape a pronoun
+        # is allowed to take is defined in exactly one place.
+        'user_pronouns': clean_pronouns(raw.get('user_pronouns')),
     }
 
 
@@ -432,6 +456,12 @@ def chat(message, conversation_history, character):
     if load_settings().get('sensitivities_enabled', True):
         for item in analysis.get("sensitivities", []):
             note_sensitivity(item["topic"], item["kind"])
+
+    # Someone saying their pronouns should not have to say it twice, so this
+    # is written before the prompt is built -- the reply that acknowledges
+    # being told already knows.
+    if analysis.get("user_pronouns"):
+        set_pronouns(analysis["user_pronouns"])
 
     # Built after the writes above, so this turn's system prompt already
     # knows whatever this message just revealed.

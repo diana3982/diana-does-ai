@@ -237,3 +237,74 @@ class TestTestMode:
         monkeypatch.setenv('COLUMBA_FORCE_INTENSITY', 'heavy')
         prompt = companion.build_system_prompt(character, intensity='heavy')
         assert 'test' not in prompt.lower().replace('latest', '')
+
+
+class TestUserPronouns:
+    """The user's own pronouns, recorded only when stated outright.
+
+    The risk this class exists for is confusion between two fields that sit
+    next to each other in the schema and mean opposite things: `gender_cue`
+    is how someone refers to THEIR COMPANION, `user_pronouns` is how they
+    refer to THEMSELVES. Getting that backwards would misgender someone
+    using a signal that was never about them.
+    """
+
+    def test_a_plain_statement_is_kept(self):
+        result = companion.normalise_analysis({
+            'intensity': 'light', 'user_pronouns': 'she/her',
+        })
+        assert result['user_pronouns'] == 'she/her'
+
+    def test_neopronouns_survive_normalising(self):
+        result = companion.normalise_analysis({
+            'intensity': 'light', 'user_pronouns': 'xe/xem',
+        })
+        assert result['user_pronouns'] == 'xe/xem'
+
+    @pytest.mark.parametrize('value', [None, '', 'not sure really', 42, []])
+    def test_anything_unusable_becomes_nothing(self, value):
+        result = companion.normalise_analysis({
+            'intensity': 'light', 'user_pronouns': value,
+        })
+        assert result['user_pronouns'] is None
+
+    def test_a_missing_field_is_not_an_error(self):
+        assert companion.normalise_analysis({'intensity': 'light'})['user_pronouns'] is None
+
+    def test_the_safe_fallback_knows_nothing(self):
+        """A failed analysis must never invent a pronoun."""
+        assert companion.safe_analysis()['user_pronouns'] is None
+
+    def test_the_companion_cue_is_not_the_user_pronoun(self):
+        """Calling the companion "she" says nothing about the user."""
+        result = companion.normalise_analysis({
+            'intensity': 'light', 'gender_cue': 'she',
+        })
+        assert result['gender_cue'] == 'she'
+        assert result['user_pronouns'] is None
+
+    def test_the_two_fields_do_not_bleed_into_each_other(self):
+        result = companion.normalise_analysis({
+            'intensity': 'light', 'gender_cue': 'he', 'user_pronouns': 'they/them',
+        })
+        assert result['gender_cue'] == 'he'
+        assert result['user_pronouns'] == 'they/them'
+
+    def test_the_prompt_tells_the_model_the_difference(self):
+        """Two adjacent fields meaning opposite things is exactly how a
+        model conflates them, so the prompt names the contrast outright."""
+        assert 'THEMSELVES' in companion.ANALYSIS_PROMPT
+        assert 'THEIR COMPANION' in companion.ANALYSIS_PROMPT
+
+    def test_being_told_is_enough_to_be_remembered(self, api, character, fake_model):
+        """End to end: said once, stored, and no longer asked for."""
+        import user_profile
+        fake_model.extraction = {
+            'found': False, 'quirks': [], 'intensity': 'light',
+            'user_pronouns': 'they/them',
+        }
+        api.post('/character', json=character)
+        api.post('/chat', json={'message': 'i use they/them by the way'})
+
+        assert user_profile.load_profile()['pronouns'] == 'they/them'
+        assert 'they/them' in companion.build_system_prompt(character)

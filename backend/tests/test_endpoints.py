@@ -10,6 +10,7 @@ endpoint that returns a bare string would put a stack trace in front of
 someone having a bad night.
 """
 import companion
+import user_profile
 import quirks
 import sensitivities
 import settings
@@ -278,3 +279,35 @@ class TestQuirks:
         quirks.update_quirk('french toast', 'positive', 2, 'food')
         assert api.delete('/quirks').status_code == 200
         assert quirks.load_quirks() == {}
+
+
+class TestProfile:
+    """Read and delete. Setting it by hand waits for a screen to set it from.
+
+    Delete does not wait. If the app is going to record someone's identity,
+    taking it back cannot mean hand-editing a JSON file.
+    """
+
+    def test_nothing_known_yet(self, api):
+        response = api.get('/profile')
+        assert response.status_code == 200
+        assert response.get_json()['profile'] == {}
+
+    def test_what_it_knows_can_be_read_back(self, api):
+        user_profile.set_pronouns('they/them')
+        assert api.get('/profile').get_json()['profile'] == {'pronouns': 'they/them'}
+
+    def test_it_can_be_taken_back(self, api):
+        user_profile.set_pronouns('she/her')
+        assert api.delete('/profile').status_code == 200
+        assert user_profile.load_profile() == {}
+
+    def test_deleting_nothing_is_not_an_error(self, api):
+        """Someone clearing a profile that is already empty has done nothing
+        wrong and should not be told they have."""
+        assert api.delete('/profile').status_code == 200
+
+    def test_setting_it_by_hand_is_not_offered_yet(self, api):
+        """Deliberate, not an oversight -- an endpoint with no screen behind
+        it is configuration invented before it is needed. Phase 4."""
+        assert api.patch('/profile', json={'pronouns': 'he/him'}).status_code == 405

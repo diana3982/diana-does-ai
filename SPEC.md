@@ -417,6 +417,15 @@ so building them apart means building the same seam twice.
     escalation stays fully live. "Force the tier" stays separate from "tell
     the model it is a test".
 
+14.5. ✅ **A profile for the person** — pronouns, recorded only when stated
+    outright and kept in `backend/user_profile.py`, separate from the transcript.
+    The companion asked every session because the answer lived only in
+    conversation history; clearing the chat lost it too. Identity is not a
+    transcript detail. **Use, never raise** — a fact here helps the companion
+    understand what you bring up, and never lets it start a subject, because
+    facts go stale in ways the store cannot detect. Relationships, place,
+    school and work extend the same store, and are their own piece of work.
+
 ### Phase 4 — My settings
 18. Edit your companion — the setup form, prefilled
 19. What your companion knows — quirks list, sensitivities list, *about quirks*

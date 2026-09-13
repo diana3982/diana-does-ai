@@ -12,6 +12,69 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## The companion stops asking who you are · 2026-09-12
+
+> **Triggered by** a browser session: *"i've told juno my pronouns a bunch of
+> times already."* It had. The answer went into the conversation history and
+> nowhere else, so every backend restart lost it — and clearing the chat lost
+> it too, which is how the bug was pinned down.
+
+**A bug, and a fairly bad one for this app.** Columba remembered what you
+like, what to steer around, and who your companion is. It remembered nothing
+about *you*. Two rules guaranteed the loop: the prompt said to ask for
+pronouns when none were provided, and the silent analysis pass was explicitly
+forbidden from recording anything about the user themselves — it only noted
+how they referred to their *companion*.
+
+Being asked your pronouns over and over by something whose whole promise is
+remembering you is worse than never asking.
+
+`backend/user_profile.py` holds what someone has said outright about themselves,
+starting with pronouns. It survives a restart, and it survives clearing the
+chat on purpose: **clearing a conversation should forget the conversation,
+not forget who you are.**
+
+**Use, never raise.** The rule that will matter most as this store grows.
+A fact here lets the companion understand what someone says; it never lets it
+start a subject. Facts go stale in ways nothing here can detect — a partner
+becomes an ex, a job ends between two sessions — and the entire cost of that
+staleness sits in raising one unprompted. *"How's your partner?"* to someone
+who was left last week is precisely the harm sensitivities exist to prevent.
+Used only when the user opens the subject, a stale fact corrects itself on
+the same message that reveals it.
+
+**Pronouns are validated by shape, not by an allowlist.** A fixed list of
+she/her, he/him, they/them would be simpler and would quietly turn away
+anyone using neopronouns, in an app that lists pronoun inclusivity as a
+commitment. So the field accepts any slash-joined lowercase form —
+`xe/xem`, `she/they`, `he/him/his`, `any` — and rejects prose.
+
+Writing the test for that found a hole in it. The first pattern allowed
+spaces, so `not sure really` passed: three ordinary lowercase words, which
+would have had the companion told that this person uses *"not sure really"*
+pronouns. Spaces are gone; a trailing noun is stripped instead, so
+`any pronouns` still works. Storing nonsense is worse than refusing a rare
+phrasing, because refusing only means asking once more.
+
+The extraction rides the Haiku call that already runs on every message, as a
+fifth field. It sits beside `gender_cue` and means the opposite — that one is
+how someone refers to their **companion**, this one is how they refer to
+**themselves** — so the prompt names the contrast outright, and there are
+tests pinning that the two never bleed into each other. Getting it backwards
+would misgender someone using a signal that was never about them.
+
+`GET` and `DELETE /profile` exist; `PATCH` waits for Phase 4, where there
+will be a screen to edit from. Delete does not wait: if the app records
+someone's identity, taking it back cannot mean hand-editing a JSON file.
+
+Deliberately **not** added to the pre-commit hook's scan. Every file
+implementing this carries example pronouns, so a stored `she/her` would fire
+on the prompt, the docstrings and every test, forever — the cry-wolf failure
+the hook's own comments warn about. `she/her` in a diff also identifies
+nobody. That reasoning does not extend to a name, a school or an employer,
+and those should join the scan when the store grows to hold them.
+
+
 ## Cost: measured, then reduced · 2026-09-08
 
 > **Triggered by** a question about the portfolio claim: the dual-model split

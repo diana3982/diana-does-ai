@@ -131,6 +131,7 @@ diana-does-ai/
 │   ├── companion.py    ← Claude API logic + dual-call architecture
 │   ├── quirks.py       ← Quirks management (scoring, confidence, sentiment)
 │   ├── sensitivities.py ← things to steer around — withhold-only
+│   ├── user_profile.py ← what the user said about themselves — use, never raise
 │   ├── settings.py     ← the handful of choices the user controls
 │   ├── storage.py      ← every file this app writes, in one list
 │   ├── usage.py        ← token counts per API call — counts only, never content
