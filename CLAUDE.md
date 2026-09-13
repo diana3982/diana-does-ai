@@ -223,6 +223,13 @@ handling is identical in test mode.
 - Any PR over ~10 files, or touching how user data is stored or deleted, gets a second review pass before merging
 - Stop mid-task and confirm the approach if a change is heading past ~10 files, needs a new dependency, or needs a different design than the one agreed — do not finish it and ask afterwards
 - Never merge to main without Diana's explicit approval
+- Every PR comment Claude writes ends with an attribution line. `gh` posts with Diana's token, so GitHub records her as the author of both sides — without a signature the review thread reads as one person talking to themselves
+
+Attribution matters here beyond tidiness. The point of reviewing in public is
+that someone can later see a decision being questioned and answered — and that
+only works if it is clear who did which. Commits already carry a
+`Co-Authored-By` trailer; PR comments have no equivalent, so they are signed
+by hand.
 
 The standard for *why* is the one the CHANGELOG already holds: a decision is
 only legible alongside the thing that forced it. Months later the question is
