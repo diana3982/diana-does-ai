@@ -8,6 +8,13 @@
   max-width: 78%;
 }
 
+/* A part of a reply with more of the same turn below it. The full gap is for
+   the space between turns; inside one, the parts sit close enough to read as
+   one thing said in pieces rather than several separate messages. */
+.bubble-row-continued {
+  margin-bottom: var(--space-1);
+}
+
 .bubble-row-user {
   margin-left: auto;
   align-items: flex-end;

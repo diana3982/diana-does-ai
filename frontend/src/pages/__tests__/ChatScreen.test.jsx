@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ChatScreen from '../ChatScreen'
 import { sendMessage } from '../../api/columba'
 import { CAP_MS, IDLE_MS, OPENER_SETTLE_MS, SETTLE_MS } from '../../lib/sendQueue'
+import { planPauses, splitReply } from '../../lib/replyQueue'
 
 /**
  * The send queue's timing is tested on its own in `src/lib/__tests__`.
@@ -205,5 +206,156 @@ describe('ChatScreen — holding a thought together', () => {
     expect(bubble('first')).toBeNull()
     expect(bubble('second')).toBeTruthy()
     expect(composer().value).toBe('first')
+  })
+})
+
+describe('ChatScreen — a reply arriving in parts', () => {
+  /** The companion's name header above a bubble. */
+  const senders = () => document.querySelectorAll('.bubble-sender')
+
+  /** Timestamps under bubbles. */
+  const timestamps = () => document.querySelectorAll('.bubble-time')
+
+  /** Every rendered bubble's text, in order. */
+  const bubbleTexts = () =>
+    [...document.querySelectorAll('.bubble-text')].map((node) => node.textContent)
+
+  /** A reply the model wrote with a blank line between two beats. */
+  const TWO_BEATS = { reply: 'that sounds exhausting.\n\nwhat is weighing heaviest?', intensity: 'light' }
+  const [, PAUSE] = planPauses(splitReply(TWO_BEATS.reply))
+
+  /**
+   * The same shape with a long first part, so the gap before part two
+   * outlasts the send queue's settle window.
+   *
+   * This matters more than it looks. With a short first part the pause sits
+   * at the floor, part two lands before anything new could be sent, and a
+   * test about sending mid-reply passes whether or not delivering counts as
+   * busy -- it cannot fail, so it proves nothing.
+   */
+  const LONG_FIRST = 'x'.repeat(400)
+  const LONG_REPLY = { reply: `${LONG_FIRST}\n\nthe rest of it`, intensity: 'light' }
+  const [, LONG_PAUSE] = planPauses(splitReply(LONG_REPLY.reply))
+
+  /** Sends a thought and lets its reply come back. */
+  const sendAndReceive = async () => {
+    send(THOUGHT)
+    await tick(SETTLE_MS)
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    Element.prototype.scrollIntoView = vi.fn()
+    sendMessage.mockClear()
+    sendMessage.mockResolvedValue(TWO_BEATS)
+    render(<ChatScreen character={CHARACTER} />)
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+  })
+
+  it('shows the first part at once and the second only after its pause', async () => {
+    await sendAndReceive()
+
+    // No delay on top of the wait for the reply itself.
+    expect(bubble('that sounds exhausting.')).toBeTruthy()
+    expect(bubble('what is weighing heaviest?')).toBeNull()
+
+    await tick(PAUSE)
+    expect(bubble('what is weighing heaviest?')).toBeTruthy()
+  })
+
+  it('reads as one utterance: the name once, the time once', async () => {
+    await sendAndReceive()
+    await tick(PAUSE)
+
+    // The user's own bubble carries a timestamp too, so two in total --
+    // one for them, one for the whole reply rather than one per part.
+    expect(senders()).toHaveLength(1)
+    expect(timestamps()).toHaveLength(2)
+  })
+
+  it('keeps the typing indicator up between parts and takes it down after', async () => {
+    await sendAndReceive()
+    // The rest of the thought is still coming, the way it would be if
+    // someone were texting it.
+    expect(typingIndicator()).toBeTruthy()
+
+    await tick(PAUSE)
+    expect(typingIndicator()).toBeNull()
+  })
+
+  it('the long reply really does outlast the settle window', () => {
+    // Guards the two tests below. If the pacing constants change and this
+    // fails, those tests have silently stopped testing anything.
+    expect(LONG_PAUSE).toBeGreaterThan(SETTLE_MS)
+  })
+
+  it('holds a message sent mid-reply until the reply has finished arriving', async () => {
+    sendMessage.mockResolvedValue(LONG_REPLY)
+    await sendAndReceive()
+    expect(sendMessage).toHaveBeenCalledTimes(1)
+
+    // Part two is still on its way. Without delivering counting as busy,
+    // this would go out as soon as its window closed and a second reply
+    // could thread itself between the two halves of the first.
+    send(THOUGHT)
+    await tick(SETTLE_MS)
+    expect(bubble('the rest of it')).toBeNull()
+    expect(sendMessage).toHaveBeenCalledTimes(1)
+
+    await tick(LONG_PAUSE + SETTLE_MS)
+    expect(sendMessage).toHaveBeenCalledTimes(2)
+  })
+
+  it('never lets a second reply interleave with the first', async () => {
+    sendMessage
+      .mockResolvedValueOnce(LONG_REPLY)
+      .mockResolvedValueOnce({ reply: 'second reply', intensity: 'light' })
+
+    await sendAndReceive()
+    send(THOUGHT)
+
+    // Stepped, not advanced in one jump. A single large advance fires every
+    // due timer before any pending promise can settle -- so part two would
+    // land first and the second reply's await would resume after it, putting
+    // the bubbles in the right order by accident and letting this pass with
+    // the fix removed. Stepping lets the send resolve where it really would.
+    await tick(SETTLE_MS)
+    await tick(LONG_PAUSE)
+    await tick(SETTLE_MS * 2)
+
+    const texts = bubbleTexts()
+    const firstEnd = texts.indexOf('the rest of it')
+    const secondReply = texts.indexOf('second reply')
+    expect(firstEnd).toBeGreaterThan(-1)
+    expect(secondReply).toBeGreaterThan(firstEnd)
+  })
+
+  it('clears cleanly mid-reply, with nothing arriving afterwards', async () => {
+    await sendAndReceive()
+    expect(bubble('that sounds exhausting.')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('[ clear this chat ]'))
+    await act(async () => {
+      fireEvent.click(screen.getByText('[ yes, clear it ]'))
+    })
+
+    await tick(PAUSE * 2)
+    // The window stays empty: no late part, and no indicator hanging over it.
+    expect(bubble('what is weighing heaviest?')).toBeNull()
+    expect(typingIndicator()).toBeNull()
+  })
+
+  it('leaves a reply with no blank line exactly as it was', async () => {
+    sendMessage.mockResolvedValue({ reply: 'i hear you. that sounds hard.', intensity: 'light' })
+    await sendAndReceive()
+
+    expect(bubble('i hear you. that sounds hard.')).toBeTruthy()
+    expect(senders()).toHaveLength(1)
+    // Nothing more coming, so no indicator lingering after it.
+    expect(typingIndicator()).toBeNull()
   })
 })

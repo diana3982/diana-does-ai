@@ -7,8 +7,18 @@ import TypingIndicator from '../components/TypingIndicator'
 import { buildAboutMe } from '../copy/about'
 import { CHAT_COPY } from '../copy/chat'
 import { getStatusMessage, stricter, STATUS } from '../copy/status'
+import { createReplyQueue, splitReply } from '../lib/replyQueue'
 import { createSendQueue } from '../lib/sendQueue'
 import './ChatScreen.css'
+
+/**
+ * One message in the history. Kept outside the component so the reply
+ * queue's callback, built once on mount, can make messages without closing
+ * over anything a later render would replace.
+ */
+function newMessage(role, text, id = crypto.randomUUID()) {
+  return { id, role, text, at: new Date() }
+}
 
 /** Textarea grows with what's typed, up to three lines. */
 const MAX_INPUT_LINES = 3
@@ -36,6 +46,12 @@ function ChatScreen({ character }) {
    * as the user is concerned, held and in flight are the same thing.
    */
   const [held, setHeld] = useState(0)
+  /**
+   * The reply has come back and at least one of its parts is still to
+   * arrive. Keeps the typing indicator up between bubbles, the way it would
+   * be while someone is still texting the rest of their thought.
+   */
+  const [delivering, setDelivering] = useState(false)
   const [clearing, setClearing] = useState(false)
   const [confirmingClear, setConfirmingClear] = useState(false)
   const [reconnecting, setReconnecting] = useState(false)
@@ -67,6 +83,10 @@ function ChatScreen({ character }) {
   const flushRef = useRef(null)
   const waitingRef = useRef(false)
   const draftRef = useRef('')
+  /** Paces a reply's parts. Owns timers, so it lives and dies with the screen. */
+  const replyQueueRef = useRef(null)
+  /** `delivering` for the send queue's timer, which can't read state. */
+  const deliveringRef = useRef(false)
 
   const name = character?.name ?? 'your companion'
   const tone = character?.tone
@@ -114,19 +134,34 @@ function ChatScreen({ character }) {
   useEffect(() => {
     queueRef.current = createSendQueue({
       onFlush: (batch) => flushRef.current?.(batch),
-      isBusy: () => waitingRef.current,
+      // Busy until the whole reply is on screen, not just until it comes
+      // back. `waiting` drops the moment the request resolves, while later
+      // parts are still arriving -- so without delivering here, a fragment
+      // sent mid-reply would go out and start a second reply threading its
+      // way between the parts of the first.
+      isBusy: () => waitingRef.current || deliveringRef.current,
       hasUnsent: () => draftRef.current.trim().length > 0,
+    })
+    replyQueueRef.current = createReplyQueue({
+      onPart: (text) => setMessages((current) => [...current, newMessage('companion', text)]),
+      onDone: () => {
+        deliveringRef.current = false
+        setDelivering(false)
+      },
     })
     return () => {
       queueRef.current?.cancel()
       queueRef.current = null
+      replyQueueRef.current?.cancel()
+      replyQueueRef.current = null
     }
   }, [])
 
-  // Follow the conversation down as it grows, including while waiting.
+  // Follow the conversation down as it grows, including while waiting and
+  // as each part of a reply arrives.
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' })
-  }, [messages, waiting, held])
+  }, [messages, waiting, held, delivering])
 
   // Land on "nevermind" when the confirmation opens. Keyboard users should
   // have to move towards the destructive answer, never away from it.
@@ -194,7 +229,7 @@ function ChatScreen({ character }) {
   }, [confirmingClear])
 
   const addMessage = (role, text, id = crypto.randomUUID()) => {
-    setMessages((current) => [...current, { id, role, text, at: new Date() }])
+    setMessages((current) => [...current, newMessage(role, text, id)])
     return id
   }
 
@@ -220,7 +255,15 @@ function ChatScreen({ character }) {
       const data = await sendMessage(text)
       setAway(false)
       setIntensity((current) => stricter(current, data.intensity))
-      addMessage('companion', data.reply)
+
+      // A reply with no blank line in it arrives whole, exactly as before;
+      // one with a break arrives as its parts. The first part is shown now
+      // and delivery is only "in progress" if more are still to come.
+      const replies = replyQueueRef.current
+      replies?.deliver(splitReply(data.reply))
+      const stillComing = replies?.isDelivering() ?? false
+      deliveringRef.current = stillComing
+      setDelivering(stillComing)
     } catch (err) {
       console.error('[columba] message failed', err)
 
@@ -315,6 +358,9 @@ function ChatScreen({ character }) {
     // held fragment arrive in the empty window would be its own small horror.
     queueRef.current?.cancel()
     setHeld(0)
+    // The same for a reply still arriving. Its onDone clears `delivering`,
+    // so the typing indicator comes down along with the parts.
+    replyQueueRef.current?.cancel()
     setClearing(true)
     try {
       await resetChat()
@@ -457,20 +503,31 @@ function ChatScreen({ character }) {
               <p className="chat-empty">{CHAT_COPY.empty}</p>
             )}
 
-            {messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                role={message.role}
-                text={message.text}
-                at={message.at}
-                companionName={name}
-              />
-            ))}
+            {messages.map((message, index) => {
+              // Consecutive companion bubbles are one turn arriving in
+              // parts, so they read as one utterance: the name on the first,
+              // the time on the last. No turn id is needed -- a new reply can
+              // only start after a user message, and only once the previous
+              // reply has finished arriving, so adjacent companion bubbles
+              // are always the same turn. User bubbles are left as they were.
+              const isCompanion = message.role === 'companion'
+              return (
+                <MessageBubble
+                  key={message.id}
+                  role={message.role}
+                  text={message.text}
+                  at={message.at}
+                  companionName={name}
+                  groupStart={!isCompanion || messages[index - 1]?.role !== 'companion'}
+                  groupEnd={!isCompanion || messages[index + 1]?.role !== 'companion'}
+                />
+              )
+            })}
 
-            {/* Held and in flight look the same from here, on purpose: the
-                message has landed either way, and the wait is the companion
-                giving them room to finish rather than answering half of it. */}
-            {(waiting || held > 0) && (
+            {/* Held, in flight and mid-reply all look the same from here, on
+                purpose: the wait is the companion either giving them room to
+                finish, or still sending the rest of what it has to say. */}
+            {(waiting || held > 0 || delivering) && (
               <TypingIndicator companionName={name} status={typingStatus} />
             )}
 

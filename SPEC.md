@@ -390,11 +390,16 @@ every message for quirk extraction — one round trip, one JSON schema, one
 defensive parse. These are entangled (a sensitivity sets the intensity floor),
 so building them apart means building the same seam twice.
 
-11.5. **Multi-part companion replies** — *next up.* The other half of the
+11.5. ✅ **Multi-part companion replies** — the other half of the
     abstraction Phase 4.5 built: one turn rendered as several bubbles,
-    paced, the way a person sends a thought in pieces. The user's side
-    is done and `frontend/src/lib/sendQueue.js` is the model for it —
-    a bubble is not a turn, in either direction.
+    paced, the way a person sends a thought in pieces. Lives in
+    `frontend/src/lib/replyQueue.js`, beside `sendQueue.js` — a bubble is
+    not a turn, in either direction. Splits **only** on a blank line the
+    model wrote, never on sentences; no prompt change, because the model
+    already leaves one between separate beats. The first part is never
+    delayed, later parts wait in proportion to the part before them, and a
+    whole reply's pauses are capped. Frontend only: `reply` is still one
+    string, so a reload in Phase 7 will show it as one bubble.
 12. ✅ **Intensity tagging** — `light` / `medium` / `heavy`, per message.
     **Fails heavy**: a missing, unparseable or errored tag must never unlock
     the light lines. A classifier that fails open is the one bug here that
@@ -464,7 +469,7 @@ relationships, places and work to a store nobody can look at.
 Both ends of the same idea: a bubble is not a turn.
 
 18.5. ✅ **Compounding user messages** *(the companion's side of this is
-    Phase 3.5 item 11.5, which is next up)* — fragments sent close together are held
+    Phase 3.5 item 11.5)* — fragments sent close together are held
     client-side and sent as one turn, so the companion answers the finished
     thought rather than the first line of it. The composer never locks.
     Quiet windows: 2s after something substantial, 5s after something short
