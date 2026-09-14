@@ -60,6 +60,22 @@ PRONOUN_PATTERN = re.compile(r'^[a-z]+(/[a-z]+){0,3}$')
 #: the regex, so the shape rule stays one readable line.
 TRAILING_NOUN = re.compile(r'\s+pronouns?$')
 
+#: Words a model writes when it means "nothing here". They pass the shape
+#: check -- "null" is four lowercase letters, "n/a" even has a slash -- so
+#: without this a model writing the WORD null instead of a JSON null would
+#: have the companion told that this person uses "null" pronouns.
+#:
+#: The schema invites exactly that, showing the field as a quoted string
+#: ending "...or null". gender_cue is safe from it only because it checks
+#: against a fixed set; this field is checked by shape and so is exposed.
+#:
+#: "none" is deliberately NOT here. It can be a model's empty answer, but
+#: "no pronouns, just use my name" is a real preference, and refusing it
+#: would mean asking that person again. It needs its own handling -- a
+#: context line saying to use their name -- rather than being swallowed or
+#: stored as "none pronouns". Recorded as open, not decided.
+NO_VALUE = frozenset({'null', 'nil', 'undefined', 'n/a', 'unknown'})
+
 
 def load_profile():
     if not os.path.exists(PROFILE_FILE):
@@ -79,9 +95,26 @@ def clean_pronouns(value):
     if not isinstance(value, str):
         return None
     cleaned = TRAILING_NOUN.sub('', value.lower().strip())
-    if len(cleaned) > 24:
+    if len(cleaned) > 24 or cleaned in NO_VALUE:
         return None
     return cleaned if PRONOUN_PATTERN.match(cleaned) else None
+
+
+def is_offered(value):
+    """Whether a model put an actual answer in the field, before validation.
+
+    Kept separate from clean_pronouns on purpose. An answer can be offered
+    and still refused -- "star / stars", with spaces -- and telling "the
+    model saw nothing" apart from "the model saw something and it was
+    rejected" is the whole point of the diagnostic this feeds. Answers that
+    only mean "nothing here" are not offered.
+    """
+    if value is None:
+        return False
+    if isinstance(value, str):
+        stripped = value.strip().lower()
+        return bool(stripped) and stripped not in NO_VALUE
+    return True
 
 
 def set_pronouns(value):

@@ -12,6 +12,83 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Seeing whether the machinery worked · 2026-09-13
+
+> **Triggered by** the pronoun bug earlier the same day. A change was
+> silently dropped, and finding out why took four wrong guesses. The original
+> message had been lost to a page refresh and was only recovered by asking the
+> companion to quote it back from its own history, which worked because the
+> conversation happened to still be in memory. Nothing in the log could have
+> answered it.
+
+**An outcome being pursued: the next failure should be visible without luck.**
+Five fields now go into `usage.jsonl`.
+
+The three profile fields came out of a design conversation, and each
+refinement made them better:
+
+- **Generic names, not `pronouns_*`.** Proposed during review.
+  `pronouns_found: 1` at 8:29pm says *"this person discussed their pronouns
+  then."* `user_profile_found: 1` only says something about them was noted.
+  That's less revealing for the same diagnostic value, and it already covers
+  relationships, place and work when the profile grows.
+- **Counts, not yes/no.** Once the profile holds several fields, `found: 2,
+  saved: 1` shows that one was dropped. A yes/no pair would read "fine."
+- **`referenced`, also proposed during review, and the most useful of the
+  three.** `found` and `saved` show a miss. `referenced` shows the harm: a
+  stale profile going into the prompt on every turn after the miss. Replayed
+  against the bug, it reads `0, 0, 1`: nothing caught, nothing saved, old
+  pronouns still sent.
+
+Two decisions keep them honest:
+
+- **`saved` counts changes, not writes.** Restating pronouns already on file
+  rewrites the same bytes and leaves the system prompt unchanged, so it can't
+  cause a cache miss. Counting it would break the correlation this number is
+  most useful for.
+- **`referenced` means put in front of the model, never used by it.** It's
+  checked against the prompt actually sent. Knowing whether the model *used*
+  the profile would mean reading the reply, which this log must never do.
+
+**An idea raised and deliberately dropped.** Logging the actual profile
+object "so we can reference it later" was suggested and then withdrawn once
+the problem was named. It would break the one promise this file makes, counts
+and never content, and field names would bring back the specificity the
+generic names removed. The profile already lives somewhere you can see and
+delete it: `GET /profile`, and soon the settings screen.
+
+**`duration_ms` measured something that had only ever been argued.** Haiku
+took 801–1,188 ms and Opus 2,045–4,413 ms across three live turns. The
+background pass adds about a second before every reply. `cost-model.md` had
+said *"the latency half is not yet measured"* since the day it was written.
+
+**`refusal`** checks an assumption the code states about itself: the refusal
+path exists because *"should never" is not "cannot."* Now it can be counted.
+
+**The rule is written into `usage.py`: this log answers "did the system
+work?", never "how was this person doing?".** That test sorted every field.
+Intensity per turn and crisis triggers are left out *on purpose*, even as
+counts. A column reading heavy at 2am, 3am, 4am is a mood diary whatever
+format it's kept in, and *when* a crisis flag fired is enough to reconstruct
+someone's hardest night. There's a test pinning that intensity is never
+logged.
+
+**A latent bug found while building it.** `clean_pronouns('null')` returned
+`'null'`, and the same was true of `nil`, `n/a`, `undefined` and `unknown`. A
+model writing the *word* null instead of a JSON null would have told the
+companion this person uses "null" pronouns. The schema invites it by showing
+the field as a quoted string ending *"…or null"*. `gender_cue` is safe only
+because it checks a fixed list; this field is checked by shape. It's in scope
+because it would have corrupted the new metrics: `saved: 1` for a save of
+"null". Those words are now refused, and they don't count as offered.
+
+**`none` is deliberately left open.** It can be a model's empty answer, but
+*"no pronouns, just use my name"* is a real preference. Swallowing it would
+ask that person again, and storing it produces *"uses none pronouns."* It
+needs its own handling, and a test pins it as undecided so it isn't decided
+by accident.
+
+
 ## Deciding what counts as pronouns · 2026-09-13
 
 > **Triggered by** a question before testing the pronoun store: *"i am going

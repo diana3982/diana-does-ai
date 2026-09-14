@@ -178,3 +178,37 @@ class TestWhyTheModelJudgesAndNotThisFile:
         this file only ever sees that."""
         assert user_profile.clean_pronouns('she her') is None
         assert user_profile.clean_pronouns('not sure really') is None
+
+
+class TestAbsenceMarkers:
+    """Words a model writes when it means "nothing here".
+
+    They pass the shape check -- "null" is four lowercase letters and "n/a"
+    even has a slash -- so without a guard the companion could be told this
+    person uses "null" pronouns. The schema invites it by showing the field
+    as a quoted string ending "...or null".
+    """
+
+    @pytest.mark.parametrize('marker', ['null', 'NULL', 'nil', 'undefined', 'n/a', 'unknown'])
+    def test_they_are_never_stored(self, marker):
+        assert user_profile.clean_pronouns(marker) is None
+
+    @pytest.mark.parametrize('marker', ['null', 'nil', 'n/a', 'unknown', '', '   ', None])
+    def test_they_do_not_count_as_offered(self, marker):
+        """Otherwise found: 1, saved: 0 would report a refusal where the
+        model had simply said nothing."""
+        assert user_profile.is_offered(marker) is False
+
+    def test_a_real_answer_counts_as_offered_even_when_refused(self):
+        assert user_profile.is_offered('star / stars') is True
+        assert user_profile.clean_pronouns('star / stars') is None
+
+    def test_none_is_left_open_on_purpose(self):
+        """Not decided, and pinned so it is not decided by accident.
+
+        "none" can be a model's empty answer, but "no pronouns, just use my
+        name" is a real preference. Swallowing it would ask that person
+        again; storing it produces "uses none pronouns". It needs its own
+        handling. If this test is changed, that handling should exist.
+        """
+        assert user_profile.clean_pronouns('none') == 'none'

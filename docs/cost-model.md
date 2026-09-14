@@ -87,8 +87,29 @@ What this buys is not only money. The analysis runs *before* the chat call
 and blocks it, deliberately: the system prompt is built after the analysis
 writes, so the reply already knows whatever the message just revealed. That
 puts the background pass on the critical path of every message, which makes
-Haiku being the fastest model load-bearing rather than incidental. The
-latency half is not yet measured — `usage.jsonl` records tokens, not timings.
+Haiku being the fastest model load-bearing rather than incidental.
+
+**Measured, 2026-09-13.** `usage.jsonl` now records `duration_ms` on every
+call. Across three live turns:
+
+| call | duration |
+|---|---|
+| analysis (Haiku) | 801 – 1,188 ms |
+| chat (Opus) | 2,045 – 4,413 ms |
+
+So the background pass adds roughly a second before every reply, which is a
+quarter to a third of the total wait. That is a real cost, not free, and it is
+the price of same-turn recall: the reply can respond to what the message just
+revealed only because the analysis finished first. Three turns is a small
+sample and the range is wide, so the log will narrow it as real sessions add
+to it.
+
+One detail consistent with the cache argument elsewhere in this doc: the
+slowest chat call (4,413 ms) was the turn where pronouns were saved. A saved
+profile changes the system prompt, which sits in front of the cached
+conversation, so that turn could not reuse the cache. One sample, so it's
+suggestive, not proof, but `user_profile_saved` and `cache_read_input_tokens`
+land on the same log line precisely so this can be checked over time.
 
 ## Claim 2: caching pays for the conversation history
 
@@ -287,11 +308,38 @@ front of every reply — a judgment, but now a measurable one.
 Every API call appends one line to `backend/data/usage.jsonl`:
 
 ```json
-{"at": "2026-09-08T16:25:10+00:00", "call": "chat", "model": "claude-opus-5",
+{"at": "2026-09-13T21:45:10+00:00", "call": "chat", "model": "claude-opus-5",
  "input_tokens": 2, "output_tokens": 116,
  "cache_creation_input_tokens": 127, "cache_read_input_tokens": 1155,
- "history_turns": 3}
+ "history_turns": 3, "duration_ms": 2045, "refusal": 0,
+ "user_profile_found": 0, "user_profile_saved": 0, "user_profile_referenced": 1}
 ```
+
+| field | means |
+|---|---|
+| `duration_ms` | how long the call took |
+| `refusal` | the chat model declined (0/1) |
+| `user_profile_found` | profile fields the model offered this message, *before* validation |
+| `user_profile_saved` | profile fields whose value **actually changed** — restating doesn't count |
+| `user_profile_referenced` | the profile was put in the prompt (0/1) — *not* that the model used it |
+
+Read together, the three profile fields say what happened:
+
+| found | saved | referenced | |
+|---|---|---|---|
+| 0 | 0 | 0 | nothing about the person noted, and no profile yet |
+| 0 | 0 | 1 | nothing new said; the stored profile was used |
+| 1 | 1 | 1 | said, saved, and used |
+| 1 | 0 | 1 | **offered but refused** by the shape check |
+
+`found: 0` can't tell *"nothing was said"* apart from *"something was said
+and missed"* — that would take reading the message. So these don't detect a
+miss on their own; they confirm one once you know it happened.
+
+**The rule for adding fields is written in `usage.py`:** this log answers
+*"did the system work?"*, never *"how was this person doing?"*. Intensity per
+turn and crisis triggers are deliberately absent, even as counts — *when*
+they happened is enough to reconstruct someone's hardest night.
 
 **Counts only, never content.** No message, no reply, no topic. That is
 enforced by a test (`test_nothing_the_user_said_is_written_down`) rather than
