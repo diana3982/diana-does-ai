@@ -12,6 +12,87 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## A reply that arrives in pieces · 2026-09-13
+
+> **Triggered by** the original idea the send queue grew out of. The
+> changelog entry for that queue records it: *"We had been talking about the
+> companion sending several bubbles the way a person texts, and the question
+> was: what happens when the **user** does that?"* The user's side got built
+> first. This is the half that started it.
+
+**An outcome being pursued.** A reply with two separate beats used to arrive
+as one tall bubble with a blank line in it. Now it arrives as two messages, a
+moment apart, the way someone texting sends the second thought after the
+first.
+
+**It splits only on a blank line the model actually wrote.** Splitting on
+sentences was rejected: *"i don't think that's true. you showed up."* is one
+thought, and cutting it in half would be worse than leaving it whole. No
+prompt change either. A browser session showed the model already leaves a
+blank line between separate beats, and leaving the prompt alone means that if
+the bubbles read wrong, the cause can only be the rendering, not a change to
+the companion's voice mixed in with it.
+
+**The pauses, and why they're capped.** On the user's side, waiting was free,
+because the reply was going to take seconds anyway. Here the whole reply
+already exists when it lands, so every pause is delay added on purpose. The
+first part is never delayed. Each later part waits in proportion to the length
+of the part before it (6 ms a character, between 600 ms and 2.2 s), and a
+whole reply's pauses can't total more than 4 s. Where that cap and the 600 ms
+floor disagree, the cap wins: a reply that takes too long to finish arriving
+is the worse failure. The first sketch used 18 ms a character, which would
+have pinned almost every real part at the ceiling and turned the formula into
+a constant.
+
+**The bug the plan was built around.** The send queue treats itself as busy
+while a reply is in flight, and *in flight* used to end the moment the request
+came back. With replies in parts, that's too early, because later parts are
+still arriving. A message sent between them would go out and start a second
+reply that threads between the halves of the first. Delivering now counts as
+busy.
+
+**No turn id.** Consecutive companion bubbles show the name once and the time
+once. That's worked out from which bubbles sit next to each other, not from a
+stored id, and it holds by construction: a new reply can only start after a
+user message, and only once the previous reply has finished arriving. So two
+companion bubbles next to each other are always one turn. Storing an id would
+be a second copy of something the message list already tells you. If someone
+sends a message while part two is still coming, their bubble appears between
+the parts, just as it would when two people type at once. That's left as it
+is.
+
+**A cancelled delivery still says it ended.** `cancel()` fires `onDone` when
+it interrupts a delivery. Without that, clearing the chat mid-reply would
+leave the typing indicator up over an empty window, because nothing would
+ever report that the delivery was over. The rule is exactly one `onDone` per
+`deliver()`, so no caller has to remember to reset anything.
+
+**Tests that couldn't fail, and how that was caught.** The first version of
+the component tests passed on the first run, which was the warning sign. The
+test for a message sent mid-reply used a first part short enough that its
+pause sat at the 600 ms floor, below the send queue's 2 s settle window, so
+part two had always arrived before anything new could go out. The key
+assertion was behind a condition that never ran, and the test passed with
+the fix or without it.
+
+Once the reply used a long first part, the interleaving test still passed
+without the fix, for a different reason. A single large fake-timer advance
+fires every due timer before any pending promise can settle, so the bubbles
+landed in the right order by accident. It now advances in steps.
+
+**All three guards were then checked by removing each fix and watching its
+test fail:** the busy rule (two tests), and cancelling on clear (one). A
+further test asserts that the long reply really does outlast the settle
+window, so a future change to the pacing numbers can't quietly make those
+tests pointless again.
+
+**Known consequence, recorded for Phase 7.** The split only affects how the
+reply is shown. History still stores one assistant message per reply, so when
+Phase 7 restores the conversation on reload, a reply seen as two bubbles comes
+back as one.
+
+---
+
 ## For someone who uses no pronouns · 2026-09-13
 
 > **Triggered by** review of the previous PR. It deliberately left `none`

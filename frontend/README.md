@@ -50,7 +50,8 @@ src/
 │   └── __tests__/
 ├── lib/
 │   ├── sendQueue.js    ← holds fragments so a thought can finish
-│   └── __tests__/      ← the timing rule, on fake timers
+│   ├── replyQueue.js   ← splits a reply on its blank lines and paces the parts
+│   └── __tests__/      ← both timing rules, on fake timers
 ├── pages/
 │   ├── SetupScreen.jsx ← first-time companion creation
 │   ├── ChatScreen.jsx  ← the chat interface

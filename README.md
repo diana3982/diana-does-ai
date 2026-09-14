@@ -157,7 +157,8 @@ diana-does-ai/
 │       │                       components: app, setup, chat, status,
 │       │                       quirks, about
 │       ├── lib/             ← client-side logic with no DOM: the send
-│       │                       queue that holds fragments together
+│       │                       queue that holds fragments together, and
+│       │                       the reply queue that paces a reply's parts
 │       ├── pages/           ← SetupScreen, ChatScreen
 │       ├── App.jsx          ← setup-vs-chat routing
 │       ├── App.css          ← design tokens + global styles
