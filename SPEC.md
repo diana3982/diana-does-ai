@@ -424,9 +424,38 @@ so building them apart means building the same seam twice.
     transcript detail. **Use, never raise** — a fact here helps the companion
     understand what you bring up, and never lets it start a subject, because
     facts go stale in ways the store cannot detect. Relationships, place,
-    school and work extend the same store, and are their own piece of work.
+    school and work extend the same store — see 17.6, which waits on 17.5.
 
 ### Phase 4 — My settings
+
+**Order change, 2026-09-13.** Seeing and editing your own profile moves to the
+front of this phase, ahead of the wider profile.
+
+*Why:* a bug in 14.5. Pronouns changed mid-conversation with *"is it okay to
+change my pronouns to star/stars?"* were never saved, because asking
+permission read as not having decided. The companion used the new pronouns;
+the store kept the old ones, and a restart would have put them back. The
+prompt fix makes that miss rarer, but a classifier will always miss
+something — so identity cannot rest on it alone. Being able to see what is
+stored is the transparency half; being able to correct it is the control
+half. Building the wider profile first would have meant adding
+relationships, places and work to a store nobody can look at.
+
+17.5. **Your profile — see it and change it.** What the companion knows
+    about *you*, shown plainly and editable by hand. Pronouns today. Needs
+    `PATCH /profile`, deferred in 14.5 until there was somewhere to edit
+    from — this is that somewhere. It is the first real section of the
+    settings screen, so it has to decide how settings opens. **Still open:**
+    panel swap is recommended (the companion stays visible while you read
+    what it knows about you), with tabs and a full-screen swap as the
+    alternatives. Decided in plan mode, not here. Everything else in this
+    phase slots into the shell it builds.
+17.6. **The wider profile** — relationships (a partner, and their pronouns),
+    where someone is from, school, work. Extends `user_profile.py`, and
+    inherits **use, never raise**. Comes after 17.5 on purpose. Unlike
+    pronouns these *are* identifying together, so they join the pre-commit
+    hook's scan, and staleness needs real design: a partner becomes an ex
+    between two sessions, and nothing in the store can know.
 18. Edit your companion — the setup form, prefilled
 19. What your companion knows — quirks list, sensitivities list, *about quirks*
 20. Start over — `[ ] my companion` `[ ] what they know`, neither pre-ticked
