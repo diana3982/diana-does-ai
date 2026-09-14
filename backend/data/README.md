@@ -87,11 +87,15 @@ forget the conversation, not forget who you are.
 What each API call cost, in tokens. One JSON object per line:
 
 ```json
-{"at": "2026-09-08T15:45:10+00:00", "call": "chat", "model": "claude-opus-5",
+{"at": "2026-09-13T21:45:10+00:00", "call": "chat", "model": "claude-opus-5",
  "input_tokens": 2, "output_tokens": 70,
  "cache_creation_input_tokens": 82, "cache_read_input_tokens": 613,
- "history_turns": 3}
+ "history_turns": 3, "duration_ms": 2045, "refusal": 0,
+ "user_profile_found": 0, "user_profile_saved": 0, "user_profile_referenced": 1}
 ```
+
+Every field describes whether the system worked, never how the person was
+doing — the full list, and what is deliberately left out, is in `usage.py`.
 
 **Counts only, never content.** No message, no reply, no topic — `usage.py`
 reads named numeric fields off the API response and has no path to the text.

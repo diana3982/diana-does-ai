@@ -1,10 +1,13 @@
 import anthropic
 import json
 import os
+import time
 from dotenv import load_dotenv
 from quirks import update_quirk, build_quirks_context
 from sensitivities import KINDS as SENSITIVITY_KINDS, note_sensitivity, build_sensitivities_context
-from user_profile import build_profile_context, clean_pronouns, set_pronouns
+from user_profile import (
+    build_profile_context, clean_pronouns, is_offered, load_profile, set_pronouns,
+)
 from settings import load_settings
 import usage
 
@@ -309,6 +312,7 @@ def safe_analysis():
         'sensitivities': [],
         'gender_cue': None,
         'user_pronouns': None,
+        'user_profile_offered': 0,
     }
 
 
@@ -398,24 +402,42 @@ def normalise_analysis(raw):
         # Validated by the store rather than here, so the shape a pronoun
         # is allowed to take is defined in exactly one place.
         'user_pronouns': clean_pronouns(raw.get('user_pronouns')),
+        # Counted BEFORE validation. Compared with what was actually saved,
+        # it separates "the model saw nothing" from "the model saw something
+        # and it was refused" -- the question that took four wrong guesses
+        # to answer when a pronoun change was silently dropped.
+        'user_profile_offered': int(is_offered(raw.get('user_pronouns'))),
     }
+
+
+def _elapsed_ms(started):
+    """Milliseconds since a time.perf_counter() reading.
+
+    perf_counter rather than the wall clock: it cannot jump backwards when
+    the system clock is adjusted, which is the only property a duration needs.
+    """
+    return round((time.perf_counter() - started) * 1000)
 
 
 def analyze_message(message):
     """One silent background pass: quirks, intensity, sensitivities, cue, pronouns.
 
-    All four ride the same Haiku call the quirk extraction always made --
+    All five ride the same Haiku call the quirk extraction always made --
     same round trip, same latency, one JSON object. Any failure returns
     safe_analysis(); this must never take the conversation down with it.
     """
     try:
+        started = time.perf_counter()
         response = client.messages.create(
             model=ANALYSIS_MODEL,
             max_tokens=500,
             system=ANALYSIS_PROMPT,
             messages=[{"role": "user", "content": message}]
         )
-        usage.record('analysis', ANALYSIS_MODEL, response)
+        # Timed because this call blocks every reply. "Haiku is fast enough
+        # to sit on the critical path" was an argument until this measured it.
+        usage.record('analysis', ANALYSIS_MODEL, response,
+                     duration_ms=_elapsed_ms(started))
         return normalise_analysis(_parse_json_object(_reply_text(response)))
 
     except Exception as e:
@@ -483,18 +505,37 @@ def chat(message, conversation_history, character):
     # Someone saying their pronouns should not have to say it twice, so this
     # is written before the prompt is built -- the reply that acknowledges
     # being told already knows.
+    profile_before = load_profile()
     if analysis.get("user_pronouns"):
         set_pronouns(analysis["user_pronouns"])
+    profile_after = load_profile()
 
     # Built after the writes above, so this turn's system prompt already
     # knows whatever this message just revealed.
     system_prompt = build_system_prompt(character, intensity=analysis["intensity"])
+
+    # "Saved" means a value actually CHANGED, not that a write happened.
+    # Restating pronouns already on file rewrites the same bytes, leaves the
+    # system prompt identical, and so cannot cost a cache miss -- counting it
+    # would break the one correlation this number is most useful for.
+    profile_saved = sum(
+        1 for field in profile_after
+        if profile_after.get(field) != profile_before.get(field)
+    )
+
+    # "Referenced" means the profile was put in front of the model -- checked
+    # against the prompt actually sent, not assumed from the profile having
+    # contents. It cannot say whether the model USED it in its reply: that
+    # would mean reading the reply, which this log must never do.
+    profile_context = build_profile_context()
+    profile_referenced = int(bool(profile_context) and profile_context in system_prompt)
 
     conversation_history.append({
         "role": "user",
         "content": message
     })
 
+    started = time.perf_counter()
     response = client.messages.create(
         model=CHAT_MODEL,
         max_tokens=CHAT_MAX_TOKENS,
@@ -510,14 +551,25 @@ def chat(message, conversation_history, character):
         messages=conversation_history
     )
 
-    usage.record(
-        'chat', CHAT_MODEL, response,
-        history_turns=len(conversation_history),
-    )
+    duration_ms = _elapsed_ms(started)
 
     # A declined request comes back as a normal 200, so this has to be
     # checked before reading the content -- not caught as an exception.
-    if getattr(response, 'stop_reason', None) == 'refusal':
+    refused = getattr(response, 'stop_reason', None) == 'refusal'
+
+    # Everything here describes whether the machinery worked -- never how
+    # the person was doing. See usage.py for where that line sits and why.
+    usage.record(
+        'chat', CHAT_MODEL, response,
+        history_turns=len(conversation_history),
+        duration_ms=duration_ms,
+        refusal=int(refused),
+        user_profile_found=analysis.get('user_profile_offered', 0),
+        user_profile_saved=profile_saved,
+        user_profile_referenced=profile_referenced,
+    )
+
+    if refused:
         conversation_history.append({"role": "assistant", "content": REFUSAL_REPLY})
         return REFUSAL_REPLY, conversation_history, analysis
 
