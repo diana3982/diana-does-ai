@@ -104,12 +104,28 @@ revealed only because the analysis finished first. Three turns is a small
 sample and the range is wide, so the log will narrow it as real sessions add
 to it.
 
-One detail consistent with the cache argument elsewhere in this doc: the
-slowest chat call (4,413 ms) was the turn where pronouns were saved. A saved
-profile changes the system prompt, which sits in front of the cached
-conversation, so that turn could not reuse the cache. One sample, so it's
-suggestive, not proof, but `user_profile_saved` and `cache_read_input_tokens`
-land on the same log line precisely so this can be checked over time.
+**Correction, same day.** An earlier version of this paragraph pointed at
+latency: in a short test, the slowest chat call happened to be the turn where
+pronouns were saved, and that was offered as a hint that a saved profile
+breaks the cache. **The cache part was right; latency was the wrong
+evidence.** A real session, logged with the `user_profile_*` fields, shows it
+directly:
+
+| turn | saved | cache read | cache write | chat ms |
+|---|---|---|---|---|
+| 1 | 0 | 0 | 1,277 | 1,640 |
+| 2 | **1** | **0** | 1,398 | 2,148 |
+| 3 | 0 | 1,398 | 70 | 2,091 |
+| 4 | 0 | 1,468 | 85 | 2,008 |
+
+Turn 2 should have reused turn 1's cache. It read nothing, on the same line
+as the profile save. Turns 3 and 4 read the exact prior prefix: 1,468 is
+1,398 plus the 70 written the turn before.
+
+Now compare the timings. The miss (2,148 ms) and the hit straight after it
+(2,091 ms) are 57 ms apart. **A cache miss costs money, not noticeable
+time.** The wait is dominated by generating the reply, not by reading the
+input, so latency was never going to show this. The cache fields do.
 
 ## Claim 2: caching pays for the conversation history
 
@@ -245,9 +261,11 @@ arguments, one piece of work.
 ### 2. Move volatile content out of the system prompt
 
 The system prompt renders *before* the messages, so anything that changes in
-it invalidates the whole cached conversation behind it. Three things can
+it invalidates the whole cached conversation behind it. Four things can
 change mid-conversation: the heavy-intensity real-talk override, a quirk
-crossing into MEDIUM confidence, and a newly noted sensitivity.
+crossing into MEDIUM confidence, a newly noted sensitivity, and a change to
+the user's profile. (The fourth was added after this section was first
+written.)
 
 Opus 5 supports mid-conversation system messages — a `{"role": "system"}`
 entry appended to `messages` rather than an edit to the top-level `system`
@@ -261,6 +279,22 @@ those three things actually change in a real conversation — which
 comes back zero when it shouldn't. Measure, then restructure. One cheap piece
 is already done: the quirks block is sorted rather than insertion-ordered, so
 a re-learned quirk can't reorder the prompt and cost a miss for nothing.
+
+**Measured, 2026-09-13, and the decision holds.** A real session caught one
+profile change through `user_profile_saved`, and the cache fields on the same
+log line confirm it caused a full miss (table above). That turn cost about
+**$0.0087** where a hit would have cost about **$0.0014**: roughly **0.7¢
+extra per change**.
+
+That session had one change in five turns, but pronouns were being changed on
+purpose while testing. Real conversations change them far less often, which
+only strengthens the conclusion. A fraction of a cent on a rare event doesn't
+justify restructuring the prompt of an emotional support app. This lever
+stays deferred, and now that's based on a measurement rather than a guess.
+
+The measurement covers profile changes only. A quirk reaching MEDIUM or a new
+sensitivity breaks the cache the same way, but neither has been measured in a
+real session yet.
 
 ### 3. Trim the sensitivities instruction
 
