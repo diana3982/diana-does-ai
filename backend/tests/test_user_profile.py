@@ -146,3 +146,35 @@ class TestInTheSystemPrompt:
         api.post('/chat/reset')
         assert user_profile.load_profile()['pronouns'] == 'she/her'
         assert 'she/her' in companion.build_system_prompt(character)
+
+
+class TestWhyTheModelJudgesAndNotThisFile:
+    """The validator checks shape. It cannot check sincerity, and must not try.
+
+    These tests exist to stop a well-meaning future fix. Mockery like
+    "toaster/toasters" gets through this file -- and the obvious response
+    is a blocklist here. But that would refuse real people, because nounself
+    pronouns such as "star/stars" have exactly the same shape: a noun and its
+    plural. Whether an answer is sincere is a question of meaning, read from
+    the whole message, so it belongs to the model. This file stays a
+    structural guard against anything malformed.
+    """
+
+    @pytest.mark.parametrize('real', ['star/stars', 'bun/buns', 'fae/faer', 'xe/xem'])
+    def test_unfamiliar_pronouns_pass_the_shape_check(self, real):
+        assert user_profile.clean_pronouns(real) == real
+
+    def test_mockery_is_shaped_exactly_like_real_nounself_pronouns(self):
+        """So no pattern can separate them -- the reason sincerity is judged
+        upstream. If this ever starts failing, someone has added a blocklist
+        here, and should check it does not also refuse star/stars."""
+        assert user_profile.clean_pronouns('toaster/toasters') is not None
+        assert user_profile.clean_pronouns('star/stars') is not None
+
+    def test_a_space_is_left_for_the_model_to_fix(self):
+        """The validator refuses "she her". It is not wrong to type it that
+        way -- it is shaped identically to "not sure really", so only the
+        model can tell which one is pronouns. The model writes slash form;
+        this file only ever sees that."""
+        assert user_profile.clean_pronouns('she her') is None
+        assert user_profile.clean_pronouns('not sure really') is None
