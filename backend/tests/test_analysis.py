@@ -4,6 +4,8 @@ The rule running through all of it: every field fails safe on its own, and
 intensity fails *heavy*. A classifier that fails open is the one bug in this
 system that could actually hurt someone.
 """
+import re
+
 import pytest
 
 import companion
@@ -308,3 +310,80 @@ class TestUserPronouns:
 
         assert user_profile.load_profile()['pronouns'] == 'they/them'
         assert 'they/them' in companion.build_system_prompt(character)
+
+
+class TestPronounJudgmentInThePrompt:
+    """What the background pass is told about deciding whether to record.
+
+    The weighting here is deliberate and asymmetric. Wrongly refusing a
+    sincere neopronoun hurts someone who has very likely been told before
+    that theirs is not real. Wrongly accepting a mocking answer only reaches
+    the person who gave it, in their own local app. So unfamiliar is not a
+    reason to refuse, and uncertainty resolves toward recording.
+    """
+
+    # Whitespace collapsed, so a phrase the prompt happens to wrap across two
+    # lines still matches. These tests pin what the model is told, not where
+    # the line breaks fall.
+    PROMPT = ' '.join(companion.ANALYSIS_PROMPT.split())
+
+    def test_it_normalises_to_slash_form(self):
+        """So "she her" -- a perfectly ordinary way to type it -- is stored,
+        rather than refused by the shape check and asked about again."""
+        assert 'slash form' in self.PROMPT
+        assert '"she her" becomes "she/her"' in self.PROMPT
+
+    def test_it_names_neopronouns_and_nounself_pronouns_as_real(self):
+        assert 'Neopronouns' in self.PROMPT
+        assert 'nounself' in self.PROMPT
+
+    def test_unfamiliar_is_not_a_reason_to_refuse(self):
+        assert 'Record pronouns that are unfamiliar to you' in self.PROMPT
+
+    def test_only_plain_insincerity_is_refused(self):
+        assert 'Return null only when the answer is plainly not sincere' in self.PROMPT
+
+    def test_sincerity_is_read_from_the_message_not_the_words(self):
+        """The line that stops the model refusing star/stars for looking odd."""
+        assert 'never from how unusual the words themselves are' in self.PROMPT
+
+    def test_uncertainty_resolves_toward_recording(self):
+        assert 'When you are unsure, record' in self.PROMPT
+
+    def test_the_count_matches_the_sections(self):
+        """The opening line announced four things after a fifth was added.
+        A model told "four" and handed five sections is being set up to drop
+        one -- and the likeliest one to go is whichever came last."""
+        sections = re.findall(r'^\d\. [A-Z]', companion.ANALYSIS_PROMPT, re.MULTILINE)
+        assert 'five things' in self.PROMPT
+        assert len(sections) == 5
+
+    def test_asking_permission_counts_as_saying(self):
+        """Found in review, and the worst shape this bug could take.
+
+        "is it okay to change my pronouns to star/stars?" was refused 8 times
+        out of 8, while "can i change my pronouns to star/stars" was accepted
+        8 out of 8. The prompt said to record only what someone *stated*, and
+        asking permission read as not having decided.
+
+        So the more hesitant someone was, the more likely they were to be
+        forgotten -- and asking permission is often what the person least
+        sure of their welcome does. The companion answered "yes" and the
+        store quietly kept the old pronouns, which a restart would then have
+        put back.
+        """
+        assert 'Asking counts as saying' in self.PROMPT
+        assert 'is it okay to change my pronouns to star/stars?' in self.PROMPT
+        assert 'hesitating is not the same as not having said it' in self.PROMPT
+
+    def test_asking_about_pronouns_in_general_does_not_count(self):
+        """The limit that stops that fix overshooting. A question about what
+        a pronoun means, or about someone else, names nothing this person
+        wants for themselves."""
+        assert 'a question about pronouns in general' in self.PROMPT
+        assert 'or about someone else' in self.PROMPT
+
+    def test_it_still_never_infers(self):
+        """Leaning toward recording applies to things they SAID. Nothing
+        about that loosens the rule against guessing."""
+        assert 'Never infer pronouns' in self.PROMPT

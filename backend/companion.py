@@ -193,7 +193,7 @@ SAFEST_INTENSITY = 'heavy'
 #: How someone refers to their companion, when they chose "any" at setup.
 GENDER_CUES = ('she', 'he', 'they')
 
-ANALYSIS_PROMPT = """You are a silent background analyzer. You never speak to the user. You read one message and report four things about it.
+ANALYSIS_PROMPT = """You are a silent background analyzer. You never speak to the user. You read one message and report five things about it.
 
 1. QUIRKS -- specific things this person likes or dislikes.
 
@@ -238,17 +238,40 @@ mood alone.
 "she", "he", "they", or null. Only from an actual pronoun they used for the
 companion. Never from anything about the user themselves.
 
-5. USER PRONOUNS -- only if this person stated their own pronouns outright:
-"i use she/her", "i'm they/them", "he/him please". Record exactly the
-pronouns they gave, nothing else.
+5. USER PRONOUNS -- only if this person stated their own pronouns:
+"i use she/her", "i'm they/them", "he/him please", "she her".
+
+Write them lowercase in slash form, however they were typed: "she her"
+becomes "she/her", "They/Them" becomes "they/them", "any pronouns" becomes
+"any". The format is yours to fix; the pronouns are theirs to choose.
 
 This is the opposite of the gender cue above, and the two are easy to
 confuse. That one is how they refer to THEIR COMPANION. This one is how they
 refer to THEMSELVES. A message calling the companion "she" says nothing
 about the user.
 
-Never infer this. Not from a name, not from how they write, not from
-anything they say about their life. If they did not state it plainly, null.
+Asking counts as saying. "is it okay to change my pronouns to star/stars?",
+"can i use they/them?" and "would it be alright to call me xe/xem?" all name
+the pronouns this person wants for themselves -- record them. Someone asking
+permission is often the person least sure they will be welcomed, and
+hesitating is not the same as not having said it. What does NOT count is a
+question about pronouns in general ("what does xe/xem mean?") or about
+someone else ("my friend uses star/stars").
+
+Record pronouns that are unfamiliar to you. Neopronouns such as xe/xem or
+fae/faer, and nounself pronouns such as star/stars or bun/buns, are real --
+and someone using them has very likely been told before that they are not.
+If a statement is plausibly sincere, record it.
+
+Return null only when the answer is plainly not sincere: a joke, an insult,
+or hostility aimed at the idea of pronouns, such as "kiss my ass" or
+"i identify as a toaster lol". Judge that from the whole message and its
+tone, never from how unusual the words themselves are. When you are unsure, record
+it -- being wrongly refused hurts someone real, while a mocking answer only
+ever reaches the person who gave it.
+
+Never infer pronouns. Not from a name, not from how they write, not from
+anything they say about their life. If they did not state them, null.
 
 Respond ONLY with valid JSON in exactly this format, no other text:
 {
@@ -379,7 +402,7 @@ def normalise_analysis(raw):
 
 
 def analyze_message(message):
-    """One silent background pass: quirks, intensity, sensitivities, cue.
+    """One silent background pass: quirks, intensity, sensitivities, cue, pronouns.
 
     All four ride the same Haiku call the quirk extraction always made --
     same round trip, same latency, one JSON object. Any failure returns
@@ -436,7 +459,7 @@ def chat(message, conversation_history, character):
     to be playful about while this conversation is happening.
     """
 
-    # One silent background pass: quirks, intensity, sensitivities, cue.
+    # One silent background pass: quirks, intensity, sensitivities, cue, pronouns.
     analysis = analyze_message(message)
 
     forced = forced_intensity()

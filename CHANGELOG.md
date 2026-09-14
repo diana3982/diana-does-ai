@@ -12,6 +12,93 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Deciding what counts as pronouns · 2026-09-13
+
+> **Triggered by** a question before testing the pronoun store: *"i am going
+> to try to set my pronouns as 'she her' — from what i understood from the
+> code, this should be ignored, correct?"* Tracing it showed the answer was
+> a coin toss, and that the fix from the night before had quietly rebuilt
+> the original bug for a very ordinary way of typing.
+
+**A bug, introduced by the previous fix.** To stop `not sure really` being
+stored as pronouns, spaces had been removed from the validator's pattern.
+That also refused `she her`: a completely normal way to type pronouns, and by
+shape identical to `not sure really`. Refused means nothing stored, which
+means the companion asks again: the exact failure the profile existed to end.
+
+Whether `she her` survived depended on Haiku. The validator never sees what
+someone typed; it checks what Haiku writes into a JSON field. The prompt said
+to record the pronouns *"exactly"*, which pushed toward keeping the space,
+while every example used a slash, which pushed the other way.
+
+**The fix moves a judgment to the layer that can make it.** `she her` versus
+`not sure really` is a question of meaning, and no pattern can answer it. So
+Haiku now normalises to slash form, and the validator goes back to being what
+it is good at: a structural guard against anything malformed.
+
+**Then a harder case, from an adversarial test.** *"i am curious to know what
+would happen if i try setting pronouns like 'kiss my ass'... because i know
+this is a common response from bigoted people."* `kiss/my/ass` and
+`toaster/toasters` both pass the validator, and a blocklist is the obvious
+answer. It would be the wrong one: nounself pronouns like `star/stars` and
+`bun/buns` are real, and have exactly the same shape as the mockery. Any rule
+strict enough to catch one refuses the other.
+
+So sincerity is also Haiku's call, read from the whole message and its tone,
+and **never from how unusual the words are.** The weighting is deliberately
+asymmetric. Wrongly refusing a sincere neopronoun hurts someone who has very
+likely been told before that theirs isn't real, and tells them this app
+agrees. Wrongly accepting a mocking answer only reaches the person who gave
+it, in their own local app. **Unfamiliar is not a reason to refuse, and
+uncertainty resolves toward recording.** Obvious hostility gets `null`.
+
+**Verified against the live model, not just the prompt text.** Six cases,
+all as intended: `she her` normalised to `she/her`; `star/stars` and `xe/xem`
+recorded; `kiss my ass` and `i identify as a toaster` refused; and a message
+calling the companion "she" kept out of the user's own pronouns entirely.
+The two that matter most are the ones no pattern could separate:
+`star/stars` stored and the toaster refused.
+
+**Then a worse one, found in review.** Testing the PR in the browser,
+pronouns were set to `she/her`, then changed mid-conversation to
+`star/stars`. The companion used `star/stars` from then on, but the profile
+kept `she/her`. So the two stores disagreed, and a restart or a cleared chat
+would have put the old pronouns back.
+
+Four guesses at the cause were wrong, each disproved by testing rather than
+argued: stale code (the usage log showed the new prompt loaded), a broken
+write (the full flow worked in isolation), missing context, and batching with
+a playful message (0 refusals in 20). The original message had been lost to
+a page refresh, and was recovered in the end by asking the companion to
+quote it back from its own conversation history.
+
+It was *"is it okay to change my pronouns to star/stars?"* That was refused
+**8 times out of 8**, while *"can i change my pronouns to star/stars"* was
+accepted 8 out of 8. The prompt said to record only what someone *stated*,
+and asking permission read as not having decided.
+
+**The more hesitant someone was, the more likely they were to be forgotten.**
+Asking permission is often what the person least sure of their welcome does.
+The companion said *"the answer was and is yes"*, and the store quietly kept
+the old pronouns anyway.
+
+The prompt now says outright that asking counts as saying, and that
+hesitating is not the same as not having said it. Its limit is also stated,
+so the fix doesn't overshoot: a question about what a pronoun *means*, or
+about someone else's, still returns `null`. Verified live across seven cases
+at four runs each. The original message now records every time, and the
+general-question, someone-else, normalising and mockery cases all still hold.
+
+**Also fixed:** the analysis prompt still opened with *"report four things"*
+after the previous PR added a fifth section. A model told four and handed
+five is being set up to drop one, most likely the last. There is now a test
+that the count matches.
+
+Tests pin the reasoning, not just the behaviour: a test asserts that mockery
+and nounself pronouns are shaped identically, so anyone who later adds a
+blocklist to the validator gets a failing test that tells them why not.
+
+
 ## The companion stops asking who you are · 2026-09-12
 
 > **Triggered by** a browser session: *"i've told juno my pronouns a bunch of
