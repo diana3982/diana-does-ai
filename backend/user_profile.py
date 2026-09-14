@@ -69,12 +69,23 @@ TRAILING_NOUN = re.compile(r'\s+pronouns?$')
 #: ending "...or null". gender_cue is safe from it only because it checks
 #: against a fixed set; this field is checked by shape and so is exposed.
 #:
-#: "none" is deliberately NOT here. It can be a model's empty answer, but
-#: "no pronouns, just use my name" is a real preference, and refusing it
-#: would mean asking that person again. It needs its own handling -- a
-#: context line saying to use their name -- rather than being swallowed or
-#: stored as "none pronouns". Recorded as open, not decided.
+#: "none" is deliberately NOT here -- see NO_PRONOUNS. It is a real answer,
+#: not an absence.
 NO_VALUE = frozenset({'null', 'nil', 'undefined', 'n/a', 'unknown'})
+
+#: The stored value for someone who uses no pronouns at all.
+#:
+#: "none" rather than "undefined", which was also proposed: "undefined" is
+#: in NO_VALUE, the words a model writes when it found NOTHING, so storing
+#: it would make one word mean both "nothing said" and "said they use no
+#: pronouns" -- and the first reading would silently stop the companion
+#: using pronouns for someone who never asked. It is also the wrong meaning:
+#: someone who uses no pronouns has set a preference, not left one unset.
+#:
+#: Kept apart from absence by where the judgment sits. The model returns a
+#: real JSON null when nothing was said, and the word "none" only for a
+#: stated preference; the prompt spells that out.
+NO_PRONOUNS = 'none'
 
 
 def load_profile():
@@ -153,12 +164,28 @@ def build_profile_context():
     if not pronouns:
         return ""
 
-    return (
-        f"This person uses {pronouns} pronouns. Use them.\n"
-        "\n"
-        "They told you this themselves, so do not ask again and do not "
-        "mention that you know -- \"I remember you use those\" turns having "
-        "been listened to into having been filed. Simply get it right. "
-        "Never raise anything you know about their life yourself; use it to "
-        "understand what they bring up, and let them be the one to bring it."
-    )
+    if pronouns == NO_PRONOUNS:
+        # Not "uses none pronouns" -- which is what the general line produced
+        # before this existed, and read as a garbled instruction every turn.
+        # In a one-to-one chat "you" covers almost everything, so the real
+        # instruction is to never reach for he, she or they.
+        opening = (
+            "This person uses no pronouns. Never refer to them as he, she or "
+            "they. Talking with them, \"you\" is all you need; if you ever "
+            "have to refer to them another way, use their name if they have "
+            "shared it, and otherwise rephrase so no pronoun is needed."
+        )
+    else:
+        opening = f"This person uses {pronouns} pronouns. Use them."
+
+    return f"{opening}\n\n{_REMEMBERED}"
+
+
+#: Shared by every profile line, so no variant can quietly drop it.
+_REMEMBERED = (
+    "They told you this themselves, so do not ask again and do not "
+    "mention that you know -- \"I remember you use those\" turns having "
+    "been listened to into having been filed. Simply get it right. "
+    "Never raise anything you know about their life yourself; use it to "
+    "understand what they bring up, and let them be the one to bring it."
+)

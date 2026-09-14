@@ -261,6 +261,18 @@ hesitating is not the same as not having said it. What does NOT count is a
 question about pronouns in general ("what does xe/xem mean?") or about
 someone else ("my friend uses star/stars").
 
+Using no pronouns is an answer too. If they say they use none -- "i don't
+use pronouns", "just use my name", "no pronouns please" -- write "none".
+
+"none" and "any" are opposites, and easy to mix up. "any" means use whatever
+pronouns you like: "any pronouns are fine", "no preference", "i don't mind".
+"none" means use no pronouns at all. Never write one for the other.
+
+"none" is only ever a stated preference. If a message says nothing about
+their pronouns, the answer is JSON null -- never the word "none". Neither is
+uncertainty ("i don't know my pronouns yet" is null) or a brush-off ("none of
+your business" is null).
+
 Record pronouns that are unfamiliar to you. Neopronouns such as xe/xem or
 fae/faer, and nounself pronouns such as star/stars or bun/buns, are real --
 and someone using them has very likely been told before that they are not.

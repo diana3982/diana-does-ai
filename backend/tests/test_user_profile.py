@@ -203,12 +203,61 @@ class TestAbsenceMarkers:
         assert user_profile.is_offered('star / stars') is True
         assert user_profile.clean_pronouns('star / stars') is None
 
-    def test_none_is_left_open_on_purpose(self):
-        """Not decided, and pinned so it is not decided by accident.
+    def test_none_is_a_real_answer_not_an_absence(self):
+        """Decided -- this test used to pin it as undecided, and said that
+        when it changed, the handling should exist. It does now."""
+        assert user_profile.clean_pronouns('none') == user_profile.NO_PRONOUNS
+        assert user_profile.is_offered('none') is True
+        assert 'none' not in user_profile.NO_VALUE
 
-        "none" can be a model's empty answer, but "no pronouns, just use my
-        name" is a real preference. Swallowing it would ask that person
-        again; storing it produces "uses none pronouns". It needs its own
-        handling. If this test is changed, that handling should exist.
+    def test_undefined_is_still_an_absence(self):
+        """Proposed as the stored value for "no pronouns", and rejected.
+
+        It is already in NO_VALUE -- what a model writes when it found
+        nothing -- so using it for a real preference would make one word mean
+        both. The first reading would stop the companion using pronouns for
+        someone who never asked.
         """
-        assert user_profile.clean_pronouns('none') == 'none'
+        assert user_profile.clean_pronouns('undefined') is None
+        assert user_profile.NO_PRONOUNS != 'undefined'
+
+
+
+class TestNoPronouns:
+    """Someone who uses no pronouns at all.
+
+    Before this, "none" passed validation and rendered through the general
+    line as "This person uses none pronouns. Use them." -- garbled, and in
+    front of the model on every turn after.
+    """
+
+    def test_it_never_says_none_pronouns(self):
+        user_profile.set_pronouns('none')
+        context = user_profile.build_profile_context()
+        assert 'none pronouns' not in context
+        assert 'uses no pronouns' in context
+
+    def test_it_rules_out_the_pronouns_it_would_otherwise_reach_for(self):
+        user_profile.set_pronouns('none')
+        assert 'Never refer to them as he, she or they' in user_profile.build_profile_context()
+
+    def test_it_does_not_assume_a_name_it_may_not_have(self):
+        """The profile holds no name. Telling the model to "use their name"
+        unconditionally would send it looking for one it does not have."""
+        user_profile.set_pronouns('none')
+        assert 'if they have shared it' in user_profile.build_profile_context()
+
+    @pytest.mark.parametrize('value', ['none', 'she/her'])
+    def test_every_variant_keeps_never_announce_and_never_raise(self, value):
+        """The shared tail is why these live in one constant: a second
+        opening line must not be able to quietly drop them."""
+        user_profile.set_pronouns(value)
+        context = user_profile.build_profile_context()
+        assert 'do not ask again' in context
+        assert 'do not mention that you know' in context
+        assert 'Never raise' in context
+
+    def test_ordinary_pronouns_are_unchanged(self):
+        user_profile.set_pronouns('they/them')
+        assert user_profile.build_profile_context().startswith(
+            'This person uses they/them pronouns. Use them.')

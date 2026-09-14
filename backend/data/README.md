@@ -72,6 +72,11 @@ pronouns; the store is shaped to hold more.
 Only ever written from an outright statement — never inferred from a name, a
 turn of phrase, or anything about how someone writes.
 
+`"none"` is a real value: this person uses **no pronouns**, and the companion
+is told never to use he, she or they for them. It is the opposite of `"any"`,
+which means use whatever pronouns you like. Absence is never stored as a word
+— a message that says nothing about pronouns leaves the file untouched.
+
 **Use, never raise.** A fact here lets the companion understand what someone
 says; it never lets it start a subject. Facts go stale in ways nothing here
 can detect — a partner becomes an ex, a job ends between two sessions — and

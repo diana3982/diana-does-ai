@@ -12,6 +12,60 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## For someone who uses no pronouns · 2026-09-13
+
+> **Triggered by** review of the previous PR. It deliberately left `none`
+> undecided, with a test pinning it that way. The review comment: *"None is
+> valid and if read… back end should know this means they have a none
+> preference."*
+
+**Also a live bug, not only a missing feature.** `none` passed validation and
+went through the general line, so someone who uses no pronouns had the
+companion told *"This person uses none pronouns. Use them."* That's garbled,
+and it was in front of the model on every turn after.
+
+**Stored as `none`, not `undefined`.** Both were proposed. `undefined` was
+already in the list of words a model writes when it found *nothing*, which
+the previous PR refuses. Using it for a real preference would have made one
+word mean both *"nothing was said"* and *"said they use no pronouns"*, and
+the first reading would stop the companion using pronouns for someone who
+never asked. It's also the wrong meaning: someone who uses no pronouns has
+*set* a preference, not left one unset.
+
+**`none` and `any` are opposites that sound alike.** *"No preference"* and
+*"no pronouns"* differ by one word and mean the reverse. The prompt names
+them as opposites and gives examples of each, because getting it wrong
+inverts exactly what someone asked for.
+
+**Keeping `none` from becoming the empty answer.** The real risk was never
+`none` failing. It was ordinary messages being recorded as `none`, which
+would quietly stop the companion using pronouns for people who said nothing.
+The prompt says absence is JSON `null`, never the word `none`, and that
+uncertainty (*"i don't know my pronouns yet"*) and brush-offs (*"none of your
+business"*) are `null` too.
+
+**Tested in depth, as requested in review: 107 of 107 live calls as
+intended.**
+
+| group | result |
+|---|---|
+| no-pronoun phrasings → `none` | 24/24, including the permission shape that broke earlier today |
+| *any* phrasings → `any`, never `none` | 12/12 |
+| near-misses (*"none of your business"*, *"i don't know my pronouns yet"*) → `null` | 15/15 |
+| ordinary messages, weighted toward *no*, *none* and *don't* → `null` | **50/50** |
+| regressions: `she/her`, `star/stars`, the toaster | 6/6 |
+
+Zero false positives in 65 negative trials puts the true rate below about 5%
+at 95% confidence. That's strong evidence, not proof of zero, and the new
+usage flags will keep watching it in real sessions.
+
+**The rendering doesn't assume a name.** The profile doesn't store one, so
+the line says to use their name *"if they have shared it"* and otherwise to
+rephrase. In a one-to-one chat, *"you"* covers almost everything anyway.
+Both versions of the profile line now share one tail (*never announce, never
+raise*), so a variant can't quietly drop it.
+
+
 ## Seeing whether the machinery worked · 2026-09-13
 
 > **Triggered by** the pronoun bug earlier the same day. A change was
