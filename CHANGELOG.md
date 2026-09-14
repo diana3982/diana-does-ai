@@ -59,6 +59,36 @@ calling the companion "she" kept out of the user's own pronouns entirely.
 The two that matter most are the ones no pattern could separate:
 `star/stars` stored and the toaster refused.
 
+**Then a worse one, found in review.** Testing the PR in the browser,
+pronouns were set to `she/her`, then changed mid-conversation to
+`star/stars`. The companion used `star/stars` from then on, but the profile
+kept `she/her`. So the two stores disagreed, and a restart or a cleared chat
+would have put the old pronouns back.
+
+Four guesses at the cause were wrong, each disproved by testing rather than
+argued: stale code (the usage log showed the new prompt loaded), a broken
+write (the full flow worked in isolation), missing context, and batching with
+a playful message (0 refusals in 20). The original message had been lost to
+a page refresh, and was recovered in the end by asking the companion to
+quote it back from its own conversation history.
+
+It was *"is it okay to change my pronouns to star/stars?"* That was refused
+**8 times out of 8**, while *"can i change my pronouns to star/stars"* was
+accepted 8 out of 8. The prompt said to record only what someone *stated*,
+and asking permission read as not having decided.
+
+**The more hesitant someone was, the more likely they were to be forgotten.**
+Asking permission is often what the person least sure of their welcome does.
+The companion said *"the answer was and is yes"*, and the store quietly kept
+the old pronouns anyway.
+
+The prompt now says outright that asking counts as saying, and that
+hesitating is not the same as not having said it. Its limit is also stated,
+so the fix doesn't overshoot: a question about what a pronoun *means*, or
+about someone else's, still returns `null`. Verified live across seven cases
+at four runs each. The original message now records every time, and the
+general-question, someone-else, normalising and mockery cases all still hold.
+
 **Also fixed:** the analysis prompt still opened with *"report four things"*
 after the previous PR added a fifth section. A model told four and handed
 five is being set up to drop one, most likely the last. There is now a test

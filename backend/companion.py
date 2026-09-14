@@ -250,6 +250,14 @@ confuse. That one is how they refer to THEIR COMPANION. This one is how they
 refer to THEMSELVES. A message calling the companion "she" says nothing
 about the user.
 
+Asking counts as saying. "is it okay to change my pronouns to star/stars?",
+"can i use they/them?" and "would it be alright to call me xe/xem?" all name
+the pronouns this person wants for themselves -- record them. Someone asking
+permission is often the person least sure they will be welcomed, and
+hesitating is not the same as not having said it. What does NOT count is a
+question about pronouns in general ("what does xe/xem mean?") or about
+someone else ("my friend uses star/stars").
+
 Record pronouns that are unfamiliar to you. Neopronouns such as xe/xem or
 fae/faer, and nounself pronouns such as star/stars or bun/buns, are real --
 and someone using them has very likely been told before that they are not.

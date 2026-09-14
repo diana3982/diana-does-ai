@@ -358,6 +358,31 @@ class TestPronounJudgmentInThePrompt:
         assert 'five things' in self.PROMPT
         assert len(sections) == 5
 
+    def test_asking_permission_counts_as_saying(self):
+        """Found in review, and the worst shape this bug could take.
+
+        "is it okay to change my pronouns to star/stars?" was refused 8 times
+        out of 8, while "can i change my pronouns to star/stars" was accepted
+        8 out of 8. The prompt said to record only what someone *stated*, and
+        asking permission read as not having decided.
+
+        So the more hesitant someone was, the more likely they were to be
+        forgotten -- and asking permission is often what the person least
+        sure of their welcome does. The companion answered "yes" and the
+        store quietly kept the old pronouns, which a restart would then have
+        put back.
+        """
+        assert 'Asking counts as saying' in self.PROMPT
+        assert 'is it okay to change my pronouns to star/stars?' in self.PROMPT
+        assert 'hesitating is not the same as not having said it' in self.PROMPT
+
+    def test_asking_about_pronouns_in_general_does_not_count(self):
+        """The limit that stops that fix overshooting. A question about what
+        a pronoun means, or about someone else, names nothing this person
+        wants for themselves."""
+        assert 'a question about pronouns in general' in self.PROMPT
+        assert 'or about someone else' in self.PROMPT
+
     def test_it_still_never_infers(self):
         """Leaning toward recording applies to things they SAID. Nothing
         about that loosens the rule against guessing."""
