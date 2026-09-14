@@ -383,6 +383,26 @@ class TestPronounJudgmentInThePrompt:
         assert 'a question about pronouns in general' in self.PROMPT
         assert 'or about someone else' in self.PROMPT
 
+    def test_no_pronouns_is_named_as_an_answer(self):
+        assert 'Using no pronouns is an answer too' in self.PROMPT
+        assert 'write "none"' in self.PROMPT
+
+    def test_none_and_any_are_named_as_opposites(self):
+        """The mix-up that would invert what someone asked for.
+        "no preference" sounds like "no pronouns" and means the reverse."""
+        assert '"none" and "any" are opposites' in self.PROMPT
+        assert '"no preference"' in self.PROMPT
+
+    def test_none_is_never_the_empty_answer(self):
+        """The false positive that matters: an ordinary message coming back
+        as "none" would stop the companion using pronouns for someone who
+        never asked. Absence is JSON null, and the prompt says so."""
+        assert 'the answer is JSON null -- never the word "none"' in self.PROMPT
+
+    def test_uncertainty_and_brush_offs_are_not_none(self):
+        assert "i don't know my pronouns yet" in self.PROMPT
+        assert 'none of your business' in self.PROMPT
+
     def test_it_still_never_infers(self):
         """Leaning toward recording applies to things they SAID. Nothing
         about that loosens the rule against guessing."""

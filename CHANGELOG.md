@@ -12,6 +12,93 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## For someone who uses no pronouns · 2026-09-13
+
+> **Triggered by** review of the previous PR. It deliberately left `none`
+> undecided, with a test pinning it that way. The review comment: *"None is
+> valid and if read… back end should know this means they have a none
+> preference."*
+
+**Also a live bug, not only a missing feature.** `none` passed validation and
+went through the general line, so someone who uses no pronouns had the
+companion told *"This person uses none pronouns. Use them."* That's garbled,
+and it was in front of the model on every turn after.
+
+**Stored as `none`, not `undefined`.** Both were proposed. `undefined` was
+already in the list of words a model writes when it found *nothing*, which
+the previous PR refuses. Using it for a real preference would have made one
+word mean both *"nothing was said"* and *"said they use no pronouns"*, and
+the first reading would stop the companion using pronouns for someone who
+never asked. It's also the wrong meaning: someone who uses no pronouns has
+*set* a preference, not left one unset.
+
+**`none` and `any` are opposites that sound alike.** *"No preference"* and
+*"no pronouns"* differ by one word and mean the reverse. The prompt names
+them as opposites and gives examples of each, because getting it wrong
+inverts exactly what someone asked for.
+
+**Keeping `none` from becoming the empty answer.** The real risk was never
+`none` failing. It was ordinary messages being recorded as `none`, which
+would quietly stop the companion using pronouns for people who said nothing.
+The prompt says absence is JSON `null`, never the word `none`, and that
+uncertainty (*"i don't know my pronouns yet"*) and brush-offs (*"none of your
+business"*) are `null` too.
+
+**Tested in depth, as requested in review: 107 of 107 live calls as
+intended.**
+
+| group | result |
+|---|---|
+| no-pronoun phrasings → `none` | 24/24, including the permission shape that broke earlier today |
+| *any* phrasings → `any`, never `none` | 12/12 |
+| near-misses (*"none of your business"*, *"i don't know my pronouns yet"*) → `null` | 15/15 |
+| ordinary messages, weighted toward *no*, *none* and *don't* → `null` | **50/50** |
+| regressions: `she/her`, `star/stars`, the toaster | 6/6 |
+
+Zero false positives in 65 negative trials puts the true rate below about 5%
+at 95% confidence. That's strong evidence, not proof of zero, and the new
+usage flags will keep watching it in real sessions.
+
+**The profile flags from the previous PR, checked against a real session.**
+Pronouns were changed to `none` in the browser and the chat was then cleared,
+giving five logged turns:
+
+| turn | found | saved | ref | history | cache read |
+|---|---|---|---|---|---|
+| 1 | 0 | 0 | 1 | 1 | 0 |
+| 2 · **the change** | **1** | **1** | 1 | 3 | **0** |
+| 3 | 0 | 0 | 1 | 5 | 1,398 |
+| 4 | 0 | 0 | 1 | 7 | 1,468 |
+| 5 · **after clearing** | 0 | 0 | 1 | **1** | 0 |
+
+`found` and `saved` fired exactly once, together, on the change. No
+rejections, nothing impossible. Turn 5 shows `history` back to 1 (a genuinely
+new conversation) with `referenced` still 1: **clearing the chat kept who
+they are**, which is the promise of the profile PR, seen in real use for the
+first time.
+
+**It corrected a claim in the cost doc.** `cost-model.md` had pointed at
+latency as a sign that a saved profile breaks the cache. The cache fields
+confirm the miss directly: turn 2 should have read turn 1's cache and read
+**0**. But the miss (2,148 ms) and the hit after it (2,091 ms) are 57 ms
+apart. **A cache miss costs money, not noticeable time.** Latency was the
+wrong evidence, and the doc now says so.
+
+**It closed an open cost lever.** Lever 2 in the cost doc (moving volatile
+content out of the system prompt) had been deferred with *"measure, then
+restructure."* Measured: about **0.7¢ extra per profile change**, and in a
+session where pronouns were changed deliberately. Not worth restructuring an
+emotional-support prompt for, so it stays deferred, now with a number behind
+it. The doc also now counts the profile as a fourth thing that can break the
+cache; the section predated it.
+
+**The rendering doesn't assume a name.** The profile doesn't store one, so
+the line says to use their name *"if they have shared it"* and otherwise to
+rephrase. In a one-to-one chat, *"you"* covers almost everything anyway.
+Both versions of the profile line now share one tail (*never announce, never
+raise*), so a variant can't quietly drop it.
+
+
 ## Seeing whether the machinery worked · 2026-09-13
 
 > **Triggered by** the pronoun bug earlier the same day. A change was
