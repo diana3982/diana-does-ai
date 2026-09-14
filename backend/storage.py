@@ -14,6 +14,7 @@ forgetting a single edit rather than a leak.
 import os
 
 import companion
+import user_profile
 import quirks
 import sensitivities
 import settings
@@ -26,6 +27,7 @@ import usage
 #: later by someone who never read this file -- which is the whole point.
 STORES = (
     (companion, 'CHARACTER_FILE', 'character.json'),
+    (user_profile, 'PROFILE_FILE', 'profile.json'),
     (quirks, 'QUIRKS_FILE', 'quirks.json'),
     (sensitivities, 'SENSITIVITIES_FILE', 'sensitivities.json'),
     (settings, 'SETTINGS_FILE', 'settings.json'),

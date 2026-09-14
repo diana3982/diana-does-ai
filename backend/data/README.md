@@ -8,6 +8,8 @@
 | `quirks.example.json` | ✅ yes | Sample quirks profile — shows the shape `GET /quirks` returns |
 | `character.json` | ❌ **never** | A real person's companion |
 | `quirks.json` | ❌ **never** | A real person's quirks profile |
+| `profile.json` | ❌ **never** | What a real person said about themselves |
+| `profile.example.json` | ✅ yes | The shape `GET /profile` returns |
 | `usage.jsonl` | ❌ **never** | Token counts per API call — see below |
 
 ## Why the real files are gitignored
@@ -57,6 +59,28 @@ can be switched off there.
 The handful of choices someone makes about how the app behaves. Missing keys
 fall back to defaults, so a file written by an older version still loads.
 
+
+## profile.json
+
+What this person has told the companion about themselves. Today that is
+pronouns; the store is shaped to hold more.
+
+```json
+{ "pronouns": "they/them" }
+```
+
+Only ever written from an outright statement — never inferred from a name, a
+turn of phrase, or anything about how someone writes.
+
+**Use, never raise.** A fact here lets the companion understand what someone
+says; it never lets it start a subject. Facts go stale in ways nothing here
+can detect — a partner becomes an ex, a job ends between two sessions — and
+the whole cost of that sits in raising one unprompted. Used only when the
+user opens the subject, a stale fact corrects itself on the message that
+reveals it.
+
+It survives clearing the chat on purpose. Clearing a conversation should
+forget the conversation, not forget who you are.
 
 ## usage.jsonl
 

@@ -14,6 +14,7 @@ import storage
 from companion import (
     chat, load_character, save_character, delete_character, test_mode_enabled,
 )
+from user_profile import load_profile, clear_profile
 from quirks import load_quirks, forget_quirk, clear_quirks
 from sensitivities import load_sensitivities, forget_sensitivity, clear_sensitivities
 from settings import load_settings, save_settings
@@ -269,6 +270,38 @@ def delete_sensitivity(topic):
         )
     except Exception as e:
         return fail("Couldn't forget that one — try again?", str(e))
+
+
+# ─────────────────────────────────────────
+# PROFILE ROUTES
+#
+# What the user has said about themselves. Read and delete only -- nothing
+# here can be set by hand yet, because it is only ever recorded from an
+# outright statement. Editing it belongs with the settings screen (Phase 4),
+# where there is somewhere to edit it from.
+# ─────────────────────────────────────────
+
+@app.route('/profile', methods=['GET'])
+def get_profile():
+    """What the companion knows about the person, not the companion."""
+    try:
+        return jsonify({"profile": load_profile()}), 200
+    except Exception as e:
+        return fail("Couldn't load that just now 💙", str(e))
+
+
+@app.route('/profile', methods=['DELETE'])
+def delete_profile():
+    """Forget it.
+
+    Not deferred along with editing. If the app is going to record someone's
+    identity, taking it back cannot require hand-editing a JSON file.
+    """
+    try:
+        clear_profile()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        return fail("Couldn't clear that just now 💙", str(e))
 
 
 # ─────────────────────────────────────────
