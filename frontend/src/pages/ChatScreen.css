@@ -147,6 +147,11 @@
 
 .chat-input {
   flex: 1;
+  /* Bold reaches what someone types, not just what they're sent. Reading
+     back your own half-finished sentence is reading -- and it is the one
+     place in the app where the text is not there yet, so it is the worst
+     place to make someone squint. The placeholder inherits this. */
+  font-weight: var(--reading-weight);
   min-height: calc(38px * var(--text-scale));
   /* ~3 lines. Scaled with the text: at a fixed 96px, larger text would be
      clipped to two lines while the JS cap still thought it had three. */

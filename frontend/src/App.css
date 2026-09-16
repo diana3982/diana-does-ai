@@ -99,9 +99,9 @@
 :root[data-text-size='large']  { --text-scale: 1.4; }
 
 /* Bolder text, for anyone who reads weight more easily than size. Applies
-   to what you READ -- the companion's profile and the conversation -- and
-   never to labels, buttons or timestamps: bold everywhere would flatten the
-   difference between a heading and a sentence.
+   to prose -- the companion's profile, the conversation, and the message
+   being typed -- and never to labels, buttons or timestamps: bold everywhere
+   would flatten the difference between a heading and a sentence.
 
    600 rather than 700. Full bold removes some of the letterform variation
    the eye tracks with, so a whole conversation in it reads denser rather

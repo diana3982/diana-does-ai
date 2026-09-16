@@ -25,11 +25,20 @@ menu — it marks what you **operate**, and the current value is marked in
 accent colour. Bolding the values would have given one meaning two signals
 and taken weight away from the setting that should own it.
 
-So bold became a setting. **Off by default**, and it applies to what you
-**read** — the companion's profile line and the conversation — never to
-labels, buttons or timestamps. Bold everywhere flattens the difference
-between a heading and a sentence, and the chrome is already heavier than the
-prose.
+So bold became a setting. **Off by default**, and it applies to **prose** —
+the companion's profile line, the conversation, and the message being typed —
+never to labels, buttons or timestamps. Bold everywhere flattens the
+difference between a heading and a sentence, and the chrome is already
+heavier than the prose.
+
+**The composer was missed on the first pass, and the rule was the reason.**
+It was written as *"what you read, not what you operate"*, which sounds right
+and put the message box on the wrong side of the line. Review caught it:
+*"we want this within the text box as the user types since it is an
+accessibility feature."* The composer is both things at once, and the
+half-written sentence in it is the one piece of text in the app that isn't
+there yet — which makes it the worst place to make someone squint, not an
+acceptable one.
 
 **Weight 600, not 700.** Full bold removes some of the letterform variation
 the eye tracks with, so a whole conversation in it reads denser rather than
@@ -62,10 +71,13 @@ written in this project and caught by eye. `displayPreferences.test.js` now
 reads the CSS as text, the way the backend's storage guard reads
 `backend/*.py`.
 
-Two of the new tests passed at first for the wrong reason and were rewritten
+Three of the new tests passed at first for the wrong reason and were rewritten
 after being checked against a deliberately broken version: one asserted a DOM
-attribute that gets written either way, and one read two stylesheets joined
-into a single string, where either file alone would satisfy it.
+attribute that gets written either way, and two checked the stylesheets a file
+at a time — which is how the guard sat green while the composer had no weight
+at all, since the file it lives in was already satisfied by a different rule.
+It checks one selector at a time now, and fails on the exact state the review
+found.
 
 ---
 

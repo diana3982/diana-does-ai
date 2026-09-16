@@ -24,13 +24,25 @@ const read = (path) => readFileSync(fileURLToPath(new URL(path, import.meta.url)
 const APP_CSS = read('../App.css')
 
 /**
- * The places prose is read at length, and so the only places bold applies.
- * Listed separately rather than concatenated: joined into one string, a
- * check for the token would pass while one of them had quietly lost it.
+ * Every place prose is set, and so every place bold has to reach.
+ *
+ * Named one selector at a time rather than one file at a time. Per file,
+ * this check passed while the composer had no weight at all -- ChatScreen.css
+ * already satisfied it through the about line, so the file looked wired up
+ * and one of its two rules was missing. That is the review comment on #10,
+ * turned into the test that would have caught it.
  */
-const PROSE_CSS = {
-  'MessageBubble.css': read('../components/MessageBubble.css'),
-  'ChatScreen.css': read('../pages/ChatScreen.css'),
+const PROSE_RULES = [
+  ['MessageBubble.css', '.bubble-text', read('../components/MessageBubble.css')],
+  ['ChatScreen.css', '.chat-about-line', read('../pages/ChatScreen.css')],
+  ['ChatScreen.css', '.chat-input', read('../pages/ChatScreen.css')],
+]
+
+/** The declarations inside one rule, by its selector. */
+const ruleBody = (css, selector) => {
+  const start = css.indexOf(`${selector} {`)
+  if (start === -1) return null
+  return css.slice(start, css.indexOf('}', start))
 }
 
 describe('text size', () => {
@@ -48,14 +60,16 @@ describe('bold letters', () => {
     expect(APP_CSS).toContain(`:root[data-bold-text='${BOLD_OPTIONS.at(-1)}']`)
   })
 
-  it('defines the weight token once and lets the prose read it', () => {
+  it('defines the weight token', () => {
     // If the token were only defined, bold would store and apply correctly
     // and change nothing on screen.
     expect(APP_CSS).toContain('--reading-weight:')
+  })
 
-    for (const [file, css] of Object.entries(PROSE_CSS)) {
-      expect(css, file).toContain('font-weight: var(--reading-weight)')
-    }
+  it.each(PROSE_RULES)('reaches %s %s', (file, selector, css) => {
+    const body = ruleBody(css, selector)
+    expect(body, `${selector} is missing from ${file}`).not.toBeNull()
+    expect(body).toContain('font-weight: var(--reading-weight)')
   })
 })
 
