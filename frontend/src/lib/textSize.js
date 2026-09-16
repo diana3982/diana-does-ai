@@ -1,9 +1,11 @@
 /**
  * How big the text is.
  *
- * Added after UAT 1, where UAT user 1 — in their fifties, and the first
- * person to use this app from outside the project — could not comfortably
- * read the setup screen. The app says it meets people "whatever age they are", and
+ * Added after UAT 1, the first session with someone outside the project,
+ * where UAT user 1 could not comfortably read the setup screen. Age range
+ * fifties is recorded here because it is the cause: age-related vision
+ * change is why 15px body text failed, and why the fix is size rather than
+ * contrast. The app says it meets people "whatever age they are", and
  * 15px body text quietly didn't.
  *
  * The control lives in the title bar rather than in settings, because the

@@ -84,9 +84,11 @@ found.
 ## Text you can actually read · 2026-09-16
 
 > **Triggered by** UAT 1 — the first session run with someone outside the
-> project. UAT user 1, in their fifties, could not comfortably read the setup
-> screen: *"maybe where it is now is 'small', then a 'medium' then a
-> 'large'."*
+> project. UAT user 1 could not comfortably read the setup screen: *"maybe
+> where it is now is 'small', then a 'medium' then a 'large'."* Age range
+> fifties — recorded, with consent, because it is the cause rather than
+> colour: age-related vision change is why 15px failed, and why the fix is
+> size and not contrast.
 
 **A bug, in the sense that matters.** Nothing was broken, but the app claims
 to meet people *"whatever age they are"* and its body text is 15px. For a

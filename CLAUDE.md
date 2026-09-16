@@ -174,12 +174,22 @@ and some of it is tested as behaviour.
   companion's alone; a project that names a tester in its own commit log has
   broken that promise where it is permanent and public.
 
-  **Consent is the test, and it is asked per session, not assumed.** A detail
-  the participant agreed could be used in testing analysis may be recorded
-  when it is load-bearing — an age range often *is* the finding, since "the
-  body text is 15px" only indicts the claim to meet people *"whatever age
-  they are"* once the age is in it. A name and a relationship are never
-  load-bearing: they identify a person and explain nothing.
+  **Use no pronouns at all.** Repeat *UAT user N* rather than reach for one,
+  the way `user_profile.py` handles someone whose pronouns are `none` — the
+  app's own rule, turned on the people who help test it. In a repo where the
+  author is named, *"she wanted bigger text"* narrows to one person about as
+  fast as a name does, and *UAT user 1 wanted bigger text* reads identically.
+
+  **A personal detail goes in only when the fix causally depends on it**, and
+  the causal link is written down beside it. Age range earned its place in
+  the text-size work because age-related vision change is *why* 15px failed —
+  it is the reason the fix is size rather than contrast. The test is not
+  "does this make the story better", it is **"is the change incoherent
+  without it"**. Consent is asked per session before even a qualifying detail
+  is recorded, never assumed from a previous one.
+
+  A name and a relationship never pass that test. No fix has ever depended on
+  them: they identify a person and explain nothing.
 
   **Commit messages and PR titles cannot be edited after the fact**, and a
   force-push does not remove the original from GitHub — it stays reachable by
