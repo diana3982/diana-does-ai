@@ -29,10 +29,10 @@ export const APP_COPY = {
   /**
    * The settings menu in the title bar.
    *
-   * `menuLabel` is the one word here worth arguing about: this bar renders
-   * on the setup screen too, before any chat exists, so anything named for
-   * the chat window reads slightly early there. Kept in copy precisely so
-   * it is a one-line change either way.
+   * `menuLabel` is "settings", not "chat settings": this bar renders on the
+   * setup screen too, before any chat exists, so a name borrowed from the
+   * chat window read early there. It also leaves room for settings that are
+   * not about the chat at all.
    *
    * Each size is written at the size it sets, so the choice can be made by
    * looking rather than by reading -- the point is to be usable by someone

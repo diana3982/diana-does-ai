@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import SettingsMenu from '../SettingsMenu'
 import TitleBar from '../TitleBar'
 import { DEFAULT_TEXT_SIZE } from '../../lib/textSize'
+import { APP_COPY } from '../../copy/app'
 
 /**
  * The settings menu. Two things here are not cosmetic:
@@ -17,8 +18,15 @@ import { DEFAULT_TEXT_SIZE } from '../../lib/textSize'
  * it rather than leaving it to drift back into a flat list.
  */
 
-const openMenu = () => fireEvent.click(screen.getByText(/chat settings/i))
-const openTextSize = () => fireEvent.click(screen.getByText('text size'))
+// Read from copy/ rather than spelled out here. These labels are writing,
+// and writing gets revised -- a test that hardcodes them fails for the wrong
+// reason the first time a word changes, which is exactly what happened.
+const MENU = APP_COPY.settings.menuLabel
+const TEXT_SIZE = APP_COPY.settings.textSizeLabel
+
+const trigger = () => screen.getByRole('button', { name: MENU })
+const openMenu = () => fireEvent.click(trigger())
+const openTextSize = () => fireEvent.click(screen.getByText(TEXT_SIZE))
 
 describe('SettingsMenu', () => {
   beforeEach(() => {
@@ -30,13 +38,13 @@ describe('SettingsMenu', () => {
   afterEach(cleanup)
 
   it('stays shut until asked', () => {
-    expect(screen.queryByText('text size')).toBeNull()
-    expect(screen.getByText(/chat settings/i).getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByText(TEXT_SIZE)).toBeNull()
+    expect(trigger().getAttribute('aria-expanded')).toBe('false')
   })
 
   it('opens to what can be changed, not to every value', () => {
     openMenu()
-    expect(screen.getByText('text size')).toBeTruthy()
+    expect(screen.getByText(TEXT_SIZE)).toBeTruthy()
     // The point of nesting: values are still out of sight.
     expect(screen.queryByText('small')).toBeNull()
     expect(screen.queryByText('large')).toBeNull()
@@ -54,7 +62,7 @@ describe('SettingsMenu', () => {
     openMenu()
     // Hover menus close when the pointer drifts and cannot be used by
     // touch at all -- hardest for the people this menu exists for.
-    fireEvent.mouseOver(screen.getByText('text size'))
+    fireEvent.mouseOver(screen.getByText(TEXT_SIZE))
     expect(screen.queryByText('large')).toBeNull()
 
     openTextSize()
@@ -89,14 +97,14 @@ describe('SettingsMenu', () => {
     openMenu()
     openTextSize()
     fireEvent.mouseDown(document.body)
-    expect(screen.queryByText('text size')).toBeNull()
+    expect(screen.queryByText(TEXT_SIZE)).toBeNull()
   })
 
   it('closes everything on escape, one predictable way out', () => {
     openMenu()
     openTextSize()
-    fireEvent.keyDown(screen.getByText('text size'), { key: 'Escape' })
-    expect(screen.queryByText('text size')).toBeNull()
+    fireEvent.keyDown(screen.getByText(TEXT_SIZE), { key: 'Escape' })
+    expect(screen.queryByText(TEXT_SIZE)).toBeNull()
   })
 })
 
@@ -105,7 +113,7 @@ describe('where the menu lives', () => {
 
   it('is in the title bar, so it is reachable on the setup screen too', () => {
     render(<TitleBar title="columba" />)
-    expect(screen.getByText(/chat settings/i)).toBeTruthy()
+    expect(screen.getByRole('button', { name: MENU })).toBeTruthy()
   })
 
   it('leaves the decorative window controls alone', () => {

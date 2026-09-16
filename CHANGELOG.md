@@ -54,10 +54,14 @@ font preference would be a poor trade, most of all for the person who needs
 the preference.
 
 **Moved into a menu during review.** The first version put three A's
-directly in the title bar. Review asked for a **chat settings** dropdown
-instead — less clutter, and somewhere for future settings to go without
-rearranging anything. It is also the more period-accurate pattern: old apps
-had menus, not scattered controls.
+directly in the title bar. Review asked for a **settings** dropdown instead —
+less clutter, and somewhere for future settings to go without rearranging
+anything. It is also the more period-accurate pattern: old apps had menus,
+not scattered controls.
+
+It is called *settings* rather than *chat settings* because the title bar
+renders on the setup screen too, before any chat exists — and because not
+every setting it will hold is about the chat.
 
 **It nests, and submenus open on click.** The first attempt at the menu was
 flat, on the grounds that flyouts are hard to use. That conflated *flyout*
@@ -101,10 +105,6 @@ overlap anything. The page became a column to hold it.
 of the title bar and would otherwise run off the window. On a narrow window
 there is no room beside it at all, so values sit beneath their setting
 instead.
-
-**One word left open.** The menu is called *chat settings*, but the title bar
-renders on the setup screen too, before any chat exists. The label lives in
-`copy/app.js` so it is a one-line change if it reads early there.
 
 ---
 
