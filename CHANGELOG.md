@@ -59,21 +59,37 @@ instead — less clutter, and somewhere for future settings to go without
 rearranging anything. It is also the more period-accurate pattern: old apps
 had menus, not scattered controls.
 
-It is a flat menu with a labelled group rather than a hover flyout. This
-control exists because someone couldn't read the screen, and a flyout that
-opens on hover and closes when the pointer drifts is the hardest kind of
-control for the people most likely to need it.
+**It nests, and submenus open on click.** The first attempt at the menu was
+flat, on the grounds that flyouts are hard to use. That conflated *flyout*
+with *hover* — and hover is the actual problem, since hover menus close when
+the pointer drifts and cannot be used by touch at all. Opening on click keeps
+the nesting, which is what stays short as settings are added, with none of
+the cost. The top level lists what can be changed; values appear when a
+setting is opened. A test pins that, so it cannot drift back into a flat
+list.
 
-**Everything in the menu is bold** — the trigger, the heading and the
-options. At 11px, uppercase and muted, the title bar carries the smallest
-text in the app, and it has to be findable by someone who hasn't enlarged
-anything yet.
+**Bold marks what you operate, not what you pick.** The trigger and the
+setting names are bold; the values are not. Weight reads as "selected", and
+selection was already shown in accent colour — two signals for one meaning,
+one of them wrong. It also leaves weight free for a bold-text setting to own
+later.
 
-**Each option is written at the size it sets**, in bold, and in fixed pixels
-rather than the scaling tokens. Bold because the menu is read at its hardest
-moment — by someone who hasn't enlarged anything yet, deciding whether they
-need to. Fixed pixels because if the options scaled with the current setting
-they'd stay identical to each other and show nothing.
+**Each value is written at the size it sets**, in fixed pixels rather than
+the scaling tokens. If they scaled with the current setting they would stay
+identical to each other and show nothing.
+
+**The default moved from small to medium.** 15px body was never actually
+chosen — it is what got built first, and the first person to use the app from
+outside the project was squinting at it. Nobody had asked for it. Small stays
+available for anyone who prefers the density. Sizing up only the setup screen
+was considered and rejected: someone who picked *large* would have had setup
+render *smaller* than they asked for, and a size change between screens reads
+as something breaking.
+
+**The submenu opens leftward**, because the menu is pinned to the right edge
+of the title bar and would otherwise run off the window. On a narrow window
+there is no room beside it at all, so values sit beneath their setting
+instead.
 
 **One word left open.** The menu is called *chat settings*, but the title bar
 renders on the setup screen too, before any chat exists. The label lives in

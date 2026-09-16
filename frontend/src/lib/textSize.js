@@ -23,7 +23,15 @@ export const TEXT_SIZES = [
   { key: 'large', scale: 1.4 },
 ]
 
-export const DEFAULT_TEXT_SIZE = 'small'
+/**
+ * Medium, not small.
+ *
+ * 15px body was never chosen -- it is just what got built first, and the
+ * first person to use this app from outside the project was squinting at it.
+ * Nobody has asked for the smaller size, and it stays available for anyone
+ * who prefers the density.
+ */
+export const DEFAULT_TEXT_SIZE = 'medium'
 
 const STORAGE_KEY = 'columba-text-size'
 

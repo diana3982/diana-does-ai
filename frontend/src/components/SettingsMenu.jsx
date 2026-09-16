@@ -4,16 +4,17 @@ import { TEXT_SIZES, applyTextSize, readTextSize, storeTextSize } from '../lib/t
 import './SettingsMenu.css'
 
 /**
- * The settings menu in the title bar — old-OS menu, not a scattered row of
+ * The settings menu in the title bar — old-OS menu, not a row of loose
  * controls.
  *
- * It holds text size today and is shaped to hold more: each setting gets its
- * own labelled group, so adding one never rearranges the others.
+ * Nested on purpose: the top level lists only the names of settings, and
+ * values appear when one is opened. With a second or third setting a flat
+ * list becomes a wall of options, while this still shows a short list.
  *
- * Deliberately a flat menu with headings rather than a hover flyout. This
- * whole menu exists because someone couldn't read the screen, and a flyout
- * that opens on hover and closes when the pointer drifts is exactly the kind
- * of control that is hardest for the people most likely to need it.
+ * Submenus open on CLICK, never on hover. Hover menus close when the pointer
+ * drifts, which is hardest for exactly the people this menu exists for — and
+ * they can't be used by touch at all. Clicking keeps it open until it is
+ * dismissed, and works the same from a keyboard.
  *
  * It sits in the title bar rather than behind a settings screen so it is
  * reachable on the FIRST screen — a preference kept behind a page you cannot
@@ -21,8 +22,14 @@ import './SettingsMenu.css'
  */
 function SettingsMenu() {
   const [open, setOpen] = useState(false)
+  const [openSection, setOpenSection] = useState(null)
   const [size, setSize] = useState(readTextSize)
   const menuRef = useRef(null)
+
+  const closeAll = () => {
+    setOpen(false)
+    setOpenSection(null)
+  }
 
   const choose = (key) => {
     setSize(applyTextSize(key))
@@ -35,16 +42,19 @@ function SettingsMenu() {
     if (!open) return undefined
 
     const dismiss = (event) => {
-      if (!menuRef.current?.contains(event.target)) setOpen(false)
+      if (!menuRef.current?.contains(event.target)) closeAll()
     }
     document.addEventListener('mousedown', dismiss)
     return () => document.removeEventListener('mousedown', dismiss)
   }, [open])
 
-  // Escape closes without needing to find the trigger again.
+  // Escape closes the whole thing rather than stepping back a level: one
+  // predictable way out beats a tidier one nobody can remember.
   const handleKeyDown = (event) => {
-    if (event.key === 'Escape') setOpen(false)
+    if (event.key === 'Escape') closeAll()
   }
+
+  const textSizeOpen = openSection === 'textSize'
 
   return (
     <div className="settings-menu" ref={menuRef} onKeyDown={handleKeyDown}>
@@ -53,7 +63,7 @@ function SettingsMenu() {
         className={`settings-trigger${open ? ' is-open' : ''}`}
         aria-haspopup="true"
         aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => (open ? closeAll() : setOpen(true))}
       >
         <span aria-hidden="true">⚙ </span>
         {APP_COPY.settings.menuLabel}
@@ -61,23 +71,40 @@ function SettingsMenu() {
 
       {open && (
         <div className="settings-panel">
-          <p className="settings-heading" id="settings-text-size">
-            {APP_COPY.settings.textSizeLabel}
-          </p>
-          <div className="settings-options" role="group" aria-labelledby="settings-text-size">
-            {TEXT_SIZES.map(({ key }) => (
-              <button
-                key={key}
-                type="button"
-                className={`settings-size settings-size-${key}${size === key ? ' is-current' : ''}`}
-                // The current size is state, not a different button, so a
-                // screen reader announces it as pressed rather than renaming.
-                aria-pressed={size === key}
-                onClick={() => choose(key)}
+          <div className="settings-item">
+            <button
+              type="button"
+              className={`settings-section${textSizeOpen ? ' is-open' : ''}`}
+              aria-haspopup="true"
+              aria-expanded={textSizeOpen}
+              onClick={() => setOpenSection(textSizeOpen ? null : 'textSize')}
+            >
+              {APP_COPY.settings.textSizeLabel}
+              <span className="settings-arrow" aria-hidden="true">▸</span>
+            </button>
+
+            {textSizeOpen && (
+              <div
+                className="settings-submenu"
+                role="group"
+                aria-label={APP_COPY.settings.textSizeLabel}
               >
-                {APP_COPY.settings.textSizes[key]}
-              </button>
-            ))}
+                {TEXT_SIZES.map(({ key }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`settings-value settings-value-${key}${size === key ? ' is-current' : ''}`}
+                    // The chosen one is announced as state. Colour marks it
+                    // visually -- deliberately not weight, which would read
+                    // as "selected" and collide with the bold setting.
+                    aria-pressed={size === key}
+                    onClick={() => choose(key)}
+                  >
+                    {APP_COPY.settings.textSizes[key]}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
