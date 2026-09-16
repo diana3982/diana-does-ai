@@ -25,4 +25,26 @@ export const APP_COPY = {
    * point is to interrupt, not to reassure.
    */
   testMode: 'TEST MODE — this session is not real, and nothing here is saved to your companion',
+
+  /**
+   * The settings menu in the title bar.
+   *
+   * `menuLabel` is "settings", not "chat settings": this bar renders on the
+   * setup screen too, before any chat exists, so a name borrowed from the
+   * chat window read early there. It also leaves room for settings that are
+   * not about the chat at all.
+   *
+   * Each size is written at the size it sets, so the choice can be made by
+   * looking rather than by reading -- the point is to be usable by someone
+   * squinting at the screen right now.
+   */
+  settings: {
+    menuLabel: 'settings',
+    textSizeLabel: 'text size',
+    textSizes: {
+      small: 'small',
+      medium: 'medium',
+      large: 'large',
+    },
+  },
 }

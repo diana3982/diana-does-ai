@@ -146,8 +146,10 @@
 
 .chat-input {
   flex: 1;
-  min-height: 38px;
-  max-height: 96px; /* ~3 lines; the JS cap keeps it in step */
+  min-height: calc(38px * var(--text-scale));
+  /* ~3 lines. Scaled with the text: at a fixed 96px, larger text would be
+     clipped to two lines while the JS cap still thought it had three. */
+  max-height: calc(96px * var(--text-scale));
   overflow-y: auto;
 }
 

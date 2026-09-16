@@ -12,6 +12,102 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Text you can actually read · 2026-09-16
+
+> **Triggered by** watching the first person outside the project use it. A
+> tester in her fifties was squinting at the setup screen: *"maybe where it
+> is now is 'small', then a 'medium' then a 'large'."*
+
+**A bug, in the sense that matters.** Nothing was broken, but the app claims
+to meet people *"whatever age they are"* and its body text is 15px. For a
+large share of the people it says it's for, that claim wasn't true.
+
+Three sizes now sit in the title bar: **small** (what it has always been),
+**medium**, and **large**, at 1.2x and 1.4x.
+
+**It's in the title bar, not in settings, and that's the whole design.** The
+person who needs this has to find it on the **first** screen. A preference
+kept behind a settings page you can't comfortably read is no preference at
+all — and this app's settings screen doesn't exist yet. The title bar is on
+both the setup screen and the chat window, so the control is there before
+anything has been filled in.
+
+**One multiplier, five tokens.** Every size was already a `rem` token defined
+in one place, so `--text-scale` moves all of them and their proportions can't
+drift apart. The first attempt put the override rules *inside* the `:root`
+block — nested selectors, which is invalid there and silently does nothing.
+Caught before commit.
+
+**Spacing deliberately doesn't scale.** The words grow inside the layout they
+already had, so panels stay put and nothing reflows out of reach. The cost is
+that large text sits a little tighter in its padding, which is the better
+trade. Two fixed heights on the composer *do* scale, because at 96px a large
+line would have been clipped to two lines while the JS still thought it had
+three.
+
+**Kept per device, not on the companion.** This is about the screen someone
+is looking at, not about who they are — a phone and a laptop can want
+different answers, and it applies instantly rather than after a round trip.
+Storage can throw outright in a locked-down browser, not just come back
+empty, so both reads and writes are guarded: failing to draw the app over a
+font preference would be a poor trade, most of all for the person who needs
+the preference.
+
+**Moved into a menu during review.** The first version put three A's
+directly in the title bar. Review asked for a **settings** dropdown instead —
+less clutter, and somewhere for future settings to go without rearranging
+anything. It is also the more period-accurate pattern: old apps had menus,
+not scattered controls.
+
+It is called *settings* rather than *chat settings* because the title bar
+renders on the setup screen too, before any chat exists — and because not
+every setting it will hold is about the chat.
+
+**It nests, and submenus open on click.** The first attempt at the menu was
+flat, on the grounds that flyouts are hard to use. That conflated *flyout*
+with *hover* — and hover is the actual problem, since hover menus close when
+the pointer drifts and cannot be used by touch at all. Opening on click keeps
+the nesting, which is what stays short as settings are added, with none of
+the cost. The top level lists what can be changed; values appear when a
+setting is opened. A test pins that, so it cannot drift back into a flat
+list.
+
+**Bold marks what you operate, not what you pick.** The trigger and the
+setting names are bold; the values are not. Weight reads as "selected", and
+selection was already shown in accent colour — two signals for one meaning,
+one of them wrong. It also leaves weight free for a bold-text setting to own
+later.
+
+**Each value is written at the size it sets**, in fixed pixels rather than
+the scaling tokens. If they scaled with the current setting they would stay
+identical to each other and show nothing.
+
+**The default moved from small to medium.** 15px body was never actually
+chosen — it is what got built first, and the first person to use the app from
+outside the project was squinting at it. Nobody had asked for it. Small stays
+available for anyone who prefers the density. Sizing up only the setup screen
+was considered and rejected: someone who picked *large* would have had setup
+render *smaller* than they asked for, and a size change between screens reads
+as something breaking.
+
+**The test-mode banner stopped covering the title bar.** Found while
+reviewing this, and older than this work: the banner was `position: fixed`,
+so it was out of the layout entirely and nothing reserved room for it. As
+soon as its sentence wrapped to a second line it sat on top of the title
+bar — and a narrow window and a larger text size both cause that wrap, so
+making medium the default is what brought it into view.
+
+It now sits above the app rather than inside it, and is `sticky` rather than
+`fixed`: still pinned while scrolling, but taking real space, so it cannot
+overlap anything. The page became a column to hold it.
+
+**The submenu opens leftward**, because the menu is pinned to the right edge
+of the title bar and would otherwise run off the window. On a narrow window
+there is no room beside it at all, so values sit beneath their setting
+instead.
+
+---
+
 ## A reply that arrives in pieces · 2026-09-13
 
 > **Triggered by** the original idea the send queue grew out of. The

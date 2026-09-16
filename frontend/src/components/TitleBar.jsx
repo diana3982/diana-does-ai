@@ -1,3 +1,4 @@
+import SettingsMenu from './SettingsMenu'
 import './TitleBar.css'
 
 /**
@@ -7,6 +8,11 @@ import './TitleBar.css'
  * marks, not buttons, unless a handler is passed: a button that looks
  * clickable and does nothing is worse than no button, and screen readers
  * shouldn't announce controls that go nowhere.
+ *
+ * It also carries the settings menu, which is why text size works
+ * everywhere: this bar is on the setup screen and the chat window both. A
+ * first-time user who cannot comfortably read the setup screen can fix it
+ * before filling anything in — which was the whole point of adding it.
  *
  * @param {string} title           text shown in the bar
  * @param {string} [icon]          small glyph before the title
@@ -19,6 +25,8 @@ function TitleBar({ title, icon = '🕊️', onClose }) {
         {icon}
       </span>
       <span className="titlebar-title">{title}</span>
+
+      <SettingsMenu />
 
       <span className="titlebar-controls">
         <span aria-hidden="true">–</span>

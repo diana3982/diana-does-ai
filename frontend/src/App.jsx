@@ -106,15 +106,22 @@ function App() {
   }
 
   return (
-    <div className="app">
-      {/* A test session must never be mistaken for a real one. */}
+    <>
+      {/* A test session must never be mistaken for a real one.
+
+          Above .app rather than inside it, so it takes real space instead of
+          floating over the screen. As a fixed overlay it covered the title
+          bar as soon as its sentence wrapped to a second line, which a narrow
+          window or a larger text size both cause. */}
       {testMode && <p className="test-mode-banner">{APP_COPY.testMode}</p>}
-      {character ? (
-        <ChatScreen character={character} />
-      ) : (
-        <SetupScreen onCharacterCreated={handleCharacterCreated} />
-      )}
-    </div>
+      <div className="app">
+        {character ? (
+          <ChatScreen character={character} />
+        ) : (
+          <SetupScreen onCharacterCreated={handleCharacterCreated} />
+        )}
+      </div>
+    </>
   )
 }
 
