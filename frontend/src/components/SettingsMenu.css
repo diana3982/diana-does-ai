@@ -1,0 +1,99 @@
+/* The settings menu in the title bar — an old-OS dropdown, not a row of
+   loose controls. Shaped so a second setting slots in as another labelled
+   group without rearranging this one. */
+
+.settings-menu {
+  position: relative;
+  margin-left: auto;
+}
+
+.settings-trigger {
+  padding: 2px var(--space-2);
+  font-family: var(--font-mono);
+  /* Scales with the setting it contains: the person opening this menu to
+     enlarge the text should find the trigger easier to read next time. */
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+}
+
+.settings-trigger:hover,
+.settings-trigger.is-open {
+  color: var(--color-accent);
+  background: var(--accent-wash);
+}
+
+.settings-panel {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: 10;
+  min-width: 160px;
+  padding: var(--space-2);
+  text-align: left;
+  background: var(--color-surface);
+  border: var(--border-thin);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
+}
+
+.settings-heading {
+  margin: 0 0 var(--space-1);
+  padding: 0 var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.settings-options {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.settings-size {
+  /* Full width and roomy: the people most likely to need this are the
+     least well served by a small target. */
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-sans);
+  /* Bold because this menu is read at its hardest moment: by someone who
+     has not yet enlarged anything, deciding whether they need to. Weight
+     buys legibility at small sizes far more cheaply than size does. */
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-text);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+}
+
+/* Each option is written at the size it sets, so the choice can be made by
+   looking. Fixed px, not the scaling tokens: if these scaled with the
+   current setting they would stay identical to each other and show nothing. */
+.settings-size-small { font-size: 13px; }
+.settings-size-medium { font-size: 16px; }
+.settings-size-large { font-size: 19px; }
+
+.settings-size:hover {
+  background: var(--accent-wash);
+}
+
+.settings-size.is-current {
+  color: var(--color-accent);
+  background: var(--accent-wash);
+}

@@ -38,9 +38,10 @@ src/
 │   ├── CompanionAvatar.jsx
 │   ├── MessageBubble.jsx
 │   ├── StatSlider.jsx
-│   ├── TitleBar.jsx    ← window chrome, and the text size control
+│   ├── SettingsMenu.jsx ← the title bar dropdown; text size lives here
+│   ├── TitleBar.jsx    ← window chrome
 │   ├── TypingIndicator.jsx
-│   └── __tests__/      ← the text size control, on jsdom
+│   └── __tests__/      ← the settings menu, on jsdom
 ├── copy/               ← every word the user reads
 │   ├── app.js          ← loading, connection failure
 │   ├── setup.js        ← ages, genders, tones, stat descriptors
@@ -81,8 +82,10 @@ queue decides someone has finished typing.
 Two suites opt into jsdom per-file with a `// @vitest-environment jsdom`
 docblock rather than switching the whole suite over — the logic tests are
 faster without it. `textSize` needs it for `localStorage` and the document
-root, and `TitleBar` for the control itself: that changing the size moves the
-whole page and is remembered, not just that a button exists.
+root, and `SettingsMenu` for the control itself: that changing the size moves
+the whole page and is remembered, that the menu opens and dismisses, and that
+it is reachable from the title bar on the setup screen — not just that a
+button exists.
 
 `ChatScreen` is the larger of the two, covering the wiring the pure tests
 can't reach: that a fragment shows a bubble before anything is

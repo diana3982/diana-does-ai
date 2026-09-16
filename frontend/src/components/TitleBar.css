@@ -24,48 +24,6 @@
   letter-spacing: 0.16em;
 }
 
-/* Text size control: three A's, each drawn at the size it sets.
-
-   Deliberately in fixed px, NOT the --text-* tokens. It is a legend for
-   the sizes, so it has to look the same whichever one is chosen -- if it
-   scaled with the setting, the three A's would stay identical to each
-   other and show nothing. */
-.titlebar-textsize {
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-  margin-left: auto;
-}
-
-.titlebar-size {
-  /* Roomy enough to hit comfortably, since the people most likely to need
-     this are the least well served by a tiny target. */
-  min-width: 24px;
-  padding: 2px var(--space-1);
-  font-family: var(--font-mono);
-  line-height: 1;
-  color: var(--color-text-muted);
-  background: none;
-  border: 0;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: color var(--transition), background var(--transition);
-}
-
-.titlebar-size-small { font-size: 10px; }
-.titlebar-size-medium { font-size: 13px; }
-.titlebar-size-large { font-size: 16px; }
-
-.titlebar-size:hover {
-  color: var(--color-text);
-  background: var(--accent-wash);
-}
-
-.titlebar-size.is-current {
-  color: var(--color-accent);
-  background: var(--accent-wash);
-}
-
 .titlebar-controls {
   display: flex;
   align-items: center;

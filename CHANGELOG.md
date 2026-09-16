@@ -53,9 +53,26 @@ empty, so both reads and writes are guarded: failing to draw the app over a
 font preference would be a poor trade, most of all for the person who needs
 the preference.
 
-**The three A's are drawn in fixed pixels**, not the scaling tokens. They're
-a legend for the sizes, so if they scaled with the setting they'd stay
-identical to each other and show nothing.
+**Moved into a menu during review.** The first version put three A's
+directly in the title bar. Review asked for a **chat settings** dropdown
+instead — less clutter, and somewhere for future settings to go without
+rearranging anything. It is also the more period-accurate pattern: old apps
+had menus, not scattered controls.
+
+It is a flat menu with a labelled group rather than a hover flyout. This
+control exists because someone couldn't read the screen, and a flyout that
+opens on hover and closes when the pointer drifts is the hardest kind of
+control for the people most likely to need it.
+
+**Each option is written at the size it sets**, in bold, and in fixed pixels
+rather than the scaling tokens. Bold because the menu is read at its hardest
+moment — by someone who hasn't enlarged anything yet, deciding whether they
+need to. Fixed pixels because if the options scaled with the current setting
+they'd stay identical to each other and show nothing.
+
+**One word left open.** The menu is called *chat settings*, but the title bar
+renders on the setup screen too, before any chat exists. The label lives in
+`copy/app.js` so it is a one-line change if it reads early there.
 
 ---
 
