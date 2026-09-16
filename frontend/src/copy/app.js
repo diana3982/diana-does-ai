@@ -39,7 +39,7 @@ export const APP_COPY = {
    * squinting at the screen right now.
    */
   settings: {
-    menuLabel: 'chat settings',
+    menuLabel: 'settings',
     textSizeLabel: 'text size',
     textSizes: {
       small: 'small',
