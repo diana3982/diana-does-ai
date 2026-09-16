@@ -64,6 +64,11 @@ control exists because someone couldn't read the screen, and a flyout that
 opens on hover and closes when the pointer drifts is the hardest kind of
 control for the people most likely to need it.
 
+**Everything in the menu is bold** — the trigger, the heading and the
+options. At 11px, uppercase and muted, the title bar carries the smallest
+text in the app, and it has to be findable by someone who hasn't enlarged
+anything yet.
+
 **Each option is written at the size it sets**, in bold, and in fixed pixels
 rather than the scaling tokens. Bold because the menu is read at its hardest
 moment — by someone who hasn't enlarged anything yet, deciding whether they
