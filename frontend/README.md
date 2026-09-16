@@ -38,8 +38,9 @@ src/
 │   ├── CompanionAvatar.jsx
 │   ├── MessageBubble.jsx
 │   ├── StatSlider.jsx
-│   ├── TitleBar.jsx
-│   └── TypingIndicator.jsx
+│   ├── TitleBar.jsx    ← window chrome, and the text size control
+│   ├── TypingIndicator.jsx
+│   └── __tests__/      ← the text size control, on jsdom
 ├── copy/               ← every word the user reads
 │   ├── app.js          ← loading, connection failure
 │   ├── setup.js        ← ages, genders, tones, stat descriptors
@@ -51,7 +52,8 @@ src/
 ├── lib/
 │   ├── sendQueue.js    ← holds fragments so a thought can finish
 │   ├── replyQueue.js   ← splits a reply on its blank lines and paces the parts
-│   └── __tests__/      ← both timing rules, on fake timers
+│   ├── textSize.js     ← small / medium / large, remembered per device
+│   └── __tests__/      ← the timing rules on fake timers, and text size
 ├── pages/
 │   ├── SetupScreen.jsx ← first-time companion creation
 │   ├── ChatScreen.jsx  ← the chat interface
@@ -76,10 +78,14 @@ lighter status copy can reach a heavy conversation, whether the companion's
 profile holds together for every combination of settings, and when the send
 queue decides someone has finished typing.
 
-`ChatScreen` is the one component test, and it opts into jsdom per-file with
-a `// @vitest-environment jsdom` docblock rather than switching the whole
-suite over — the logic tests are faster without it. It covers the wiring the
-pure tests can't reach: that a fragment shows a bubble before anything is
+Two suites opt into jsdom per-file with a `// @vitest-environment jsdom`
+docblock rather than switching the whole suite over — the logic tests are
+faster without it. `textSize` needs it for `localStorage` and the document
+root, and `TitleBar` for the control itself: that changing the size moves the
+whole page and is remembered, not just that a button exists.
+
+`ChatScreen` is the larger of the two, covering the wiring the pure tests
+can't reach: that a fragment shows a bubble before anything is
 sent, that a burst arrives at the API as one turn, that the composer is
 never disabled, and that a failed send hands back every word.
 
@@ -103,6 +109,8 @@ reading over a shoulder.
   as writing, and some of it is tested as behaviour.
 - **The composer never disables.** Someone in the middle of a thought must
   always be able to keep typing, including while a turn is in flight. Timing
-  logic goes in `src/lib/` where it can be tested without a DOM.
+  logic goes in `src/lib/`, away from components. Most of it needs no DOM at
+  all; `textSize.js` is the exception, since remembering a preference and
+  applying it to the page are both browser things.
 
 See `../SPEC.md` for the full component spec and `../CLAUDE.md` for project context.

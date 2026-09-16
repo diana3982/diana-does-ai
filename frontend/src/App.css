@@ -38,11 +38,16 @@
   --font-mono: 'Courier New', Courier, monospace;   /* UI chrome */
   --font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* messages */
 
-  --text-xs: 0.6875rem;   /* 11px — badges, timestamps */
-  --text-sm: 0.8125rem;   /* 13px — labels, buttons */
-  --text-base: 0.9375rem; /* 15px — body, messages */
-  --text-lg: 1.125rem;    /* 18px — panel headings */
-  --text-xl: 1.5rem;      /* 24px — app title */
+  /* Every size below is multiplied by this, so one value moves all of
+     them together and their relative proportions never drift. Set from
+     the title bar and remembered per device — see lib/textSize.js. */
+  --text-scale: 1;
+
+  --text-xs: calc(0.6875rem * var(--text-scale));   /* 11px — badges, timestamps */
+  --text-sm: calc(0.8125rem * var(--text-scale));   /* 13px — labels, buttons */
+  --text-base: calc(0.9375rem * var(--text-scale)); /* 15px — body, messages */
+  --text-lg: calc(1.125rem * var(--text-scale));    /* 18px — panel headings */
+  --text-xl: calc(1.5rem * var(--text-scale));      /* 24px — app title */
 
   /* --- Spacing scale ------------------------------------------ */
   --space-1: 4px;
@@ -75,6 +80,18 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Text size, chosen in the title bar.
+
+   Outside :root on purpose — these are separate rules that override the
+   token above, not declarations inside it.
+
+   Spacing deliberately does NOT scale with the text. The words grow inside
+   the layout they already had, so panels stay where they are and nothing
+   reflows out of reach; the tradeoff is that large text sits a little
+   tighter in its padding. */
+:root[data-text-size='medium'] { --text-scale: 1.2; }
+:root[data-text-size='large']  { --text-scale: 1.4; }
 
 /* ===============================================================
    Base elements

@@ -25,4 +25,21 @@ export const APP_COPY = {
    * point is to interrupt, not to reassure.
    */
   testMode: 'TEST MODE — this session is not real, and nothing here is saved to your companion',
+
+  /**
+   * The text size control in the title bar.
+   *
+   * Shown as three A's of increasing size, which needs no reading to
+   * understand -- the point is to be usable by someone who is squinting at
+   * the screen right now. The words below are what a screen reader says,
+   * and what the button announces when it is the one in use.
+   */
+  textSize: {
+    groupLabel: 'text size',
+    options: {
+      small: 'small text',
+      medium: 'medium text',
+      large: 'large text',
+    },
+  },
 }

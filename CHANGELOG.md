@@ -12,6 +12,53 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Text you can actually read · 2026-09-16
+
+> **Triggered by** watching the first person outside the project use it. A
+> tester in her fifties was squinting at the setup screen: *"maybe where it
+> is now is 'small', then a 'medium' then a 'large'."*
+
+**A bug, in the sense that matters.** Nothing was broken, but the app claims
+to meet people *"whatever age they are"* and its body text is 15px. For a
+large share of the people it says it's for, that claim wasn't true.
+
+Three sizes now sit in the title bar: **small** (what it has always been),
+**medium**, and **large**, at 1.2x and 1.4x.
+
+**It's in the title bar, not in settings, and that's the whole design.** The
+person who needs this has to find it on the **first** screen. A preference
+kept behind a settings page you can't comfortably read is no preference at
+all — and this app's settings screen doesn't exist yet. The title bar is on
+both the setup screen and the chat window, so the control is there before
+anything has been filled in.
+
+**One multiplier, five tokens.** Every size was already a `rem` token defined
+in one place, so `--text-scale` moves all of them and their proportions can't
+drift apart. The first attempt put the override rules *inside* the `:root`
+block — nested selectors, which is invalid there and silently does nothing.
+Caught before commit.
+
+**Spacing deliberately doesn't scale.** The words grow inside the layout they
+already had, so panels stay put and nothing reflows out of reach. The cost is
+that large text sits a little tighter in its padding, which is the better
+trade. Two fixed heights on the composer *do* scale, because at 96px a large
+line would have been clipped to two lines while the JS still thought it had
+three.
+
+**Kept per device, not on the companion.** This is about the screen someone
+is looking at, not about who they are — a phone and a laptop can want
+different answers, and it applies instantly rather than after a round trip.
+Storage can throw outright in a locked-down browser, not just come back
+empty, so both reads and writes are guarded: failing to draw the app over a
+font preference would be a poor trade, most of all for the person who needs
+the preference.
+
+**The three A's are drawn in fixed pixels**, not the scaling tokens. They're
+a legend for the sizes, so if they scaled with the setting they'd stay
+identical to each other and show nothing.
+
+---
+
 ## A reply that arrives in pieces · 2026-09-13
 
 > **Triggered by** the original idea the send queue grew out of. The
