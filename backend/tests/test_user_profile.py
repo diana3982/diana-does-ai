@@ -69,6 +69,35 @@ class TestPronounValidation:
         assert user_profile.load_profile()['pronouns'] == 'she/her'
 
 
+class TestTheLengthCap:
+    """The 24-character ceiling on a pronoun string.
+
+    Found by a mutation sweep: both `> 24 -> >= 24` and `24 -> 25` survived,
+    so nothing in the suite touched this line. It is not decoration. The
+    pattern allows up to four slash-separated runs of letters with no length
+    of its own, so without the cap a model returning a paragraph of lowercase
+    letters would have it stored and read back as someone's pronouns.
+    """
+
+    def test_a_long_but_well_shaped_string_is_refused(self):
+        # Matches PRONOUN_PATTERN exactly -- lowercase runs, three slashes --
+        # and is refused on length alone. This is the case the cap exists for.
+        too_long = 'abcdefgh/abcdefgh/abcdefgh'
+        assert len(too_long) > 24
+        assert user_profile.PRONOUN_PATTERN.match(too_long)
+
+        assert user_profile.clean_pronouns(too_long) is None
+
+    def test_the_boundary_itself_is_allowed(self):
+        # Exactly 24 is fine; 25 is not. Pins which side the comparison
+        # sits on, so the rule cannot drift by one unnoticed.
+        at_limit = 'abcdefg/abcdefg/abcdefg'.ljust(24, 'z')
+        assert len(at_limit) == 24
+
+        assert user_profile.clean_pronouns(at_limit) == at_limit
+        assert user_profile.clean_pronouns(at_limit + 'z') is None
+
+
 class TestStore:
     def test_nothing_known_yet(self):
         assert user_profile.load_profile() == {}
@@ -198,6 +227,15 @@ class TestAbsenceMarkers:
         """Otherwise found: 1, saved: 0 would report a refusal where the
         model had simply said nothing."""
         assert user_profile.is_offered(marker) is False
+
+    def test_a_non_string_answer_counts_as_offered(self):
+        # A model that returns a number or an object has still answered --
+        # it just answered badly, and `clean_pronouns` will refuse it. The
+        # diagnostic needs those two apart: "saw nothing" and "saw something
+        # unusable" are different failures with different fixes.
+        assert user_profile.is_offered(42) is True
+        assert user_profile.is_offered({'pronouns': 'she/her'}) is True
+        assert user_profile.is_offered(None) is False
 
     def test_a_real_answer_counts_as_offered_even_when_refused(self):
         assert user_profile.is_offered('star / stars') is True

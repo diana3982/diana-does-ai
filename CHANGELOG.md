@@ -12,6 +12,61 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Every test, checked against broken code · 2026-09-16
+
+> **Triggered by** review on #10, after two tests in that PR turned out to
+> pass against deliberately broken code: *"Let's deliberately try to break
+> the code in the test suites. We need positive and negative testing
+> always."*
+
+`scripts/mutate.py` changes one operator or constant at a time, runs the
+suite, and reports every change nothing caught. 81 mutations were caught;
+the survivors were then judged one at a time, because **a survivor is not
+automatically a missing test**.
+
+**The finding: `quirks.py` scoring had no tests at all.** There was no
+`test_quirks.py`. Flipping `sentiment == 'positive'` to `!=` — which inverts
+scoring outright, so saying you hate something raises your score for it —
+broke nothing in 286 tests. Neither did moving the "loves"/"likes"
+thresholds. The extraction tests covered what gets pulled *out* of a
+message; nothing covered what the numbers then did with it.
+
+That is the worst place in this codebase for that gap. These scores decide
+what the companion believes about someone, and `build_quirks_context` says
+it out loud in the system prompt. Inverted scoring would not crash anything
+— it would produce a companion **confidently wrong about a person**, which is
+the one failure this app can least afford.
+
+`test_quirks.py` now covers sentiment direction, both clamps, the confidence
+boundaries from both sides, and the label thresholds pinned at 3.5 and 2.0
+exactly. The **24-character pronoun cap** was untested too, and it is not
+decoration: `PRONOUN_PATTERN` has no length of its own, so without the cap a
+model returning a paragraph of lowercase letters would be stored and read
+back as someone's pronouns.
+
+**The sweep also caught a bad test written to close a gap.** The threshold
+test asserted `"likes kite flying" in context` — and that is a *substring of*
+`"dislikes kite flying"`, so with the 2.0 threshold broken the label flipped
+and the assertion still passed. It now asserts on the leading `- ` that only
+the real line has. Three tests this week were green for the wrong reason;
+this was the first found by machine rather than by guessing where to look,
+which is the argument for doing it in bulk.
+
+**What was deliberately left alone**, because reporting an honest equivalent
+beats inflating a kill rate: four `indent=2` → `3` (JSON cosmetics),
+`round(score, 1)` → `2` (enthusiasm is 1–5, so `0.5 × n` never has two
+decimals), every timing dial in `sendQueue` and `replyQueue` — 600ms → 601ms
+*should* survive, since pinning it would test the knob and not the behaviour
+— two boundary comparisons in `splitReply` that produce an identical array at
+exactly `MAX_PARTS`, and one unreachable guard against an empty flush.
+
+**Left open, as a design question rather than a test gap:**
+`clear_profile()`, `clear_sensitivities()` and `clear_quirks()` each return
+an unconditional `True` that no caller in `app.py` reads. It can never be
+`False`. It advertises a success signal that does not exist.
+
+---
+
 ## Bold letters, and one shape for every display setting · 2026-09-16
 
 > **Triggered by** UAT 1, in the same sitting. UAT user 1 wanted the menu

@@ -160,6 +160,27 @@ and some of it is tested as behaviour.
   way. Not inheritance — a shared function and a plain list
 - **Run `pytest` before every commit** and report the result — the
   pre-commit hook enforces this too, but report the result either way
+- **Positive and negative testing, always.** A test asserts both that the
+  right thing happens and that the wrong thing does not. Neither half is
+  optional, and the negative half is the one that gets skipped.
+- **A new test is not trusted until it has been seen to fail.** Break the
+  code it covers on purpose, watch that specific test go red, then put the
+  code back. A test that has only ever passed is not yet evidence — it may be
+  asserting something that was already true, or something that stays true
+  when the feature is gone.
+
+  This is not theoretical here. Three tests in the bold-letters work passed
+  against deliberately broken code: one asserted a DOM attribute written
+  whether or not the state it was checking survived, and two checked a
+  stylesheet one *file* at a time, so a file stayed green while one of its
+  two rules had nothing in it — which is exactly the bug review found by
+  eye. All three were rewritten and re-broken to confirm they bite.
+
+  `scripts/mutate.py` does this in bulk when a whole area needs checking:
+  it changes one operator or constant at a time, runs the suite, and reports
+  every change nothing caught. A survivor is not automatically a missing
+  test: it may be an equivalent change, a tuning dial that *should* survive,
+  or an unreachable guard. Which one it is, is the finding.
 - **Never use a real quirk, sensitivity or companion name as example or
   test data.** Invent them. `scripts/hooks/pre-commit` enforces this —
   install with `git config core.hooksPath scripts/hooks`
