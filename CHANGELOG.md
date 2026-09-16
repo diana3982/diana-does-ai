@@ -14,7 +14,7 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ## Bold letters, and one shape for every display setting · 2026-09-16
 
-> **Triggered by** the same tester, in the same sitting. She wanted the menu
+> **Triggered by** UAT 1, in the same sitting. She wanted the menu
 > items easier to read at first glance — and when that turned into bolding
 > the values themselves, Diana pushed back: *"someone might expect the text
 > to be bolded once selected... It could be another option in chat settings,
@@ -83,9 +83,9 @@ found.
 
 ## Text you can actually read · 2026-09-16
 
-> **Triggered by** watching the first person outside the project use it. A
-> tester in her fifties was squinting at the setup screen: *"maybe where it
-> is now is 'small', then a 'medium' then a 'large'."*
+> **Triggered by** UAT 1 — the first session run with someone outside the
+> project. UAT user 1 could not comfortably read the setup screen: *"maybe
+> where it is now is 'small', then a 'medium' then a 'large'."*
 
 **A bug, in the sense that matters.** Nothing was broken, but the app claims
 to meet people *"whatever age they are"* and its body text is 15px. For a
@@ -153,7 +153,8 @@ identical to each other and show nothing.
 
 **The default moved from small to medium.** 15px body was never actually
 chosen — it is what got built first, and the first person to use the app from
-outside the project was squinting at it. Nobody had asked for it. Small stays
+to use this app from outside the project could not read it comfortably.
+Nobody had asked for it. Small stays
 available for anyone who prefers the density. Sizing up only the setup screen
 was considered and rejected: someone who picked *large* would have had setup
 render *smaller* than they asked for, and a size change between screens reads

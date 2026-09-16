@@ -163,6 +163,23 @@ and some of it is tested as behaviour.
 - **Never use a real quirk, sensitivity or companion name as example or
   test data.** Invent them. `scripts/hooks/pre-commit` enforces this —
   install with `git config core.hooksPath scripts/hooks`
+- **Never identify a UAT participant.** Refer to them only as **UAT user N**,
+  numbered by the UAT session (`UAT 1` → `UAT user 1`). No name, no age or
+  age range, no gender or pronouns, no relationship to anyone on the project.
+  This applies everywhere, not just in code: commit messages, PR titles and
+  descriptions, PR comments, the CHANGELOG, code comments and test fixtures.
+
+  This is the same rule the app itself runs on, pointed at the people who
+  help build it. Columba's whole promise is that someone's story is theirs
+  and the companion's alone; a project that publishes *"a tester in her
+  fifties was squinting"* has broken that promise in its own commit log,
+  where it is permanent and public. What made a change necessary is the part
+  worth recording — *the setup screen was hard to read* — and that survives
+  the anonymisation intact. Who found it does not need to.
+
+  **Commit messages and PR titles cannot be edited after the fact**, and a
+  force-push does not remove the original from GitHub — it stays reachable by
+  SHA. So this gets checked *before* the commit, not after.
 
 ---
 

@@ -50,7 +50,7 @@ export const APP_COPY = {
         values: { small: 'small', medium: 'medium', large: 'large' },
       },
       /* "bold letters", not "bold text" -- the plain-language name, and the
-         one the first-time tester used when she asked for it. */
+         one UAT user 1 used when asking for it. */
       boldText: {
         label: 'bold letters',
         values: { off: 'off', on: 'on' },

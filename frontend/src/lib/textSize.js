@@ -1,8 +1,8 @@
 /**
  * How big the text is.
  *
- * Added after a first-time tester in her fifties was seen squinting at the
- * setup screen. The app says it meets people "whatever age they are", and
+ * Added after UAT 1, where the setup screen turned out to be hard to
+ * read. The app says it meets people "whatever age they are", and
  * 15px body text quietly didn't.
  *
  * The control lives in the title bar rather than in settings, because the
@@ -23,7 +23,7 @@ export const TEXT_SIZES = [
  * Medium, not small.
  *
  * 15px body was never chosen -- it is just what got built first, and the
- * first person to use this app from outside the project was squinting at it.
+ * first session with someone outside the project found it hard to read.
  * Nobody has asked for the smaller size, and it stays available for anyone
  * who prefers the density.
  */

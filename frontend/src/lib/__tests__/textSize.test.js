@@ -12,7 +12,8 @@ import { DEFAULT_TEXT_SIZE, TEXT_SIZES, textSize } from '../textSize'
 describe('the sizes themselves', () => {
   it('starts at medium, not at the smallest it has', () => {
     // 15px body was never chosen; it is what got built first, and the first
-    // outside user was squinting at it. Small stays available.
+    // session with an outside user found it hard to read. Small stays
+    // available.
     expect(DEFAULT_TEXT_SIZE).toBe('medium')
     expect(TEXT_SIZES[0]).toMatchObject({ key: 'small', scale: 1 })
   })
