@@ -1,8 +1,9 @@
 /**
  * How big the text is.
  *
- * Added after UAT 1, where the setup screen turned out to be hard to
- * read. The app says it meets people "whatever age they are", and
+ * Added after UAT 1, where UAT user 1 — in their fifties, and the first
+ * person to use this app from outside the project — could not comfortably
+ * read the setup screen. The app says it meets people "whatever age they are", and
  * 15px body text quietly didn't.
  *
  * The control lives in the title bar rather than in settings, because the
