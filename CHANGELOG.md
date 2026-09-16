@@ -86,6 +86,17 @@ was considered and rejected: someone who picked *large* would have had setup
 render *smaller* than they asked for, and a size change between screens reads
 as something breaking.
 
+**The test-mode banner stopped covering the title bar.** Found while
+reviewing this, and older than this work: the banner was `position: fixed`,
+so it was out of the layout entirely and nothing reserved room for it. As
+soon as its sentence wrapped to a second line it sat on top of the title
+bar — and a narrow window and a larger text size both cause that wrap, so
+making medium the default is what brought it into view.
+
+It now sits above the app rather than inside it, and is `sticky` rather than
+`fixed`: still pinned while scrolling, but taking real space, so it cannot
+overlap anything. The page became a column to hold it.
+
 **The submenu opens leftward**, because the menu is pinned to the right edge
 of the title bar and would otherwise run off the window. On a narrow window
 there is no room beside it at all, so values sit beneath their setting

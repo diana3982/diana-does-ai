@@ -111,7 +111,11 @@ body {
   background-attachment: fixed;
 }
 
+/* A column, so anything above the app (the test-mode banner) takes its own
+   space rather than overlapping what is below it. */
 #root {
+  display: flex;
+  flex-direction: column;
   min-height: 100%;
 }
 
@@ -552,9 +556,9 @@ kbd {
 
 .app {
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
   padding: var(--space-5);
 }
 
@@ -572,11 +576,14 @@ kbd {
    real conversation, which matters most to whoever is reading over a
    shoulder. Full-width, high contrast, above everything. */
 .test-mode-banner {
-  position: fixed;
+  /* Sticky, not fixed. Fixed took it out of the layout entirely, so nothing
+     reserved room for it and it sat on top of the title bar the moment its
+     sentence wrapped -- which a narrow window and a larger text size both
+     cause. Sticky keeps it visible while scrolling AND keeps its space. */
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 100;
+  flex-shrink: 0;
   margin: 0;
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-mono);
