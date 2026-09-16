@@ -127,6 +127,10 @@ Warm, gentle, non-clinical. The UI should feel like a safe space — never steri
 - `CompanionAvatar` ✅ — small avatar/icon for the companion in chat
 - `TitleBar` ✅ — the Y2K window chrome
 - `TypingIndicator` ✅ — three dots plus the companion's typing status
+- `SettingsMenu` ✅ — the title bar dropdown holding the display settings
+  (text size, bold letters). In the title bar rather than behind a settings
+  screen because it renders on the setup screen too — a preference kept
+  behind a page you cannot comfortably read is no preference at all
 
 ### `src/copy/`
 Every word the user reads lives here, never inline in a component. The wording
@@ -145,6 +149,15 @@ and some of it is tested as behaviour.
 - Comment non-obvious logic
 - Keep components focused — if it's doing too much, split it
 - User-facing strings go in `src/copy/`, never inline
+- **Never write the same fact in two places.** A label lives in `src/copy/`
+  and is read from there by the component *and* by its tests; a number the
+  CSS needs is a token, not a constant CSS cannot import. Renaming one menu
+  label once broke eight tests that had spelled it out — the tests were
+  wrong, not the rename
+- **Loosely coupled, highly cohesive.** A new thing of an existing kind
+  should be a list entry, not a branch: its own file says what it *is*, the
+  shared piece handles the rest, and the component renders them all the same
+  way. Not inheritance — a shared function and a plain list
 - **Run `pytest` before every commit** and report the result — the
   pre-commit hook enforces this too, but report the result either way
 - **Never use a real quirk, sensitivity or companion name as example or

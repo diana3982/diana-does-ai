@@ -38,7 +38,7 @@ src/
 │   ├── CompanionAvatar.jsx
 │   ├── MessageBubble.jsx
 │   ├── StatSlider.jsx
-│   ├── SettingsMenu.jsx ← the title bar dropdown; text size lives here
+│   ├── SettingsMenu.jsx ← the title bar dropdown; display settings live here
 │   ├── TitleBar.jsx    ← window chrome
 │   ├── TypingIndicator.jsx
 │   └── __tests__/      ← the settings menu, on jsdom
@@ -53,8 +53,10 @@ src/
 ├── lib/
 │   ├── sendQueue.js    ← holds fragments so a thought can finish
 │   ├── replyQueue.js   ← splits a reply on its blank lines and paces the parts
+│   ├── preference.js   ← one display setting: read it, remember it, apply it
 │   ├── textSize.js     ← small / medium / large, remembered per device
-│   └── __tests__/      ← the timing rules on fake timers, and text size
+│   ├── boldText.js     ← heavier prose, for whoever reads weight before size
+│   └── __tests__/      ← the timing rules on fake timers, and the settings
 ├── pages/
 │   ├── SetupScreen.jsx ← first-time companion creation
 │   ├── ChatScreen.jsx  ← the chat interface
@@ -79,13 +81,20 @@ lighter status copy can reach a heavy conversation, whether the companion's
 profile holds together for every combination of settings, and when the send
 queue decides someone has finished typing.
 
-Two suites opt into jsdom per-file with a `// @vitest-environment jsdom`
+Some suites opt into jsdom per-file with a `// @vitest-environment jsdom`
 docblock rather than switching the whole suite over — the logic tests are
-faster without it. `textSize` needs it for `localStorage` and the document
-root, and `SettingsMenu` for the control itself: that changing the size moves
-the whole page and is remembered, that the menu opens and dismisses, and that
-it is reachable from the title bar on the setup screen — not just that a
-button exists.
+faster without it. The display settings need it for `localStorage` and the
+document root, and `SettingsMenu` for the control itself: that changing a
+setting moves the whole page and is remembered, that the menu opens and
+dismisses, and that it is reachable from the title bar on the setup screen —
+not just that a button exists.
+
+`src/__tests__/displayPreferences.test.js` reads the CSS as text, the way the
+backend's storage guard reads `backend/*.py`. A display setting is joined to
+the stylesheet by nothing but a string, so every way it breaks breaks
+quietly — a renamed attribute, a value with no rule, a token defined and
+never used, or a rule nested inside `:root`, which is simply ignored. That
+last one was written here once and caught by eye.
 
 `ChatScreen` is the larger of the two, covering the wiring the pure tests
 can't reach: that a fragment shows a bubble before anything is
@@ -113,7 +122,13 @@ reading over a shoulder.
 - **The composer never disables.** Someone in the middle of a thought must
   always be able to keep typing, including while a turn is in flight. Timing
   logic goes in `src/lib/`, away from components. Most of it needs no DOM at
-  all; `textSize.js` is the exception, since remembering a preference and
-  applying it to the page are both browser things.
+  all; the display settings are the exception, since remembering a preference
+  and applying it to the page are both browser things.
+- **Nothing the user reads is written twice.** A label belongs in `src/copy/`
+  and is read from there by the component *and* by its tests. A number the
+  CSS needs belongs in a token, not in a constant the CSS cannot import.
+- **A new display setting should be a list entry, not a branch.** Its own
+  file declares what it is; `preference.js` handles the rest; `SettingsMenu`
+  renders every setting the same way.
 
 See `../SPEC.md` for the full component spec and `../CLAUDE.md` for project context.

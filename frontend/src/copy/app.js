@@ -34,17 +34,27 @@ export const APP_COPY = {
    * chat window read early there. It also leaves room for settings that are
    * not about the chat at all.
    *
-   * Each size is written at the size it sets, so the choice can be made by
-   * looking rather than by reading -- the point is to be usable by someone
-   * squinting at the screen right now.
+   * Each value is written the way it looks -- sizes at the size they set,
+   * "on" in the weight it turns on -- so the choice can be made by looking
+   * rather than by reading. The point is to be usable by someone squinting
+   * at the screen right now.
+   *
+   * Keyed by the setting's own name so the menu can render sections from
+   * this object rather than from a list repeated in the component.
    */
   settings: {
     menuLabel: 'settings',
-    textSizeLabel: 'text size',
-    textSizes: {
-      small: 'small',
-      medium: 'medium',
-      large: 'large',
+    sections: {
+      textSize: {
+        label: 'text size',
+        values: { small: 'small', medium: 'medium', large: 'large' },
+      },
+      /* "bold letters", not "bold text" -- the plain-language name, and the
+         one the first-time tester used when she asked for it. */
+      boldText: {
+        label: 'bold letters',
+        values: { off: 'off', on: 'on' },
+      },
     },
   },
 }

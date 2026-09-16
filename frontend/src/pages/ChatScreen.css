@@ -68,6 +68,7 @@
 .chat-about-line {
   margin: 0 0 var(--space-2);
   font-size: var(--text-sm);
+  font-weight: var(--reading-weight);
   line-height: 1.5;
   color: var(--color-text);
 }

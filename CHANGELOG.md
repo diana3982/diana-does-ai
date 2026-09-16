@@ -12,6 +12,63 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Bold letters, and one shape for every display setting · 2026-09-16
+
+> **Triggered by** the same tester, in the same sitting. She wanted the menu
+> items easier to read at first glance — and when that turned into bolding
+> the values themselves, Diana pushed back: *"someone might expect the text
+> to be bolded once selected... It could be another option in chat settings,
+> 'Enable Bold Letters'."*
+
+The pushback was the useful part. Weight was already doing a job in that
+menu — it marks what you **operate**, and the current value is marked in
+accent colour. Bolding the values would have given one meaning two signals
+and taken weight away from the setting that should own it.
+
+So bold became a setting. **Off by default**, and it applies to what you
+**read** — the companion's profile line and the conversation — never to
+labels, buttons or timestamps. Bold everywhere flattens the difference
+between a heading and a sentence, and the chrome is already heavier than the
+prose.
+
+**Weight 600, not 700.** Full bold removes some of the letterform variation
+the eye tracks with, so a whole conversation in it reads denser rather than
+clearer. Dark mode sharpens that — light text on a dark ground already looks
+thicker than the same weight the other way round, and this app has no light
+theme. It is an accessibility setting, not a style one: Windows ships the
+same thing as *"Make text bolder"*, and for many low-vision readers weight
+helps more than size does.
+
+**The second setting is what forced the shape.** One setting can be written
+any way at all; two is where the duplication would have started. Text size
+and bold now declare only what they *are* — key, values, default — and
+`lib/preference.js` holds the storage, the fallback and the document-root
+write once. `SettingsMenu` renders from a list, so a third setting is an
+entry there and a label in `copy/`. No new markup, no new state, no branch.
+
+**Where the number lives mattered too.** 600 is a CSS token, not a JavaScript
+constant: CSS cannot import from JS, so a copy in `boldText.js` would have
+been a second definition of the same number waiting to disagree with the
+first. That is now written down in `CLAUDE.md` alongside the rule that
+prompted it — *"moving forward no more hard coding, please"* — after a
+renamed menu label broke eight tests that had spelled the label out.
+
+**A guard test, because this seam fails silently.** A display setting is
+joined to the stylesheet by nothing but a string. A renamed attribute, a
+value with no rule, a token defined and never read, or a rule nested inside
+`:root` — which is invalid and simply ignored — all leave a setting that
+stores and applies correctly and changes nothing on screen. That last one was
+written in this project and caught by eye. `displayPreferences.test.js` now
+reads the CSS as text, the way the backend's storage guard reads
+`backend/*.py`.
+
+Two of the new tests passed at first for the wrong reason and were rewritten
+after being checked against a deliberately broken version: one asserted a DOM
+attribute that gets written either way, and one read two stylesheets joined
+into a single string, where either file alone would satisfy it.
+
+---
+
 ## Text you can actually read · 2026-09-16
 
 > **Triggered by** watching the first person outside the project use it. A
