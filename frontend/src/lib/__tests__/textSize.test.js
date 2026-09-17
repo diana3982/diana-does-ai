@@ -1,27 +1,19 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  DEFAULT_TEXT_SIZE,
-  TEXT_SIZES,
-  applyTextSize,
-  initTextSize,
-  isTextSize,
-  readTextSize,
-  storeTextSize,
-} from '../textSize'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { DEFAULT_TEXT_SIZE, TEXT_SIZES, textSize } from '../textSize'
 
 /**
- * Text size, and the two ways it can go wrong: a stored value that is not
- * one of ours, and a browser that refuses storage outright. Neither may
- * stop the screen rendering -- failing to draw the app over a font
- * preference would be a poor trade, especially for the person who needs
- * the preference.
+ * Text size: what the sizes are and which one someone lands on. How a
+ * preference is stored, recovered and applied is the factory's job and is
+ * tested in preference.test.js — repeating it here would only mean two
+ * places to update.
  */
 
 describe('the sizes themselves', () => {
   it('starts at medium, not at the smallest it has', () => {
     // 15px body was never chosen; it is what got built first, and the first
-    // outside user was squinting at it. Small stays available.
+    // session with an outside user found it hard to read. Small stays
+    // available.
     expect(DEFAULT_TEXT_SIZE).toBe('medium')
     expect(TEXT_SIZES[0]).toMatchObject({ key: 'small', scale: 1 })
   })
@@ -31,73 +23,27 @@ describe('the sizes themselves', () => {
     expect(scales).toEqual([...scales].sort((a, b) => a - b))
   })
 
-  it('recognises its own sizes and nothing else', () => {
-    expect(isTextSize('large')).toBe(true)
-    expect(isTextSize('enormous')).toBe(false)
-    expect(isTextSize(null)).toBe(false)
+  it('offers its own sizes and nothing else', () => {
+    expect(textSize.isValid('large')).toBe(true)
+    expect(textSize.isValid('enormous')).toBe(false)
   })
 })
 
-describe('remembering the choice', () => {
+describe('what the page gets', () => {
   beforeEach(() => {
     window.localStorage.clear()
     delete document.documentElement.dataset.textSize
   })
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  it('defaults when nothing has been chosen', () => {
-    expect(readTextSize()).toBe(DEFAULT_TEXT_SIZE)
-  })
-
-  it('remembers a choice across visits', () => {
-    storeTextSize('large')
-    expect(readTextSize()).toBe('large')
-  })
-
-  it('ignores a stored value it does not recognise', () => {
-    // A hand-edited value, or one left by an older version.
-    window.localStorage.setItem('columba-text-size', 'gigantic')
-    expect(readTextSize()).toBe(DEFAULT_TEXT_SIZE)
-  })
-
-  it('survives a browser that refuses to read storage', () => {
-    vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => {
-      throw new Error('access denied')
-    })
-    expect(readTextSize()).toBe(DEFAULT_TEXT_SIZE)
-  })
-
-  it('survives a browser that refuses to write storage', () => {
-    vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
-      throw new Error('quota exceeded')
-    })
-    // The size still applies for this visit; it just is not remembered.
-    expect(() => storeTextSize('medium')).not.toThrow()
-  })
-})
-
-describe('applying the choice', () => {
-  beforeEach(() => {
-    window.localStorage.clear()
-    delete document.documentElement.dataset.textSize
-  })
-
-  it('puts the size on the document root, where the CSS reads it', () => {
-    applyTextSize('large')
-    expect(document.documentElement.dataset.textSize).toBe('large')
-  })
-
-  it('falls back rather than writing something the CSS has no rule for', () => {
-    applyTextSize('gigantic')
+  it('lands on medium on a first visit, without anything stored', () => {
+    expect(textSize.init()).toBe(DEFAULT_TEXT_SIZE)
     expect(document.documentElement.dataset.textSize).toBe(DEFAULT_TEXT_SIZE)
   })
 
-  it('applies what was remembered, as the app starts', () => {
-    storeTextSize('medium')
-    expect(initTextSize()).toBe('medium')
-    expect(document.documentElement.dataset.textSize).toBe('medium')
+  it('writes the attribute the CSS rules are keyed on', () => {
+    // App.css matches :root[data-text-size='large']; a different attribute
+    // name here would apply nothing at all, and silently.
+    textSize.apply('large')
+    expect(document.documentElement.dataset.textSize).toBe('large')
   })
 })

@@ -12,11 +12,141 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Every test, checked against broken code · 2026-09-16
+
+> **Triggered by** review on #10, after two tests in that PR turned out to
+> pass against deliberately broken code: *"Let's deliberately try to break
+> the code in the test suites. We need positive and negative testing
+> always."*
+
+`scripts/mutate.py` changes one operator or constant at a time, runs the
+suite, and reports every change nothing caught. 81 mutations were caught;
+the survivors were then judged one at a time, because **a survivor is not
+automatically a missing test**.
+
+**The finding: `quirks.py` scoring had no tests at all.** There was no
+`test_quirks.py`. Flipping `sentiment == 'positive'` to `!=` — which inverts
+scoring outright, so saying you hate something raises your score for it —
+broke nothing in 286 tests. Neither did moving the "loves"/"likes"
+thresholds. The extraction tests covered what gets pulled *out* of a
+message; nothing covered what the numbers then did with it.
+
+That is the worst place in this codebase for that gap. These scores decide
+what the companion believes about someone, and `build_quirks_context` says
+it out loud in the system prompt. Inverted scoring would not crash anything
+— it would produce a companion **confidently wrong about a person**, which is
+the one failure this app can least afford.
+
+`test_quirks.py` now covers sentiment direction, both clamps, the confidence
+boundaries from both sides, and the label thresholds pinned at 3.5 and 2.0
+exactly. The **24-character pronoun cap** was untested too, and it is not
+decoration: `PRONOUN_PATTERN` has no length of its own, so without the cap a
+model returning a paragraph of lowercase letters would be stored and read
+back as someone's pronouns.
+
+**The sweep also caught a bad test written to close a gap.** The threshold
+test asserted `"likes kite flying" in context` — and that is a *substring of*
+`"dislikes kite flying"`, so with the 2.0 threshold broken the label flipped
+and the assertion still passed. It now asserts on the leading `- ` that only
+the real line has. Three tests this week were green for the wrong reason;
+this was the first found by machine rather than by guessing where to look,
+which is the argument for doing it in bulk.
+
+**What was deliberately left alone**, because reporting an honest equivalent
+beats inflating a kill rate: four `indent=2` → `3` (JSON cosmetics),
+`round(score, 1)` → `2` (enthusiasm is 1–5, so `0.5 × n` never has two
+decimals), every timing dial in `sendQueue` and `replyQueue` — 600ms → 601ms
+*should* survive, since pinning it would test the knob and not the behaviour
+— two boundary comparisons in `splitReply` that produce an identical array at
+exactly `MAX_PARTS`, and one unreachable guard against an empty flush.
+
+**One survivor was a real finding, and not a test gap.**
+`clear_profile()`, `clear_sensitivities()` and `clear_quirks()` each ended in
+an unconditional `True` that no caller reads and that can never be `False` —
+a success signal that does not exist, waiting for someone to branch on it.
+All three are gone. `forget_quirk()` and `forget_sensitivity()` keep theirs:
+those genuinely report whether the topic was there, and `app.py` answers 404
+with it.
+
+---
+
+## Bold letters, and one shape for every display setting · 2026-09-16
+
+> **Triggered by** UAT 1, in the same sitting. UAT user 1 wanted the menu
+> items easier to read at first glance — and when that turned into bolding
+> the values themselves, Diana pushed back: *"someone might expect the text
+> to be bolded once selected... It could be another option in chat settings,
+> 'Enable Bold Letters'."*
+
+The pushback was the useful part. Weight was already doing a job in that
+menu — it marks what you **operate**, and the current value is marked in
+accent colour. Bolding the values would have given one meaning two signals
+and taken weight away from the setting that should own it.
+
+So bold became a setting. **Off by default**, and it applies to **prose** —
+the companion's profile line, the conversation, and the message being typed —
+never to labels, buttons or timestamps. Bold everywhere flattens the
+difference between a heading and a sentence, and the chrome is already
+heavier than the prose.
+
+**The composer was missed on the first pass, and the rule was the reason.**
+It was written as *"what you read, not what you operate"*, which sounds right
+and put the message box on the wrong side of the line. Review caught it:
+*"we want this within the text box as the user types since it is an
+accessibility feature."* The composer is both things at once, and the
+half-written sentence in it is the one piece of text in the app that isn't
+there yet — which makes it the worst place to make someone squint, not an
+acceptable one.
+
+**Weight 600, not 700.** Full bold removes some of the letterform variation
+the eye tracks with, so a whole conversation in it reads denser rather than
+clearer. Dark mode sharpens that — light text on a dark ground already looks
+thicker than the same weight the other way round, and this app has no light
+theme. It is an accessibility setting, not a style one: Windows ships the
+same thing as *"Make text bolder"*, and for many low-vision readers weight
+helps more than size does.
+
+**The second setting is what forced the shape.** One setting can be written
+any way at all; two is where the duplication would have started. Text size
+and bold now declare only what they *are* — key, values, default — and
+`lib/preference.js` holds the storage, the fallback and the document-root
+write once. `SettingsMenu` renders from a list, so a third setting is an
+entry there and a label in `copy/`. No new markup, no new state, no branch.
+
+**Where the number lives mattered too.** 600 is a CSS token, not a JavaScript
+constant: CSS cannot import from JS, so a copy in `boldText.js` would have
+been a second definition of the same number waiting to disagree with the
+first. That is now written down in `CLAUDE.md` alongside the rule that
+prompted it — *"moving forward no more hard coding, please"* — after a
+renamed menu label broke eight tests that had spelled the label out.
+
+**A guard test, because this seam fails silently.** A display setting is
+joined to the stylesheet by nothing but a string. A renamed attribute, a
+value with no rule, a token defined and never read, or a rule nested inside
+`:root` — which is invalid and simply ignored — all leave a setting that
+stores and applies correctly and changes nothing on screen. That last one was
+written in this project and caught by eye. `displayPreferences.test.js` now
+reads the CSS as text, the way the backend's storage guard reads
+`backend/*.py`.
+
+Three of the new tests passed at first for the wrong reason and were rewritten
+after being checked against a deliberately broken version: one asserted a DOM
+attribute that gets written either way, and two checked the stylesheets a file
+at a time — which is how the guard sat green while the composer had no weight
+at all, since the file it lives in was already satisfied by a different rule.
+It checks one selector at a time now, and fails on the exact state the review
+found.
+
+---
+
 ## Text you can actually read · 2026-09-16
 
-> **Triggered by** watching the first person outside the project use it. A
-> tester in her fifties was squinting at the setup screen: *"maybe where it
-> is now is 'small', then a 'medium' then a 'large'."*
+> **Triggered by** UAT 1 — the first session run with someone outside the
+> project. UAT user 1 could not comfortably read the setup screen: *"maybe
+> where it is now is 'small', then a 'medium' then a 'large'."* Age range
+> fifties — recorded, with consent, because it is the cause rather than
+> colour: age-related vision change is why 15px failed, and why the fix is
+> size and not contrast.
 
 **A bug, in the sense that matters.** Nothing was broken, but the app claims
 to meet people *"whatever age they are"* and its body text is 15px. For a
@@ -84,7 +214,8 @@ identical to each other and show nothing.
 
 **The default moved from small to medium.** 15px body was never actually
 chosen — it is what got built first, and the first person to use the app from
-outside the project was squinting at it. Nobody had asked for it. Small stays
+to use this app from outside the project could not read it comfortably.
+Nobody had asked for it. Small stays
 available for anyone who prefers the density. Sizing up only the setup screen
 was considered and rejected: someone who picked *large* would have had setup
 render *smaller* than they asked for, and a size change between screens reads

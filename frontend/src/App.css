@@ -43,6 +43,11 @@
      the title bar and remembered per device — see lib/textSize.js. */
   --text-scale: 1;
 
+  /* The weight of prose someone reads at length. Raised by the bold-text
+     setting; everything else keeps its own weight. */
+  --reading-weight: 400;
+  --weight-bold-text: 600;
+
   --text-xs: calc(0.6875rem * var(--text-scale));   /* 11px — badges, timestamps */
   --text-sm: calc(0.8125rem * var(--text-scale));   /* 13px — labels, buttons */
   --text-base: calc(0.9375rem * var(--text-scale)); /* 15px — body, messages */
@@ -92,6 +97,18 @@
    tighter in its padding. */
 :root[data-text-size='medium'] { --text-scale: 1.2; }
 :root[data-text-size='large']  { --text-scale: 1.4; }
+
+/* Bolder text, for anyone who reads weight more easily than size. Applies
+   to prose -- the companion's profile, the conversation, and the message
+   being typed -- and never to labels, buttons or timestamps: bold everywhere
+   would flatten the difference between a heading and a sentence.
+
+   600 rather than 700. Full bold removes some of the letterform variation
+   the eye tracks with, so a whole conversation in it reads denser rather
+   than clearer -- and dark mode sharpens that, since light text on a dark
+   ground already appears thicker than the same weight would the other way
+   round. This app has no light theme. */
+:root[data-bold-text='on'] { --reading-weight: var(--weight-bold-text); }
 
 /* ===============================================================
    Base elements

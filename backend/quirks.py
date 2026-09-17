@@ -64,7 +64,6 @@ def clear_quirks():
     is just as valid a choice as clearing them.
     """
     save_quirks({})
-    return True
 
 def forget_quirk(topic):
     quirks = load_quirks()

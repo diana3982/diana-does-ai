@@ -117,13 +117,18 @@
   transition: color var(--transition), background var(--transition);
 }
 
-/* Each size is written at the size it sets, so the choice can be made by
-   looking. Fixed px, not the scaling tokens: if these scaled with the
-   current setting they would stay identical to each other and show
-   nothing. */
+/* Each value is written the way it looks, so the choice can be made by
+   looking rather than by reading.
+
+   Fixed px for the sizes, not the scaling tokens: if these scaled with the
+   current setting they would stay identical to each other and show nothing.
+   For the same reason "on" carries the bold weight outright rather than
+   through --reading-weight, which is only raised once bold is already on --
+   a preview that only appears after you pick it is not a preview. */
 .settings-value-small { font-size: 13px; }
 .settings-value-medium { font-size: 16px; }
 .settings-value-large { font-size: 19px; }
+.settings-value-on { font-weight: var(--weight-bold-text); }
 
 .settings-value:hover {
   background: var(--accent-wash);

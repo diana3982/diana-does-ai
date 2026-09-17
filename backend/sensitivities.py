@@ -82,7 +82,6 @@ def forget_sensitivity(topic):
 
 def clear_sensitivities():
     save_sensitivities({})
-    return True
 
 
 def build_sensitivities_context(enabled=True):

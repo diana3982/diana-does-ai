@@ -127,6 +127,10 @@ Warm, gentle, non-clinical. The UI should feel like a safe space — never steri
 - `CompanionAvatar` ✅ — small avatar/icon for the companion in chat
 - `TitleBar` ✅ — the Y2K window chrome
 - `TypingIndicator` ✅ — three dots plus the companion's typing status
+- `SettingsMenu` ✅ — the title bar dropdown holding the display settings
+  (text size, bold letters). In the title bar rather than behind a settings
+  screen because it renders on the setup screen too — a preference kept
+  behind a page you cannot comfortably read is no preference at all
 
 ### `src/copy/`
 Every word the user reads lives here, never inline in a component. The wording
@@ -145,11 +149,72 @@ and some of it is tested as behaviour.
 - Comment non-obvious logic
 - Keep components focused — if it's doing too much, split it
 - User-facing strings go in `src/copy/`, never inline
+- **Never write the same fact in two places.** A label lives in `src/copy/`
+  and is read from there by the component *and* by its tests; a number the
+  CSS needs is a token, not a constant CSS cannot import. Renaming one menu
+  label once broke eight tests that had spelled it out — the tests were
+  wrong, not the rename
+- **Loosely coupled, highly cohesive.** A new thing of an existing kind
+  should be a list entry, not a branch: its own file says what it *is*, the
+  shared piece handles the rest, and the component renders them all the same
+  way. Not inheritance — a shared function and a plain list
 - **Run `pytest` before every commit** and report the result — the
   pre-commit hook enforces this too, but report the result either way
+- **Positive and negative testing, always.** A test asserts both that the
+  right thing happens and that the wrong thing does not. Neither half is
+  optional, and the negative half is the one that gets skipped.
+- **A new test is not trusted until it has been seen to fail.** Break the
+  code it covers on purpose, watch that specific test go red, then put the
+  code back. A test that has only ever passed is not yet evidence — it may be
+  asserting something that was already true, or something that stays true
+  when the feature is gone.
+
+  This is not theoretical here. Three tests in the bold-letters work passed
+  against deliberately broken code: one asserted a DOM attribute written
+  whether or not the state it was checking survived, and two checked a
+  stylesheet one *file* at a time, so a file stayed green while one of its
+  two rules had nothing in it — which is exactly the bug review found by
+  eye. All three were rewritten and re-broken to confirm they bite.
+
+  `scripts/mutate.py` does this in bulk when a whole area needs checking:
+  it changes one operator or constant at a time, runs the suite, and reports
+  every change nothing caught. A survivor is not automatically a missing
+  test: it may be an equivalent change, a tuning dial that *should* survive,
+  or an unreachable guard. Which one it is, is the finding.
 - **Never use a real quirk, sensitivity or companion name as example or
   test data.** Invent them. `scripts/hooks/pre-commit` enforces this —
   install with `git config core.hooksPath scripts/hooks`
+- **Never identify a UAT participant.** Refer to them as **UAT user N**,
+  numbered by the UAT session (`UAT 1` → `UAT user 1`). Never a name, never
+  a relationship to anyone on the project, never gender or pronouns. This
+  applies everywhere, not just in code: commit messages, PR titles and
+  descriptions, PR comments, the CHANGELOG, code comments and test fixtures.
+
+  This is the same rule the app itself runs on, pointed at the people who
+  help build it. Columba's promise is that someone's story is theirs and the
+  companion's alone; a project that names a tester in its own commit log has
+  broken that promise where it is permanent and public.
+
+  **Use no pronouns at all.** Repeat *UAT user N* rather than reach for one,
+  the way `user_profile.py` handles someone whose pronouns are `none` — the
+  app's own rule, turned on the people who help test it. In a repo where the
+  author is named, *"she wanted bigger text"* narrows to one person about as
+  fast as a name does, and *UAT user 1 wanted bigger text* reads identically.
+
+  **A personal detail goes in only when the fix causally depends on it**, and
+  the causal link is written down beside it. Age range earned its place in
+  the text-size work because age-related vision change is *why* 15px failed —
+  it is the reason the fix is size rather than contrast. The test is not
+  "does this make the story better", it is **"is the change incoherent
+  without it"**. Consent is asked per session before even a qualifying detail
+  is recorded, never assumed from a previous one.
+
+  A name and a relationship never pass that test. No fix has ever depended on
+  them: they identify a person and explain nothing.
+
+  **Commit messages and PR titles cannot be edited after the fact**, and a
+  force-push does not remove the original from GitHub — it stays reachable by
+  SHA. So this gets checked *before* the commit, not after.
 
 ---
 
@@ -225,6 +290,25 @@ handling is identical in test mode.
 - Any architectural decision must include a brief note on the tradeoff considered before writing any code
 - Any PR over ~10 files, or touching how user data is stored or deleted, gets a second review pass before merging
 - Stop mid-task and confirm the approach if a change is heading past ~10 files, needs a new dependency, or needs a different design than the one agreed — do not finish it and ask afterwards
+- **Git records decisions, not open questions.** An unresolved question is
+  raised in conversation and answered *before* anything is committed. It is
+  never parked in a commit message, a CHANGELOG entry, a PR description, a
+  PR comment or a code comment to be found later. A CHANGELOG that says
+  "left open" sends the reader after a decision nobody recorded, and a
+  question in a diff is a question nobody is being asked. The reasoning
+  behind a decision belongs in git; the deciding happens first.
+
+  So the order is fixed. Anything that needs a decision — a word, a
+  tradeoff, a sequence, a thing worth removing — is **raised in conversation
+  with Diana**, not written into the PR for her to find. Once it is settled,
+  the commit message carries the decision and its reasoning, and Diana notes
+  the outcome on the PR herself.
+
+  Claude's PR comments report what was *done*. A report is not a question:
+  "removed in 36526c6, and here is why the other two kept theirs" belongs on
+  the PR. "Worth removing or making real, but I've left it" does not — that
+  is a decision left hanging in a permanent record, and it is the thing this
+  rule exists to stop.
 - Never merge to main without Diana's explicit approval
 - Every PR comment Claude writes ends with an attribution line. `gh` posts with Diana's token, so GitHub records her as the author of both sides — without a signature the review thread reads as one person talking to themselves
 
