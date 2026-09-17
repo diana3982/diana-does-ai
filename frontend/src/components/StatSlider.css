@@ -31,12 +31,17 @@
 /* Inline after the label: "compassion — steady, not effusive".
    min-width:0 lets it shrink and ellipsize on narrow screens rather than
    pushing the value out of the row. */
+/* What each level of the slider means -- the text someone reads to choose.
+   It was the smallest size in the app, italic, and muted grey: the three
+   least readable choices available, on the one line that decides the
+   answer. Nobody picked that combination for this content; it inherited the
+   styling of a caption. Now it reads like the content it is, for everyone,
+   whether or not they ever find the settings menu. */
 .stat-slider-descriptor {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: var(--text-xs);
-  font-style: italic;
-  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

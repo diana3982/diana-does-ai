@@ -98,10 +98,8 @@
 :root[data-text-size='medium'] { --text-scale: 1.2; }
 :root[data-text-size='large']  { --text-scale: 1.4; }
 
-/* Bolder text, for anyone who reads weight more easily than size. Applies
-   to prose -- the companion's profile, the conversation, and the message
-   being typed -- and never to labels, buttons or timestamps: bold everywhere
-   would flatten the difference between a heading and a sentence.
+/* Bolder text, for anyone who reads weight more easily than size. Applied
+   on `body` above, so it reaches every window.
 
    600 rather than 700. Full bold removes some of the letterform variation
    the eye tracks with, so a whole conversation in it reads denser rather
@@ -118,6 +116,18 @@ body {
   min-height: 100%;
   font-family: var(--font-sans);
   font-size: var(--text-base);
+  /* Bold letters, applied once for the whole app. It is an accessibility
+     setting, so it reaches every window rather than the screens someone
+     decided were "reading" -- the first version covered the chat and did
+     nothing on the create-companion screen, which is the screen that
+     started all of this.
+
+     Hierarchy survives because everything meant to stand out already
+     declares 700 or more: headings, primary buttons, the companion's name.
+     Body text moves 400 -> 600 underneath them, so the gap narrows and
+     never closes. index.css gives form controls `font: inherit`, so the
+     name field and the dropdowns come along too. */
+  font-weight: var(--reading-weight);
   line-height: 1.5;
   color: var(--color-text);
   background-color: var(--color-bg);

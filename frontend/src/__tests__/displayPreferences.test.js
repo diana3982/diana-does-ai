@@ -22,21 +22,7 @@ import { TEXT_SIZES } from '../lib/textSize'
 const read = (path) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8')
 
 const APP_CSS = read('../App.css')
-
-/**
- * Every place prose is set, and so every place bold has to reach.
- *
- * Named one selector at a time rather than one file at a time. Per file,
- * this check passed while the composer had no weight at all -- ChatScreen.css
- * already satisfied it through the about line, so the file looked wired up
- * and one of its two rules was missing. That is the review comment on #10,
- * turned into the test that would have caught it.
- */
-const PROSE_RULES = [
-  ['MessageBubble.css', '.bubble-text', read('../components/MessageBubble.css')],
-  ['ChatScreen.css', '.chat-about-line', read('../pages/ChatScreen.css')],
-  ['ChatScreen.css', '.chat-input', read('../pages/ChatScreen.css')],
-]
+const SETTINGS_CSS = read('../components/SettingsMenu.css')
 
 /** The declarations inside one rule, by its selector. */
 const ruleBody = (css, selector) => {
@@ -60,21 +46,38 @@ describe('bold letters', () => {
     expect(APP_CSS).toContain(`:root[data-bold-text='${BOLD_OPTIONS.at(-1)}']`)
   })
 
-  it('defines the weight token', () => {
+  it('defines the weight token it switches', () => {
     // If the token were only defined, bold would store and apply correctly
     // and change nothing on screen.
     expect(APP_CSS).toContain('--reading-weight:')
   })
 
-  it.each(PROSE_RULES)('reaches %s %s', (file, selector, css) => {
-    const body = ruleBody(css, selector)
-    expect(body, `${selector} is missing from ${file}`).not.toBeNull()
+  it('reaches the whole app from one rule on body', () => {
+    // Applied once, not per component. The first version listed the
+    // selectors it judged to be "reading" and so did nothing at all on the
+    // create-companion screen -- the screen that prompted this work. An
+    // accessibility setting does not get an opinion about which windows
+    // deserve it, and a list of selectors is how it acquires one.
+    const body = ruleBody(APP_CSS, 'body')
+    expect(body).not.toBeNull()
     expect(body).toContain('font-weight: var(--reading-weight)')
+  })
+
+  it('leaves the menu that previews it alone', () => {
+    // The negative half, and the one weight in the app that must NOT follow
+    // the setting: "on" in the submenu is written in the weight it turns on.
+    // If these values inherited it, then with bold already on both options
+    // would render at 600 and the preview would show nothing -- the control
+    // would stop describing itself.
+    const value = ruleBody(SETTINGS_CSS, '.settings-value')
+    expect(value).not.toBeNull()
+    expect(value).toContain('font-weight: 400')
+    expect(value).not.toContain('var(--reading-weight)')
   })
 })
 
 describe('the rules themselves', () => {
-  it('sits at the top level, not nested inside :root', () => {
+  it('sit at the top level, not nested inside :root', () => {
     // `:root { :root[data-bold-text='on'] { ... } }` is not an error, it is
     // simply ignored -- so the setting would look wired up and do nothing.
     for (const line of APP_CSS.split('\n')) {

@@ -5,17 +5,23 @@
  * as "Make text bolder", and for many low-vision readers weight helps more
  * than size does. Off by default; nothing changes unless it is asked for.
  *
- * It applies to PROSE -- the companion's profile, the conversation, and the
- * message someone is still typing -- and not to chrome. Labels, buttons and
- * timestamps stay as they are: bold everywhere would flatten the difference
- * between a heading and a sentence, and the chrome is already heavier than
- * the prose.
+ * It applies to EVERY window, from one rule on `body` in App.css.
  *
- * The composer was left out of the first version of this, on a rule that
- * sounded right and wasn't: "what you read, not what you operate". The
- * composer is both, and the half-written sentence in it is the one piece of
- * text in the app that isn't there yet -- which makes it the worst place to
- * make someone squint, not an acceptable one.
+ * Two narrower versions came first and both were wrong the same way. The
+ * first covered the chat and left out the composer, on a rule that sounded
+ * right -- "what you read, not what you operate" -- when the composer is
+ * both, and a half-written sentence is the one piece of text in the app
+ * that is not there yet. The second still did nothing on the
+ * create-companion screen, which is the screen someone was squinting at
+ * when they asked for this.
+ *
+ * The lesson is in the category, not the selectors: an accessibility
+ * setting does not get an opinion about which windows deserve it, and a
+ * list of selectors is how it quietly acquires one.
+ *
+ * Hierarchy survives because everything meant to stand out already declares
+ * 700 or more -- headings, primary buttons, the companion's name. Body text
+ * moves 400 -> 600 underneath them, so the gap narrows and never closes.
  */
 import { createPreference } from './preference'
 
