@@ -106,6 +106,11 @@
   width: 100%;
   padding: var(--space-1) var(--space-2);
   font-family: var(--font-sans);
+  /* Pinned, and the only weight in the app that does not follow the bold
+     setting. This submenu is where bold is previewed: "on" is written in
+     the weight it turns on. If these inherited the setting, then with bold
+     already on both options would render at 600 and the preview would show
+     nothing -- the control would stop describing itself. */
   font-weight: 400;
   line-height: 1.3;
   text-align: left;

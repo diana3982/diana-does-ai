@@ -12,6 +12,61 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Bold letters reach every window, and the slider descriptions get readable · 2026-09-16
+
+> **Triggered by** trying it: *"having bold letters on in the create
+> companion menu did nothing though btw"* — and then, on being offered a
+> choice of how far to extend it, *"i think bold setting should be for all
+> windows since it is an accessibility thing."*
+
+**That reason overrides the question.** Bold was scoped by a rule — "prose,
+not chrome" — reasoned entirely about the chat, where weight on labels and
+timestamps would compete with message text. On a form there is no long prose
+to compete with, so the rule imported an assumption that did not hold and
+left the setting doing nothing on the create-companion screen. Which is the
+screen someone was squinting at when they asked for any of this.
+
+It now applies **once, on `body`**, and reaches everything. The per-component
+declarations are gone.
+
+**Hierarchy survives, and that is why this works rather than a hope.**
+Everything meant to stand out already declares 700 or more: headings,
+primary buttons, the companion's name. Body text moves 400 → 600 underneath
+them, so the gap narrows and never closes. `index.css` gives form controls
+`font: inherit`, so the name field and the dropdowns come along without
+being named.
+
+**One weight deliberately does not follow the setting.** The values in the
+bold submenu stay at 400, because that submenu is where bold is previewed —
+"on" is written in the weight it turns on. If those inherited the setting,
+then with bold already on both options would render at 600 and the preview
+would show nothing: the control would stop describing itself. A test pins
+it, since it looks exactly like an oversight worth tidying.
+
+**The generalisation, recorded because two narrower versions were both wrong
+the same way:** an accessibility setting does not get an opinion about which
+windows deserve it, and a list of selectors is how it quietly acquires one.
+
+---
+
+**Separately, the slider descriptions were the least readable text in the
+app.** `.stat-slider-descriptor` — *"creatively minded"*, the line someone
+reads to decide what a level means — was `--text-xs` (the smallest size),
+*italic*, and muted grey. The three least readable choices available, on the
+line that decides the answer.
+
+Nobody chose that combination for this content; it inherited the styling of
+a caption. It now reads like the content it is: `--text-sm`, upright, normal
+text colour. **For everyone**, not only for whoever finds the settings menu
+— which is the point. The people most likely to need this are the least
+likely to go looking for a preference.
+
+**Verification.** Three mutations, all caught: `body` losing the weight
+(bold does nothing anywhere), the on-rule nested inside `:root` (invalid,
+silently ignored), and the preview menu made to follow the setting.
+
+---
+
 ## The creativity slider stops promising the opposite of what it does · 2026-09-16
 
 > **Triggered by** diagnosing UAT 1 rather than by anything UAT user 1 said.

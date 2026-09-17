@@ -54,7 +54,6 @@
 .bubble-text {
   margin: 0;
   font-size: var(--text-base);
-  font-weight: var(--reading-weight);
   line-height: 1.5;
   /* Keeps the line breaks someone typed, and breaks long unspaced strings
      instead of stretching the bubble off the panel. */
