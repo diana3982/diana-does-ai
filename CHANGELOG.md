@@ -30,7 +30,7 @@ for, one at a time:
 | 💬 | **give me advice** |
 | 🎨 | **suggest something to try** |
 
-`listen` is the one nothing in this app could previously express.
+Of the four, `listen` is the one the app had no way to ask for before.
 
 **One at a time, not several.** Some pairs contradict outright — *just listen*
 and *give me advice* would ask the companion to hold back and to offer in the
