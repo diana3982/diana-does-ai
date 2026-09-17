@@ -212,6 +212,12 @@ and some of it is tested as behaviour.
   A name and a relationship never pass that test. No fix has ever depended on
   them: they identify a person and explain nothing.
 
+  **The number belongs to the session, not the person.** Someone who tested
+  in UAT 1 and returns for UAT 2 is *UAT user 2* in everything written about
+  that session. This is deliberate rather than sloppy: it means the record
+  never says whether two sessions were the same person, so nothing can be
+  assembled across sessions into a profile of one participant.
+
   **Commit messages and PR titles cannot be edited after the fact**, and a
   force-push does not remove the original from GitHub — it stays reachable by
   SHA. So this gets checked *before* the commit, not after.
