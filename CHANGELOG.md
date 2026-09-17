@@ -12,6 +12,65 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## The creativity slider stops promising the opposite of what it does · 2026-09-16
+
+> **Triggered by** diagnosing UAT 1 rather than by anything UAT user 1 said.
+> They chose `creativity: 1`, whose label read **"grounded and practical"**,
+> and got the fewest suggestions of anything — the label promised the
+> opposite of the behaviour.
+
+The slider sets how often creative outlets come up, and 1 is the *fewest*.
+"Grounded and practical" reads as a promise of practical advice, so someone
+wanting practical help picks the rung that gives them least of everything.
+A label promising the opposite of its behaviour is worse than a vague one:
+vague makes you look, wrong makes you choose wrong.
+
+Level 1 is now **"not the artsy type"** — honest about the creative bent,
+and silent about advice it does not control.
+
+**The descriptors are not only slider labels, which decided the fix.** The
+first draft rewrote all five as behaviour — *"suggests an outlet
+sometimes"* — until `about.js` turned out to build the companion's
+first-person profile blurb from this exact text. That would have put a job
+description inside a paragraph about who it is: *"light when you need it.
+suggests an outlet sometimes."* They stay self-descriptive, and the reason
+is now a comment in `setup.js` so the next person doesn't rediscover it.
+
+Checked by rendering the real blurb rather than reasoning about it:
+
+```
+creativity 1   light when you need it. not the artsy type.
+creativity 3   creatively minded. light when you need it.
+creativity 5   sees everything as art. warm and caring too — that's where i live.
+```
+
+**This fixes the label, not the gap.** There is still no dial for *"give me
+practical advice"* — UAT user 1 wanted one and reached for the nearest
+label. Honest wording stops the next person being misled; it does not give
+them what they asked for. That is the mode picker, which replaces this
+slider outright, and `SPEC.md 17.7` now records the follow-on: suggest
+outlets the person already likes before reaching for new ones, using quirks
+that are already collected and consulted by nothing.
+
+**The commit was refused, and the hook was right to notice.** `creativity`
+is a stat key *and* was a real topic in local data, so `scripts/hooks/pre-commit`
+read the CHANGELOG entry as leaking a quirk. The word appears in `setup.js`,
+`companion.py`, `SPEC.md` and most of this file, so every future commit
+touching the slider would have been refused too — which is how a guard
+teaches people to pass `--no-verify`, and that removes it entirely. The four
+stat keys are now exempt **as topics**, read from `setup.js` rather than
+typed in, the same way the "choose for me" name list already was.
+
+The exemption stops exactly there. A companion *named* after a stat is still
+a name its owner chose, and the first draft of this widened far enough to
+swallow it — the filter now runs before the name is added rather than after.
+Three mutations were run against the tests; the third, hardcoding the keys
+instead of reading them, **survived**, because asserting the four real names
+passes just as well against a hardcoded list. That test now uses stat keys
+the app does not have.
+
+---
+
 ## Warmth answers to the setting, and a suggestion sounds like a friend's · 2026-09-16
 
 > **Triggered by** UAT 1. Two separate notes from the same session, both
