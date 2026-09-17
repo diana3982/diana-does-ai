@@ -317,6 +317,16 @@ handling is identical in test mode.
   rule exists to stop.
 - Never merge to main without Diana's explicit approval
 - Every PR comment Claude writes ends with an attribution line. `gh` posts with Diana's token, so GitHub records her as the author of both sides — without a signature the review thread reads as one person talking to themselves
+- **No session links, anywhere.** `Co-Authored-By: Claude Opus 5` is the whole
+  attribution. A `claude.ai/code/session_…` URL never goes in a commit
+  message, PR description or comment.
+
+  Not general caution — specific to this repo. The transcript behind such a
+  link holds exactly what the repo deliberately does not: a UAT
+  participant's name, real quirks, the details of a session. Committing the
+  URL is the same leak as committing the data, one level of indirection
+  away, and a commit message cannot be edited afterwards. Set against that,
+  its value to a reader is zero: nobody reviewing this repo can open it.
 
 Attribution matters here beyond tidiness. The point of reviewing in public is
 that someone can later see a decision being questioned and answered — and that
