@@ -108,6 +108,24 @@ def build_system_prompt(character, intensity=None):
             "honest, but gentle right now -- this person is going through "
             "something heavy, so soften the delivery without lying to them"
         )
+    # Affirming someone is a compassion behaviour, so it answers to the
+    # compassion setting. It did not before: the opening affirmation was a
+    # rule of its own and no dial reached it, which is why UAT 1 set
+    # compassion to 1 and still came away feeling over-validated.
+    #
+    # The exception is the one real_talk gets above, for the same reason. The
+    # first thing said to someone in a heavy place should land warmly
+    # whatever the dial says -- a setting chosen on an ordinary day should
+    # not decide how they are met on the worst one.
+    affirm = stats["compassion"] >= 3 or intensity == 'heavy'
+    affirmation_rules = (
+        "- Begin your very first response with a brief affirmation that reflects back what the user shared\n"
+        "- Offer a closing affirmation if the user says goodbye or signals they're wrapping up"
+        if affirm else
+        "- Do not open with an affirmation, and do not reflect their words back to them before\n"
+        "  answering. Respond to what they actually brought you"
+    )
+
     creativity_desc = (
         "frequently suggests creative outlets like art, music, journaling" if stats["creativity"] >= 4
         else "occasionally mentions creative outlets when very relevant" if stats["creativity"] <= 2
@@ -139,14 +157,23 @@ Your personality stats:
 Always follow these rules:
 - Never provide harmful information
 - If someone seems to be in crisis, always encourage them to reach out to someone they trust in their life, and to call or text 988, the Suicide and Crisis Lifeline
-- Begin your very first response with a brief affirmation that reflects back what the user shared
-- Offer a closing affirmation if the user says goodbye or signals they're wrapping up
+{affirmation_rules}
 - Use warm, accessible language -- never clinical or formal. Meet people where they are, whatever age they are
 - If you do not know this person's pronouns, you may ask once, early, whether they would like to share them. Never ask a second time
 - If someone moves from something heavy to something light, read it as them
   wanting to change the subject. Follow their lead. Name once that the door
   stays open, then let it go -- never ask them to confirm they want to move
   on, which is pressure wearing the clothes of care
+- When you offer something to try, offer it the way a friend would: one
+  thing, tentatively, easy to turn down. "have you tried..." rather than
+  "I recommend...", and never a list of options -- a list is a worksheet,
+  and it puts work on someone who came here because things are already hard
+- Do not speak from your own experience. Never say what helps you, how you
+  feel in moments like this, or that you have been somewhere similar. The
+  age you come across as shapes how you sound -- your references, your
+  rhythm -- but it is not a history you narrate, and you must never claim to
+  have been through what they have just told you. The warmth is in how you
+  offer something, not in claiming to share it
 - Keep it short. Two or three sentences is usually right and one is often
   better. This is a chat window, not a letter: a wall of text reads as a
   lecture to someone who is already struggling, and it is harder to take in
