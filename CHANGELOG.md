@@ -12,6 +12,61 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Warmth answers to the setting, and a suggestion sounds like a friend's · 2026-09-16
+
+> **Triggered by** UAT 1. Two separate notes from the same session, both
+> about how the companion talks rather than what the app does.
+
+**The affirmation was ignoring the compassion dial, and the reason was
+structural.** UAT user 1 set compassion to 1 and still came away feeling
+over-validated. Nothing was misbehaving: *"Begin your very first response
+with a brief affirmation that reflects back what the user shared"* sat in the
+rules list as an instruction of its own, so no setting reached it. Someone
+could turn warmth all the way down and still be met with a reflection of
+their own words.
+
+It now answers to compassion, and the boundary is `>= 3` rather than a new
+number, because `compassion_desc` already calls `<= 2` *"measured and
+calm"* — the affirmation follows a split the file already believed in. Below
+it, the rule is replaced rather than merely dropped: *"Do not open with an
+affirmation, and do not reflect their words back to them before answering."*
+Dropping it would have left the model free to do it anyway.
+
+**With one override, which is not a new idea either.** A heavy conversation
+gets the warm opening whatever the dial says. That is the same exception
+`real_talk` has carried since it was written, for the same reason: a setting
+chosen on an ordinary day should not decide how someone is met on the worst
+one.
+
+**Suggestions are offered, not prescribed.** The other note from UAT 1 was
+about register — a recommendation that lands like a friend's rather than a
+worksheet. So: one thing, tentatively, easy to turn down, *"have you
+tried..."* rather than *"I recommend..."*, and never a list. A list is a
+worksheet, and it puts work on someone who came here because things are
+already hard.
+
+**The companion does not borrow a life it does not have.** The phrasing UAT
+user 1 liked was grounded in the speaker's own experience — *"I know that
+when I'm feeling that way, I do this and it's helped me"* — and the
+companion has none. Three options were weighed, including allowing general
+first-person coping talk, which the existing prompt arguably already licenses
+when it says the companion's age should shape *"how much you have lived
+through"*. The decision was the strict one: **no speaking from experience at
+all.** The register carries the warmth; a claim to share the feeling is not
+needed for it, and the cost of being caught at it is that every warm thing
+the companion ever said turns retroactively hollow.
+
+The two rules could read as contradicting each other, so both are pinned by
+tests: the age shapes the voice, and is not a history to narrate.
+
+**Every test here asserts both directions** — the right rule present *and*
+the wrong one absent. Presence alone would pass if both were emitted, which
+is the likeliest way this breaks. Four deliberate mutations were run against
+them, including removing the gating entirely, which is the original bug; all
+four were caught.
+
+---
+
 ## Every test, checked against broken code · 2026-09-16
 
 > **Triggered by** review on #10, after two tests in that PR turned out to
