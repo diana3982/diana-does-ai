@@ -15,9 +15,11 @@ import {
   deleteQuirk,
   getCharacter,
   getQuirks,
+  getSettings,
   resetChat,
   saveCharacter,
   sendMessage,
+  updateSettings,
 } from '../columba'
 
 const json = (body, status = 200) => ({
@@ -62,10 +64,22 @@ describe('happy paths', () => {
     expect(options.headers['Content-Type']).toBe('application/json')
   })
 
+  it('changes settings with PATCH, not PUT', async () => {
+    // The backend applies a partial update -- sending the whole object
+    // would overwrite settings this caller never meant to touch.
+    fetch.mockResolvedValue(json({ mode: 'advice' }))
+    await updateSettings({ mode: 'advice' })
+
+    const [, options] = fetch.mock.calls[0]
+    expect(options.method).toBe('PATCH')
+    expect(JSON.parse(options.body)).toEqual({ mode: 'advice' })
+  })
+
   it.each([
     ['resetChat', () => resetChat(), '/chat/reset'],
     ['getQuirks', () => getQuirks(), '/quirks'],
     ['clearQuirks', () => clearQuirks(), '/quirks'],
+    ['getSettings', () => getSettings(), '/settings'],
   ])('%s hits %s', async (_name, call, path) => {
     fetch.mockResolvedValue(json({}))
     await call()

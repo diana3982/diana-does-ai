@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { saveCharacter } from '../api/columba'
+import { saveCharacter, updateSettings } from '../api/columba'
 import StatSlider from '../components/StatSlider'
 import TitleBar from '../components/TitleBar'
-import { AGES, GENDERS, RANDOM_NAMES, SETUP_COPY, STATS, TONES } from '../copy/setup'
+import {
+  AGES, DEFAULT_MODE, GENDERS, MODES, RANDOM_NAMES, SETUP_COPY, STATS, TONES,
+} from '../copy/setup'
 import './SetupScreen.css'
 
 /** Every stat starts in the middle — no default personality is the "right" one. */
-const DEFAULT_STATS = { compassion: 3, real_talk: 3, creativity: 3, humor: 3 }
+const DEFAULT_STATS = { compassion: 3, real_talk: 3, humor: 3 }
 
 const pick = (items) => items[Math.floor(Math.random() * items.length)]
 const roll = () => Math.floor(Math.random() * 5) + 1
@@ -27,6 +29,7 @@ function SetupScreen({ onCharacterCreated }) {
   const [gender, setGender] = useState('gender-neutral')
   const [tone, setTone] = useState('warm')
   const [stats, setStats] = useState(DEFAULT_STATS)
+  const [mode, setMode] = useState(DEFAULT_MODE)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [randomized, setRandomized] = useState(false)
@@ -48,7 +51,7 @@ function SetupScreen({ onCharacterCreated }) {
   const touched = () => setRandomized(false)
 
   /** Saves the character and hands it up to App. */
-  const submit = async (character) => {
+  const submit = async ({ mode: chosenMode, ...character }) => {
     if (!character.name.trim()) {
       showError(SETUP_COPY.nameMissing)
       return
@@ -63,6 +66,19 @@ function SetupScreen({ onCharacterCreated }) {
     setError(null)
     try {
       const saved = await saveCharacter({ ...character, name: character.name.trim() })
+
+      // Two requests, because the mode is a setting rather than part of the
+      // companion — it says what someone wants today, not who their
+      // companion is. If this one fails the companion still exists and the
+      // mode is simply the default, which is a sane place to land, so it
+      // must not read as "setup failed" and send them back to a form they
+      // already completed.
+      try {
+        await updateSettings({ mode: chosenMode })
+      } catch (err) {
+        console.error('[columba] could not save the mode; leaving the default', err)
+      }
+
       onCharacterCreated(saved?.character ?? character)
     } catch (err) {
       // err.detail holds the technical reason — console only, never the UI.
@@ -74,7 +90,7 @@ function SetupScreen({ onCharacterCreated }) {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    submit({ name, age, gender, tone, stats })
+    submit({ name, age, gender, tone, stats, mode })
   }
 
   /**
@@ -89,12 +105,8 @@ function SetupScreen({ onCharacterCreated }) {
     setAge(pick(AGES).value)
     setGender(pick(GENDERS).value)
     setTone(pick(TONES).value)
-    setStats({
-      compassion: roll(),
-      real_talk: roll(),
-      creativity: roll(),
-      humor: roll(),
-    })
+    setStats(Object.fromEntries(STATS.map((stat) => [stat.key, roll()])))
+    setMode(pick(MODES).key)
     setError(null)
     setRandomized(true)
   }
@@ -195,6 +207,28 @@ function SetupScreen({ onCharacterCreated }) {
                     touched()
                   }}
                 >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="setup-field setup-group">
+            <legend className="label">{SETUP_COPY.modeLabel}</legend>
+            <div className="setup-pills">
+              {MODES.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  className="pill"
+                  disabled={saving}
+                  aria-pressed={mode === option.key}
+                  onClick={() => {
+                    setMode(option.key)
+                    touched()
+                  }}
+                >
+                  <span aria-hidden="true">{option.emoji} </span>
                   {option.label}
                 </button>
               ))}

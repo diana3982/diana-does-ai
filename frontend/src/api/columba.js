@@ -115,6 +115,35 @@ export async function saveCharacter(character) {
 }
 
 /**
+ * The settings the backend holds — currently the mode and the
+ * sensitivities switch.
+ *
+ * Distinct from the display preferences in `src/lib/preference.js`, which
+ * are per device and live in localStorage. These are about how the
+ * companion behaves, so they belong with the companion and follow whoever
+ * is using it rather than whichever screen they are at.
+ *
+ * @returns {Promise<{mode: string, sensitivities_enabled: boolean}>}
+ */
+export async function getSettings() {
+  return request('/settings')
+}
+
+/**
+ * Change some settings, leaving the rest alone.
+ *
+ * PATCH rather than PUT because the backend applies a partial update:
+ * unknown keys are ignored, and so is a value a setting has no room for —
+ * a mode it does not recognise leaves the stored one standing.
+ *
+ * @param {object} updates  e.g. { mode: 'advice' }
+ * @returns {Promise<object>}  every setting, after the update
+ */
+export async function updateSettings(updates) {
+  return request('/settings', { method: 'PATCH', body: updates })
+}
+
+/**
  * Start over — forget the companion so setup runs again.
  *
  * Quirks are kept by default: they belong to the user, not the companion,

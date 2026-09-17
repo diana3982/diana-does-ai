@@ -37,14 +37,14 @@ src/
 ├── components/
 │   ├── CompanionAvatar.jsx
 │   ├── MessageBubble.jsx
-│   ├── StatSlider.jsx
+│   ├── StatSlider.jsx  ← one personality stat, 1-5
 │   ├── SettingsMenu.jsx ← the title bar dropdown; display settings live here
 │   ├── TitleBar.jsx    ← window chrome
 │   ├── TypingIndicator.jsx
 │   └── __tests__/      ← the settings menu, on jsdom
 ├── copy/               ← every word the user reads
 │   ├── app.js          ← loading, connection failure
-│   ├── setup.js        ← ages, genders, tones, stat descriptors
+│   ├── setup.js        ← ages, genders, tones, stat descriptors, modes
 │   ├── chat.js         ← placeholders, failures, confirmations
 │   ├── status.js       ← AIM-style status messages, gated by intensity
 │   ├── quirks.js       ← the "about quirks" explainer

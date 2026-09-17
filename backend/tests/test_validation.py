@@ -27,7 +27,7 @@ def test_blank_field_is_caught(character, field):
     assert any(field in problem for problem in flask_app.validate_character(character))
 
 
-@pytest.mark.parametrize('stat', ['compassion', 'real_talk', 'creativity', 'humor'])
+@pytest.mark.parametrize('stat', flask_app.REQUIRED_STATS)
 def test_missing_stat_is_caught(character, stat):
     del character['stats'][stat]
     assert any(stat in problem for problem in flask_app.validate_character(character))

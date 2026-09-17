@@ -45,7 +45,7 @@ export const TONES = [
 ]
 
 /**
- * The four personality stats, each with a descriptor per value.
+ * The three personality stats, each with a descriptor per value.
  *
  * Descriptors are written to describe a *person you'd want to talk to* at
  * every setting — there is no bad end of any slider. A 1 is not "less
@@ -78,30 +78,6 @@ export const STATS = [
     },
   },
   {
-    key: 'creativity',
-    emoji: '🎨',
-    label: 'creativity',
-    /*
-     * These read as self-description, not as a service. They are the slider
-     * labels AND the companion's own words in its profile blurb -- `about.js`
-     * builds that from this exact text -- so "suggests an outlet sometimes"
-     * would put a job description inside a paragraph about who it is.
-     *
-     * Level 1 said "grounded and practical", which promised practical advice
-     * this slider does not control: it sets how often creative outlets come
-     * up, and 1 is the FEWEST suggestions. UAT user 1 read the label, chose
-     * 1 expecting practical help, and got the least of everything. A label
-     * promising the opposite of its behaviour is worse than a vague one.
-     */
-    descriptors: {
-      1: 'not the artsy type',
-      2: 'a little creative, now and then',
-      3: 'creatively minded',
-      4: 'always finds an outlet',
-      5: 'sees everything as art',
-    },
-  },
-  {
     key: 'humor',
     emoji: '😄',
     label: 'humor',
@@ -114,6 +90,35 @@ export const STATS = [
     },
   },
 ]
+
+/**
+ * What someone is asking the companion for — not who it is.
+ *
+ * This replaced the `creativity` slider. That slider set how often creative
+ * outlets came up, and called its lowest rung "grounded and practical", so
+ * someone who wanted practical help chose the rung that gave them the least
+ * of everything. Making the label honest fixed the lie but not the gap:
+ * there was still no way to ask for plain advice, and no way at all to ask
+ * just to be heard.
+ *
+ * Deliberately NOT a fifth entry in STATS. A stat is a dial from 1 to 5 with
+ * a descriptor per value, and `about.js` reads every stat's `descriptors`
+ * map to write the profile blurb — an entry without one would break it. It
+ * is also not a trait: it says what this person wants today, and it can be
+ * a different answer tomorrow.
+ *
+ * One at a time. "just listen" and "give me advice" together would ask the
+ * companion to hold back and to offer in the same breath.
+ */
+export const MODES = [
+  { key: 'listen', emoji: '👂', label: 'just listen' },
+  { key: 'unpack', emoji: '🫧', label: 'help me unpack it' },
+  { key: 'advice', emoji: '💬', label: 'give me advice' },
+  { key: 'suggest', emoji: '🎨', label: 'suggest something to try' },
+]
+
+/** Where someone lands before choosing. Matches DEFAULT_MODE in modes.py. */
+export const DEFAULT_MODE = 'unpack'
 
 /** Celestial names for "choose for me" — Columba's neighbourhood. */
 export const RANDOM_NAMES = [
@@ -142,6 +147,9 @@ export const SETUP_COPY = {
   genderLabel: 'gender',
   toneLabel: 'tone',
   statsLabel: 'personality',
+  /* "right now", because it is the one choice here that is not about who
+     the companion is — and the one someone can change their mind about. */
+  modeLabel: 'what do you need right now?',
   randomize: '[ ✨ choose for me ]',
   /** Shown after "choose for me" fills the form — you confirm, it doesn't. */
   randomized: 'picked one for you — change anything you like 💙',

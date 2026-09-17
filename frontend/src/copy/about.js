@@ -58,8 +58,16 @@ function descriptorFor(stat, value) {
  * Writes the profile for a companion.
  *
  * The two strongest traits lead, because that's what someone would say
- * about themselves first; the other two follow as plain fragments, the
+ * about themselves first; whatever remains follows as plain fragments, the
  * way profiles actually read.
+ *
+ * Built from however many traits there are, rather than from four by name.
+ * The earlier version destructured `[first, second, third, fourth]`, so when
+ * `creativity` left `STATS` the last line rendered "creatively minded.
+ * undefined." into the sidebar — and every test in this file still passed,
+ * because "undefined" is lowercase, contains no "and", and does not change
+ * how many lines come back. Counting is the whole bug; not counting is the
+ * whole fix.
  *
  * @param   {object}   character  the saved companion
  * @returns {string[]}            lines to render, in order
@@ -72,11 +80,11 @@ export function buildAboutMe(character) {
     .sort((a, b) => (stats[b.key] ?? 3) - (stats[a.key] ?? 3))
     .map((stat) => descriptorFor(stat, stats[stat.key]))
 
-  const [first, second, third, fourth] = described
+  const [first, second, ...rest] = described
 
   return [
     voice.opener,
-    `${first}. ${second} too ${voice.tail}`,
-    `${third}. ${fourth}.`,
-  ]
+    [first, second].filter(Boolean).join('. ') + (second ? ` too ${voice.tail}` : '.'),
+    rest.length ? `${rest.join('. ')}.` : '',
+  ].filter(Boolean)
 }
