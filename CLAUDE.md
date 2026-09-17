@@ -298,11 +298,17 @@ handling is identical in test mode.
   question in a diff is a question nobody is being asked. The reasoning
   behind a decision belongs in git; the deciding happens first.
 
-  This is not a rule against raising things in review. Flagging a word,
-  naming a tradeoff, recommending a sequence — that *is* the review working,
-  and the thread records the answer. What must not happen is a decision left
-  hanging in the permanent record: "worth removing or making real, but I've
-  left it" belongs in conversation, and only its outcome belongs in git.
+  So the order is fixed. Anything that needs a decision — a word, a
+  tradeoff, a sequence, a thing worth removing — is **raised in conversation
+  with Diana**, not written into the PR for her to find. Once it is settled,
+  the commit message carries the decision and its reasoning, and Diana notes
+  the outcome on the PR herself.
+
+  Claude's PR comments report what was *done*. A report is not a question:
+  "removed in 36526c6, and here is why the other two kept theirs" belongs on
+  the PR. "Worth removing or making real, but I've left it" does not — that
+  is a decision left hanging in a permanent record, and it is the thing this
+  rule exists to stop.
 - Never merge to main without Diana's explicit approval
 - Every PR comment Claude writes ends with an attribution line. `gh` posts with Diana's token, so GitHub records her as the author of both sides — without a signature the review thread reads as one person talking to themselves
 
