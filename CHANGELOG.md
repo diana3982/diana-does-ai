@@ -60,10 +60,13 @@ decimals), every timing dial in `sendQueue` and `replyQueue` — 600ms → 601ms
 — two boundary comparisons in `splitReply` that produce an identical array at
 exactly `MAX_PARTS`, and one unreachable guard against an empty flush.
 
-**Left open, as a design question rather than a test gap:**
-`clear_profile()`, `clear_sensitivities()` and `clear_quirks()` each return
-an unconditional `True` that no caller in `app.py` reads. It can never be
-`False`. It advertises a success signal that does not exist.
+**One survivor was a real finding, and not a test gap.**
+`clear_profile()`, `clear_sensitivities()` and `clear_quirks()` each ended in
+an unconditional `True` that no caller reads and that can never be `False` —
+a success signal that does not exist, waiting for someone to branch on it.
+All three are gone. `forget_quirk()` and `forget_sensitivity()` keep theirs:
+those genuinely report whether the topic was there, and `app.py` answers 404
+with it.
 
 ---
 

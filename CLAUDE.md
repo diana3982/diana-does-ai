@@ -290,6 +290,13 @@ handling is identical in test mode.
 - Any architectural decision must include a brief note on the tradeoff considered before writing any code
 - Any PR over ~10 files, or touching how user data is stored or deleted, gets a second review pass before merging
 - Stop mid-task and confirm the approach if a change is heading past ~10 files, needs a new dependency, or needs a different design than the one agreed — do not finish it and ask afterwards
+- **Git records decisions, not open questions.** An unresolved question is
+  raised in conversation and answered *before* anything is committed. It is
+  never parked in a commit message, a CHANGELOG entry, a PR description or a
+  code comment to be found later. A CHANGELOG that says "left open" sends
+  the reader after a decision nobody recorded, and a question in a diff is a
+  question nobody is being asked. The reasoning behind a decision belongs in
+  git; the deciding happens first.
 - Never merge to main without Diana's explicit approval
 - Every PR comment Claude writes ends with an attribution line. `gh` posts with Diana's token, so GitHub records her as the author of both sides — without a signature the review thread reads as one person talking to themselves
 

@@ -149,7 +149,6 @@ def set_pronouns(value):
 def clear_profile():
     """Forget all of it. Offered wherever starting over is."""
     save_profile({})
-    return True
 
 
 def build_profile_context():
