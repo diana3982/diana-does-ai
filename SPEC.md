@@ -431,6 +431,22 @@ so building them apart means building the same seam twice.
     facts go stale in ways the store cannot detect. Relationships, place,
     school and work extend the same store — see 17.6, which waits on 17.5.
 
+17.7. **Suggest outlets the person already likes, before reaching for new
+    ones.** Quirks already record what someone enjoys; nothing consults them
+    when the companion offers something to try. It should suggest from what
+    it knows first, and only venture outside when nothing on hand fits the
+    mood of the moment — a suggestion drawn from something you already love
+    lands as being known, while a generic one lands as a worksheet.
+
+    *Waits on modes.* The mode picker decides **whether** a suggestion is
+    wanted at all; this decides **which** one. Building it first would tune
+    the contents of a thing that may not be offered.
+
+    Note the failure it must avoid, which is the one quirks always have: a
+    suggestion that announces the recall — "you like kite flying, so..." —
+    turns being remembered into being recorded. Same rule as
+    `build_quirks_context`: use it, never announce it.
+
 ### Phase 4 — My settings
 
 **Order change, 2026-09-13.** Seeing and editing your own profile moves to the

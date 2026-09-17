@@ -37,7 +37,13 @@ def fake_repo(tmp_path):
     copy_dir = tmp_path / 'frontend' / 'src' / 'copy'
     copy_dir.mkdir(parents=True)
     (copy_dir / 'setup.js').write_text(
-        "export const RANDOM_NAMES = [\n  'luna',\n  'vega',\n  'wren',\n]\n")
+        "export const RANDOM_NAMES = [\n  'luna',\n  'vega',\n  'wren',\n]\n"
+        "\nexport const STATS = [\n"
+        "  { key: 'compassion', descriptors: {} },\n"
+        "  { key: 'real_talk', descriptors: {} },\n"
+        "  { key: 'creativity', descriptors: {} },\n"
+        "  { key: 'humor', descriptors: {} },\n"
+        "]\n")
 
     data = tmp_path / 'backend' / 'data'
     data.mkdir(parents=True)
@@ -79,6 +85,65 @@ class TestNameExemption:
     def test_the_exemption_never_reaches_a_sensitivity(self, hook, fake_repo):
         _write(fake_repo, 'sensitivities.json', {'luna': {'kind': 'other'}})
         assert 'luna' in hook.learned_topics(fake_repo)
+
+
+class TestStatKeys:
+    """The four sliders are schema, and cannot be guarded as topics.
+
+    `creativity` is a stat key AND was a real topic in one contributor's
+    local data, so every commit touching the slider was refused. A guard
+    that fires on the app's own vocabulary teaches people to pass
+    --no-verify, which removes it entirely -- so the word the app uses in a
+    dozen files is exempt, and the exemption stops precisely there.
+    """
+
+    def test_the_keys_are_read_from_source(self, hook, tmp_path):
+        # Deliberately NOT the app's four. Asserting the real names would
+        # pass just as well against a hardcoded list, which is the thing
+        # this test exists to rule out -- and it did, until a mutation
+        # showed the hardcoded version passing.
+        copy_dir = tmp_path / 'frontend' / 'src' / 'copy'
+        copy_dir.mkdir(parents=True)
+        (copy_dir / 'setup.js').write_text(
+            "export const STATS = [\n"
+            "  { key: 'patience', descriptors: {} },\n"
+            "  { key: 'wit', descriptors: {} },\n"
+            "]\n")
+
+        assert hook.app_stat_keys(tmp_path) == {'patience', 'wit'}
+
+    def test_it_reads_the_keys_the_app_actually_has(self, hook, fake_repo):
+        assert hook.app_stat_keys(fake_repo) == {
+            'compassion', 'real_talk', 'creativity', 'humor'}
+
+    def test_an_unreadable_file_guards_them_as_before(self, hook, tmp_path):
+        """Conservative direction, the same as the name list."""
+        assert hook.app_stat_keys(tmp_path) == set()
+
+    def test_a_quirk_named_after_a_stat_is_not_flagged(self, hook, fake_repo):
+        _write(fake_repo, 'quirks.json', {'creativity': {}})
+
+        assert hook.learned_topics(fake_repo) == set()
+
+    def test_a_real_quirk_alongside_it_is_still_flagged(self, hook, fake_repo):
+        # The half that matters. An exemption that quietly swallowed its
+        # neighbours would look exactly like a clean repo.
+        _write(fake_repo, 'quirks.json', {'creativity': {}, 'kite flying': {}})
+
+        assert hook.learned_topics(fake_repo) == {'kite flying'}
+
+    def test_the_exemption_never_reaches_the_companion_name(self, hook, fake_repo):
+        # A companion named after a stat is still a name its owner chose.
+        # Widening a topic exemption to cover the name is the failure this
+        # file was written to catch, in the other direction.
+        _write(fake_repo, 'character.json', {'name': 'creativity'})
+
+        assert hook.learned_topics(fake_repo) == {'creativity'}
+
+    def test_the_exemption_never_reaches_a_sensitivity_either(self, hook, fake_repo):
+        _write(fake_repo, 'sensitivities.json', {'drinking': {}})
+
+        assert hook.learned_topics(fake_repo) == {'drinking'}
 
 
 class TestStillCatchesEverythingElse:

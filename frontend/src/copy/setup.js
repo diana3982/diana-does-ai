@@ -81,9 +81,21 @@ export const STATS = [
     key: 'creativity',
     emoji: '🎨',
     label: 'creativity',
+    /*
+     * These read as self-description, not as a service. They are the slider
+     * labels AND the companion's own words in its profile blurb -- `about.js`
+     * builds that from this exact text -- so "suggests an outlet sometimes"
+     * would put a job description inside a paragraph about who it is.
+     *
+     * Level 1 said "grounded and practical", which promised practical advice
+     * this slider does not control: it sets how often creative outlets come
+     * up, and 1 is the FEWEST suggestions. UAT user 1 read the label, chose
+     * 1 expecting practical help, and got the least of everything. A label
+     * promising the opposite of its behaviour is worse than a vague one.
+     */
     descriptors: {
-      1: 'grounded and practical',
-      2: 'occasionally inspired',
+      1: 'not the artsy type',
+      2: 'a little creative, now and then',
       3: 'creatively minded',
       4: 'always finds an outlet',
       5: 'sees everything as art',

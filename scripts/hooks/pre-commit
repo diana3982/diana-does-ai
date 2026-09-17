@@ -79,6 +79,31 @@ def app_suggested_names(root):
         return set()
 
 
+def app_stat_keys(root):
+    """The four sliders: compassion, real_talk, creativity, humor.
+
+    These are schema, not topics. They name fields of the character config
+    and appear in setup.js, companion.py, SPEC.md and most of the CHANGELOG,
+    so the hook cannot protect them: a reader who sees "creativity: 1" in a
+    slider label learns nothing about anyone. What it *can* do is fire on
+    every commit that touches a stat, which is how a guard teaches people to
+    pass --no-verify. That costs more than it saves.
+
+    Read from source for the same reason app_suggested_names is, and an
+    unreadable file returns nothing, which guards them as before.
+
+    **Applied to topics only.** A companion named after a stat is still a
+    real name and is still caught.
+    """
+    path = os.path.join(root, 'frontend', 'src', 'copy', 'setup.js')
+    try:
+        with open(path) as f:
+            block = re.search(r'STATS\s*=\s*\[(.*?)\n\]', f.read(), re.S)
+        return {k.lower() for k in re.findall(r"key:\s*['\"]([^'\"]+)['\"]", block.group(1))}
+    except Exception:                                        # noqa: BLE001
+        return set()
+
+
 def learned_topics(root):
     """Everything the companion knows, as plain lowercase strings."""
     data_dir = os.path.join(root, 'backend', 'data')
@@ -90,16 +115,22 @@ def learned_topics(root):
             with open(path) as f:
                 topics |= {str(k).lower() for k in json.load(f)}
 
+    # Schema words are exempt as TOPICS, and the filter runs here rather than
+    # at the end so it cannot reach the name added below.
+    topics -= APP_VOCABULARY | app_stat_keys(root)
+
     character = os.path.join(data_dir, 'character.json')
     if os.path.exists(character):
         with open(character) as f:
             name = json.load(f).get('name')
-        # Only the name gets this exemption; topics never do.
+        # Only the app's own suggestions exempt a name. A companion named
+        # after a stat or a category is still a name its owner chose, and
+        # widening a topic exemption to cover it is the failure this hook's
+        # test suite was written to catch.
         if name and str(name).lower() not in app_suggested_names(root):
             topics.add(str(name).lower())
 
-    return {t for t in topics
-            if len(t) >= MIN_LENGTH and t not in APP_VOCABULARY}
+    return {t for t in topics if len(t) >= MIN_LENGTH}
 
 
 def added_lines():
