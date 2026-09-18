@@ -279,6 +279,10 @@ directory. It reads the store list from `backend/storage.py`, the same one
 test mode redirects — one list, so the two cannot drift apart. Live tests are opt-in (`COLUMBA_LIVE=1`) and capped by a counter
 around the client.
 
+**UAT sessions** follow `docs/uat-protocol.md` — a fixed message script, and
+combinations chosen where two rules in the code collide rather than at random.
+A session that changes the companion *and* the script answers nothing.
+
 **Test mode** is env-gated and writes to `backend/data/test/`, so exercising
 the app can never touch a real companion:
 
