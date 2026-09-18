@@ -112,7 +112,7 @@ export const STATS = [
  */
 export const MODES = [
   { key: 'listen', emoji: '👂', label: 'just listen' },
-  { key: 'unpack', emoji: '🫧', label: 'help me unpack it' },
+  { key: 'unpack', emoji: '🧩', label: 'help me unpack it' },
   { key: 'advice', emoji: '💬', label: 'give me advice' },
   { key: 'suggest', emoji: '💡', label: 'give me an idea' },
 ]

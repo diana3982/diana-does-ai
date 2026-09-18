@@ -109,7 +109,7 @@ The whole thing is centered on the page, like a floating OS window. Fixed width 
 - Small select or pill options: `warm | chill | uplifting | playful | gentle`
 
 **What do you need right now?** (pill group, one at a time)
-- 👂 just listen · 🫧 help me unpack it · 💬 give me advice · 💡 give me an idea
+- 👂 just listen · 🧩 help me unpack it · 💬 give me advice · 💡 give me an idea
 
 Not a stat, and deliberately not a fifth slider. A stat says who the companion
 is; this says what the person wants today, and it can be a different answer

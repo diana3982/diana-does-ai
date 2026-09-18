@@ -26,7 +26,7 @@ for, one at a time:
 | | |
 |---|---|
 | 👂 | **just listen** |
-| 🫧 | **help me unpack it** |
+| 🧩 | **help me unpack it** |
 | 💬 | **give me advice** |
 | 💡 | **give me an idea** |
 
