@@ -188,14 +188,14 @@ class TestPromptIntegration:
 
 class TestSettings:
     def test_defaults_when_nothing_saved(self):
-        assert settings.load_settings() == {'sensitivities_enabled': True}
+        assert settings.load_settings() == settings.DEFAULTS
 
     def test_sensitivities_default_to_on(self):
         assert settings.load_settings()['sensitivities_enabled'] is True
 
     def test_saving_a_partial_update(self):
         assert settings.save_settings({'sensitivities_enabled': False}) == {
-            'sensitivities_enabled': False,
+            **settings.DEFAULTS, 'sensitivities_enabled': False,
         }
         assert settings.load_settings()['sensitivities_enabled'] is False
 

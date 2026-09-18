@@ -54,7 +54,7 @@ def fail(message, detail=None, status=500):
     return jsonify({"error": message, "detail": detail}), status
 
 
-REQUIRED_STATS = ('compassion', 'real_talk', 'creativity', 'humor')
+REQUIRED_STATS = ('compassion', 'real_talk', 'humor')
 
 
 def validate_character(character):

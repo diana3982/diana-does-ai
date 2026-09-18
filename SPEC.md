@@ -108,14 +108,22 @@ The whole thing is centered on the page, like a floating OS window. Fixed width 
 **Tone**
 - Small select or pill options: `warm | chill | uplifting | playful | gentle`
 
+**What do you need right now?** (pill group, one at a time)
+- 👂 just listen · 🧩 help me unpack it · 💬 give me advice · 💡 give me an idea
+
+Not a stat, and deliberately not a fifth slider. A stat says who the companion
+is; this says what the person wants today, and it can be a different answer
+tomorrow — so it is stored in settings rather than in the character config.
+It replaced a `creativity` slider whose lowest rung read "grounded and
+practical" while producing the fewest suggestions of anything.
+
 **Personality Stats** (rendered via `StatSlider` component)
 - Compassion (1–5)
 - Real Talk (1–5)
-- Creativity (1–5)
 - Humor (1–5)
 
 Each slider has:
-- A label with an emoji (💛 Compassion, 💬 Real Talk, 🎨 Creativity, 😄 Humor)
+- A label with an emoji (💛 Compassion, 💬 Real Talk, 😄 Humor)
 - The current value displayed as a number
 - A short descriptor that updates based on value (e.g., Compassion 5 = "deeply empathetic", 1 = "calm and measured")
 
@@ -438,9 +446,10 @@ so building them apart means building the same seam twice.
     mood of the moment — a suggestion drawn from something you already love
     lands as being known, while a generic one lands as a worksheet.
 
-    *Waits on modes.* The mode picker decides **whether** a suggestion is
-    wanted at all; this decides **which** one. Building it first would tune
-    the contents of a thing that may not be offered.
+    *Modes have shipped, so this is unblocked.* The mode picker decides
+    **whether** a suggestion is wanted at all; this decides **which** one.
+    Only `suggest` and `advice` ever reach for one, so this need only apply
+    under those two.
 
     Note the failure it must avoid, which is the one quirks always have: a
     suggestion that announces the recall — "you like kite flying, so..." —

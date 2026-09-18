@@ -12,6 +12,101 @@ saying so is more honest than presenting them as a plan that went to plan.
 
 ---
 
+## Modes: asking for what you actually need · 2026-09-17
+
+> **Triggered by** the half of UAT 1 that yesterday's fix could not reach.
+> UAT user 1 chose `creativity: 1` — labelled *"grounded and practical"* — and
+> got the fewest suggestions of anything. `#12` made the label honest. It did
+> not create the thing being reached for: **there was no way to ask for plain
+> advice, and no way at all to ask simply to be heard.**
+
+The `creativity` slider is gone. In its place, four things a person can ask
+for, one at a time:
+
+| | |
+|---|---|
+| 👂 | **just listen** |
+| 🧩 | **help me unpack it** |
+| 💬 | **give me advice** |
+| 💡 | **give me an idea** |
+
+Of the four, `listen` is the one the app had no way to ask for before.
+
+**One at a time, not several.** Some pairs contradict outright — *just listen*
+and *give me advice* would ask the companion to hold back and to offer in the
+same breath — and every combination would be a behaviour someone has to test.
+
+**Not named for therapy.** The first sketch of this list included
+*"conversational therapy simulation"*. In an app that routes crisis to 988
+precisely because it is **not** clinical care, a mode named *therapy* invites
+being taken as treatment by the person least able to afford the confusion.
+`unpack` does the same work without the claim.
+
+**It lives in settings, not in the character config** — a reversal of the
+earlier plan, and the reasoning is the interesting part. A stat says who the
+companion *is*; a mode says what this person wants *today*, and it can be a
+different answer tomorrow. Storing it in settings also meant the back-compat
+came free: `load_settings()` already merges onto `DEFAULTS`, an idiom with a
+test pinning it since it was written, so a settings file from before modes
+existed simply gets the default. `PATCH /settings` already existed too, so
+switching modes later needs no new endpoint.
+
+**The accepted cost, recorded because it is real:** mode is global rather
+than per-companion, and there is **no migration** — a companion that had
+`creativity: 5` lands on the default like everyone else. "Behaviour preserved
+approximately" is not preserved. One person uses this app today; the
+simplicity is worth more than the fidelity.
+
+**`settings.py` could store any word as a mode, and would have.** Its
+coercion keys off the *type of the default*, so booleans were cleaned and a
+string was stored exactly as sent. `PATCH /settings` would have accepted
+`mode: "anything"` and the prompt would have carried it. There is now an
+explicit guard on the way in — the same "refuse at the boundary, index freely
+afterwards" that `validate_character` and `_clean_quirks` already argue for.
+Kept as one `if` rather than a registry of validators: one enum key does not
+earn the indirection, and a second is when to generalise.
+
+### The part that is about safety
+
+`listen` is the only mode that tells the companion to **withhold**, which
+makes it the only one that could withhold the wrong thing. Its rule ends with
+the sentence `sensitivities.py` already uses for the same purpose: *"if
+someone is in danger, respond fully and point them to help."* Not offering
+suggestions is about advice; it is never about someone's safety, and the
+person most likely to choose *just listen* on a bad night is exactly who that
+carve-out is for.
+
+It is pinned at **every** intensity rather than once, because the tier is
+decided by a model — so the unlucky combination is the one nobody would have
+tried by hand. `988` is asserted present under all four modes.
+
+### The bug that removing a stat would have shipped
+
+`buildAboutMe` destructured four descriptors by name and rendered
+`` `${third}. ${fourth}.` ``. With three stats, `fourth` is `undefined` and the
+sidebar would have read **"creatively minded. undefined."** to the user.
+
+**All eight tests in `about.test.js` passed through that.** The "no *and and
+and*" regex does not match `undefined`; the lowercase check passes because
+`'undefined'` is already lowercase; and the length test pins *three returned
+lines*, not three stats. It now builds from however many traits there are,
+and a test asserts no line contains `undefined` for every tone × every value
+— checked by reintroducing the four-way destructure and watching it go red.
+
+That is the fifth test this week found to be green for the wrong reason, and
+the first caught before the code was written rather than after.
+
+### One more thing that had to move
+
+Dropping `creativity` from `STATS` **re-armed the privacy hook against it**.
+`app_stat_keys()` scrapes the stat list out of `setup.js` at hook runtime, so
+the moment the word stopped being a stat key it stopped being exempt — and it
+is a real learned topic locally. Every commit mentioning the slider it used to
+be, including this changelog entry, would have been refused. It is retired
+into `APP_VOCABULARY` by hand, with the reason written beside it.
+
+---
+
 ## Bold letters reach every window, and the slider descriptions get readable · 2026-09-16
 
 > **Triggered by** trying it: *"having bold letters on in the create

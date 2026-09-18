@@ -24,6 +24,7 @@ diana-does-ai/
 │   ├── sensitivities.py ← things to steer around — withhold-only, never suggested
 │   ├── user_profile.py  ← what the user said about themselves — use, never raise
 │   ├── settings.py      ← user-controlled settings
+│   ├── modes.py         ← what someone asked for: listen, unpack, advice, suggest
 │   ├── storage.py       ← every file this app writes, in one list
 │   ├── usage.py         ← token counts per API call — counts only, never content
 │   ├── tests/           ← pytest suite (see backend/tests/README.md)
@@ -118,12 +119,12 @@ Warm, gentle, non-clinical. The UI should feel like a safe space — never steri
 
 ### Pages / Screens
 1. **SetupScreen** ✅ — first-time character creation (name, age, gender, tone, stat sliders). Shows if no character is saved yet.
-2. **ChatScreen** ✅ — main chat interface. Message list + input. Shows once character exists.
+2. **ChatScreen** ✅ — main chat interface. Message list + input. Shows once character exists. *The mode picker is chosen at setup only; switching it mid-chat is its own piece of work — `ChatScreen`'s `character` prop is read-only and `SettingsMenu` holds device preferences rather than backend ones.*
 3. **My settings** — *not built yet.* Everything about the user in one place: edit your companion (setup form, prefilled), read and delete what it has noticed, and start over with checkboxes rather than an "are you sure". Not called a *profile* — a profile implies something other people see, and nothing here is.
 
 ### Shared Components
 - `MessageBubble` ✅ — renders a single chat message (user vs companion styling)
-- `StatSlider` ✅ — labeled slider for compassion/real talk/creativity/humor (1–5)
+- `StatSlider` ✅ — labeled slider for compassion/real talk/humor (1–5)
 - `CompanionAvatar` ✅ — small avatar/icon for the companion in chat
 - `TitleBar` ✅ — the Y2K window chrome
 - `TypingIndicator` ✅ — three dots plus the companion's typing status
@@ -226,7 +227,7 @@ and some of it is tested as behaviour.
 
 ## What NOT to Do
 
-- Do NOT modify backend files (app.py, companion.py, quirks.py, sensitivities.py, settings.py, storage.py, usage.py, user_profile.py) unless explicitly asked
+- Do NOT modify backend files (app.py, companion.py, modes.py, quirks.py, sensitivities.py, settings.py, storage.py, usage.py, user_profile.py) unless explicitly asked
 - Do NOT add Tailwind, Bootstrap, or any CSS framework
 - Do NOT use Redux or any external state management
 - Do NOT make the UI look like a modern chat app (Slack, iMessage aesthetic) — lean into the retro AIM/MSN vibe

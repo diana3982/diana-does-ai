@@ -238,7 +238,7 @@ class TestSensitivities:
 
 class TestSettings:
     def test_defaults(self, api):
-        assert api.get('/settings').get_json() == {'sensitivities_enabled': True}
+        assert api.get('/settings').get_json() == settings.DEFAULTS
 
     def test_switching_sensitivities_off(self, api):
         body = api.patch('/settings', json={'sensitivities_enabled': False}).get_json()

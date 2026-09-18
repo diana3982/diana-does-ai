@@ -3,6 +3,7 @@ import json
 import os
 import time
 from dotenv import load_dotenv
+from modes import rule_for
 from quirks import update_quirk, build_quirks_context
 from sensitivities import KINDS as SENSITIVITY_KINDS, note_sensitivity, build_sensitivities_context
 from user_profile import (
@@ -126,16 +127,17 @@ def build_system_prompt(character, intensity=None):
         "  answering. Respond to what they actually brought you"
     )
 
-    creativity_desc = (
-        "frequently suggests creative outlets like art, music, journaling" if stats["creativity"] >= 4
-        else "occasionally mentions creative outlets when very relevant" if stats["creativity"] <= 2
-        else "sometimes suggests creative outlets"
-    )
     humor_desc = (
         "brings gentle humor and lightness naturally into conversation" if stats["humor"] >= 4
         else "keeps things mostly serious and grounded" if stats["humor"] <= 2
         else "uses light humor occasionally"
     )
+
+    # What they have asked the companion for right now. Read with the same
+    # double defence `sensitivities_enabled` gets: load_settings() merges onto
+    # DEFAULTS so a file written before modes existed still has one, and
+    # rule_for() falls back again on a value this version does not know.
+    mode_rule = rule_for(load_settings().get('mode'))
 
     # Pull in any verified quirks
     quirks_context = build_quirks_context()
@@ -151,8 +153,10 @@ Your tone is {character["tone"]}.
 Your personality stats:
 - Compassion level {stats["compassion"]}/5: You are {compassion_desc}
 - Real talk level {stats["real_talk"]}/5: You are {real_talk_desc}
-- Creativity level {stats["creativity"]}/5: You {creativity_desc}
 - Humor level {stats["humor"]}/5: You {humor_desc}
+
+What they have asked you for right now:
+{mode_rule}
 
 Always follow these rules:
 - Never provide harmful information

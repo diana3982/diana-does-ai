@@ -42,6 +42,13 @@ APP_VOCABULARY = {
     'music', 'food', 'sports', 'hobby', 'media', 'place',
     'health', 'substance', 'family', 'relationship', 'grief',
     'money', 'work', 'other',
+    # Retired, and pinned by hand for that reason. `creativity` was a stat
+    # key until modes replaced it, so app_stat_keys() no longer finds it in
+    # setup.js -- but it is still all through SPEC.md, the CHANGELOG and this
+    # project's history, and it collides with a real learned topic. Without
+    # this line every commit that mentions the slider it used to be would be
+    # refused, which is how a guard teaches people to pass --no-verify.
+    'creativity',
 }
 
 #: Below this, a topic is too short to match anything but noise.

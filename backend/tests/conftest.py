@@ -68,7 +68,7 @@ def character():
         'age': '31-40',
         'gender': 'nonbinary',
         'tone': 'playful',
-        'stats': {'compassion': 3, 'real_talk': 3, 'creativity': 3, 'humor': 3},
+        'stats': {'compassion': 3, 'real_talk': 3, 'humor': 3},
     }
 
 

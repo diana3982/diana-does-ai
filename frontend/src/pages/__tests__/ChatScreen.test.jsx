@@ -24,7 +24,7 @@ const CHARACTER = {
   age: 17,
   gender: 'nonbinary',
   tone: 'warm',
-  stats: { compassion: 5, real_talk: 3, creativity: 4, humor: 3 },
+  stats: { compassion: 5, real_talk: 3, humor: 3 },
 }
 
 const composer = () => screen.getByLabelText(/message luna/i)
