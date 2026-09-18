@@ -28,7 +28,7 @@ for, one at a time:
 | 👂 | **just listen** |
 | 🫧 | **help me unpack it** |
 | 💬 | **give me advice** |
-| 🎨 | **suggest something to try** |
+| 💡 | **give me an idea** |
 
 Of the four, `listen` is the one the app had no way to ask for before.
 
